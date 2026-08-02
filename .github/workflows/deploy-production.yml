@@ -1,0 +1,20 @@
+name: Deploy production
+
+# Production Netlify cutover is never auto-deployed from push or laptop scripts.
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-production-frontend
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Refuse until production site exists
+        run: |
+          echo "Production Netlify is intentionally unused in establish-platform-foundation."
+          echo "This workflow is gated on GitHub Environment 'production' and workflow_dispatch only."
+          exit 1
