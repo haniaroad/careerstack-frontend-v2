@@ -1,6 +1,6 @@
 # CareerStack Frontend V2
 
-Vite + React + TypeScript scaffold for CareerStack. Design-system shell arrives in a later change.
+Vite + React + TypeScript app with the CareerStack design system and authenticated application shell (stub session until identity lands).
 
 ## Clone path caveat
 
@@ -20,7 +20,17 @@ npm install
 npm run dev
 ```
 
-Open http://localhost:5173. Status page: `/status`.
+Open http://localhost:5173. Default entry lands on `/home` inside the shell.
+
+Useful routes:
+
+- `/home`, `/explore`, `/my-work`, `/inbox`, `/profile` — shell destination stubs
+- `/status` — API health smoke page (outside the shell)
+- `/dev/design-system` — token/component gallery (local and staging only)
+
+## Component imports
+
+Product UI should import from `@/components` (CareerStack wrappers). Raw shadcn/Radix primitives live under `@/components/ui` and are not the public feature API.
 
 ## Compose
 
@@ -36,6 +46,7 @@ Serves the production build on http://localhost:5173. Point `VITE_API_BASE_URL` 
 |----------|---------|
 | `VITE_API_BASE_URL` | API origin used by the status/smoke page |
 | `VITE_SENTRY_DSN` | Optional Sentry DSN (deferred until secret exists) |
+| `VITE_ENABLE_DESIGN_SYSTEM_PREVIEW` | Optional override to show `/dev/design-system` |
 
 ## Quality gates
 

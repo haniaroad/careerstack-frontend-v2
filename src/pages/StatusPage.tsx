@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { apiBaseUrl } from '../config'
+import { Button } from '@/components/Button'
+import { apiBaseUrl } from '@/config'
 
 type HealthState =
   | { kind: 'loading' }
@@ -42,11 +43,11 @@ export function StatusPage() {
 
   return (
     <main className="mx-auto flex min-h-screen max-w-3xl flex-col justify-center px-6 py-16">
-      <p className="text-sm uppercase tracking-[0.2em] text-slate-600">CareerStack</p>
-      <h1 className="mt-4 text-4xl font-semibold tracking-tight text-slate-900">API status</h1>
-      <p className="mt-3 text-slate-700">Smoke check against {url}</p>
+      <p className="text-sm uppercase tracking-[0.2em] text-muted-foreground">CareerStack</p>
+      <h1 className="mt-4 text-4xl font-semibold tracking-tight text-foreground">API status</h1>
+      <p className="mt-3 text-muted-foreground">Smoke check against {url}</p>
 
-      <div className="mt-8 rounded-md border border-slate-300/70 bg-white/70 p-4">
+      <div className="mt-8 rounded-md border border-border bg-surface p-4">
         {state.kind === 'loading' && <p>Checking health…</p>}
         {state.kind === 'ok' && (
           <p>
@@ -54,15 +55,13 @@ export function StatusPage() {
           </p>
         )}
         {state.kind === 'error' && (
-          <p className="text-red-800">
-            Unreachable: {state.message}
-          </p>
+          <p className="text-status-danger">Unreachable: {state.message}</p>
         )}
       </div>
 
-      <Link to="/" className="mt-8 text-sm text-slate-800 underline">
-        Back home
-      </Link>
+      <Button asChild variant="link" className="mt-8 h-auto justify-start px-0">
+        <Link to="/home">Back home</Link>
+      </Button>
     </main>
   )
 }

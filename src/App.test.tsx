@@ -4,14 +4,15 @@ import { describe, expect, it } from 'vitest'
 import App from './App'
 
 describe('App', () => {
-  it('renders the home route', () => {
+  it('renders the home destination inside the shell', () => {
     render(
-      <MemoryRouter initialEntries={['/']}>
+      <MemoryRouter initialEntries={['/home']}>
         <App />
       </MemoryRouter>,
     )
 
-    expect(screen.getByText('CareerStack')).toBeInTheDocument()
-    expect(screen.getByText('Platform foundation')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Home' })).toBeInTheDocument()
+    expect(screen.getAllByText('CareerStack').length).toBeGreaterThan(0)
+    expect(screen.getByTestId('app-header')).toBeInTheDocument()
   })
 })
