@@ -1,6 +1,6 @@
 # CareerStack Frontend V2
 
-Vite + React + TypeScript app with the CareerStack design system and authenticated application shell (stub session until identity lands).
+Vite + React + TypeScript app with the CareerStack design system, Firebase auth/onboarding flows, and an authenticated application shell wired to session/workspace APIs.
 
 ## Clone path caveat
 
@@ -20,13 +20,16 @@ npm install
 npm run dev
 ```
 
-Open http://localhost:5173. Default entry lands on `/home` inside the shell.
+Open http://localhost:5173. Unauthenticated visitors land on `/sign-in`.
 
 Useful routes:
 
-- `/home`, `/explore`, `/my-work`, `/inbox`, `/profile` — shell destination stubs
+- `/sign-in`, `/auth/complete`, `/onboarding`, `/invite/:token`, `/welcome`, `/organizations/new` — AuthLayout (outside the shell)
+- `/home`, `/explore`, `/my-work`, `/inbox`, `/profile` — shell destinations (require completed onboarding)
 - `/status` — API health smoke page (outside the shell)
-- `/dev/design-system` — token/component gallery (local and staging only)
+- `/dev/design-system` — token/component gallery with preview shell stubs (local and staging only)
+
+For local UI without Firebase, set `VITE_AUTH_STUB=true` and run the backend with `FIREBASE_AUTH_STUB=true`.
 
 ## Component imports
 
@@ -44,9 +47,14 @@ Serves the production build on http://localhost:5173. Point `VITE_API_BASE_URL` 
 
 | Variable | Purpose |
 |----------|---------|
-| `VITE_API_BASE_URL` | API origin used by the status/smoke page |
+| `VITE_API_BASE_URL` | API origin for session/onboarding/workspace calls |
 | `VITE_SENTRY_DSN` | Optional Sentry DSN (deferred until secret exists) |
 | `VITE_ENABLE_DESIGN_SYSTEM_PREVIEW` | Optional override to show `/dev/design-system` |
+| `VITE_FIREBASE_*` | Staging Firebase web config (`API_KEY`, `AUTH_DOMAIN`, `PROJECT_ID`, `APP_ID`) |
+| `VITE_AUTH_STUB` | Local stub auth (`true`) when Firebase is not configured |
+| `VITE_MIXPANEL_TOKEN` | Optional Mixpanel token for non-PII activation events |
+
+Firebase authorized domains for staging should include `localhost` and the Netlify staging host.
 
 ## Quality gates
 

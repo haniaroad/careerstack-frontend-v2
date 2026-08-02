@@ -1,18 +1,34 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { describe, expect, it } from 'vitest'
 import App from './App'
 
 describe('App', () => {
-  it('renders the home destination inside the shell', () => {
+  it('redirects unauthenticated shell routes to sign-in', async () => {
     render(
       <MemoryRouter initialEntries={['/home']}>
         <App />
       </MemoryRouter>,
     )
 
-    expect(screen.getByRole('heading', { name: 'Home' })).toBeInTheDocument()
-    expect(screen.getAllByText('CareerStack').length).toBeGreaterThan(0)
-    expect(screen.getByTestId('app-header')).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: 'Sign in' })).toBeInTheDocument()
+    })
+    expect(screen.getByRole('button', { name: /continue with google/i })).toBeInTheDocument()
+    expect(screen.queryByTestId('app-header')).not.toBeInTheDocument()
+  })
+
+  it('renders the sign-in entry points without a password field', async () => {
+    render(
+      <MemoryRouter initialEntries={['/sign-in']}>
+        <App />
+      </MemoryRouter>,
+    )
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: 'Sign in' })).toBeInTheDocument()
+    })
+    expect(screen.getByLabelText('Email')).toBeInTheDocument()
+    expect(screen.queryByLabelText(/password/i)).not.toBeInTheDocument()
   })
 })
