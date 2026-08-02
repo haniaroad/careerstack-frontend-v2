@@ -31,12 +31,23 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+          NETLIFY_SITE_ID: ${{ vars.NETLIFY_SITE_ID }}
       - name: Smoke check staging site
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ vars.NETLIFY_SITE_ID }}
+          STAGING_SITE_URL: ${{ vars.STAGING_SITE_URL }}
         run: |
-          SITE_URL="${{ vars.STAGING_SITE_URL }}"
+          SITE_URL="$STAGING_SITE_URL"
           if [ -z "$SITE_URL" ]; then
-            echo "STAGING_SITE_URL not set; skipping URL smoke check after Netlify deploy action"
-            exit 0
+            echo "STAGING_SITE_URL not set; looking up Netlify site $NETLIFY_SITE_ID"
+            SITE_URL=$(curl -fsS -H "Authorization: Bearer $NETLIFY_AUTH_TOKEN" \
+              "https://api.netlify.com/api/v1/sites/$NETLIFY_SITE_ID" \
+              | python3 -c 'import json,sys; data=json.load(sys.stdin); print(data.get("ssl_url") or data.get("url") or "")')
           fi
+          if [ -z "$SITE_URL" ]; then
+            echo "Could not resolve staging site URL"
+            exit 1
+          fi
+          echo "Checking $SITE_URL"
           curl -fsS "$SITE_URL" >/dev/null
