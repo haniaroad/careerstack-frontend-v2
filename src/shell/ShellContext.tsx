@@ -2,6 +2,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
   type ReactNode,
@@ -17,16 +18,30 @@ const ShellContext = createContext<ShellContextValue | null>(null)
 
 export function ShellProvider({ children, initial }: ShellProviderProps) {
   const workspaces = initial?.workspaces ?? PLACEHOLDER_WORKSPACES
-  const [activeWorkspaceId, setActiveWorkspaceId] = useState(
+  const [activeWorkspaceId, setActiveWorkspaceIdState] = useState(
     initial?.activeWorkspaceId ?? workspaces[0]?.id ?? 'personal',
   )
   const [isImpersonating, setIsImpersonating] = useState(
     initial?.isImpersonating ?? false,
   )
 
+  useEffect(() => {
+    if (initial?.activeWorkspaceId) {
+      setActiveWorkspaceIdState(initial.activeWorkspaceId)
+    }
+  }, [initial?.activeWorkspaceId])
+
   const exitImpersonation = useCallback(() => {
     setIsImpersonating(false)
   }, [])
+
+  const setActiveWorkspaceId = useCallback(
+    (id: string) => {
+      setActiveWorkspaceIdState(id)
+      void initial?.onSwitchWorkspace?.(id)
+    },
+    [initial],
+  )
 
   const value = useMemo<ShellContextValue>(
     () => ({
@@ -38,14 +53,17 @@ export function ShellProvider({ children, initial }: ShellProviderProps) {
       isImpersonating,
       setActiveWorkspaceId,
       exitImpersonation,
+      signOut: initial?.onSignOut,
     }),
     [
       activeWorkspaceId,
       exitImpersonation,
       initial?.canAccessOrgAdmin,
       initial?.notificationCount,
+      initial?.onSignOut,
       initial?.userDisplayName,
       isImpersonating,
+      setActiveWorkspaceId,
       workspaces,
     ],
   )

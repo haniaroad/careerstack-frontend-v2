@@ -20,3 +20,26 @@ export function isDesignSystemPreviewEnabled(): boolean {
     host.endsWith('.netlify.app')
   )
 }
+
+export function firebaseConfig() {
+  return {
+    apiKey: import.meta.env.VITE_FIREBASE_API_KEY as string | undefined,
+    authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN as string | undefined,
+    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID as string | undefined,
+    appId: import.meta.env.VITE_FIREBASE_APP_ID as string | undefined,
+  }
+}
+
+export function isFirebaseConfigured(): boolean {
+  const config = firebaseConfig()
+  return Boolean(config.apiKey && config.authDomain && config.projectId && config.appId)
+}
+
+/** Local/test stub: API accepts Bearer test:<uid>:<email> when backend FIREBASE_AUTH_STUB=true */
+export function authStubEnabled(): boolean {
+  return import.meta.env.VITE_AUTH_STUB === 'true' || import.meta.env.MODE === 'test'
+}
+
+export function mixpanelToken(): string | undefined {
+  return import.meta.env.VITE_MIXPANEL_TOKEN as string | undefined
+}

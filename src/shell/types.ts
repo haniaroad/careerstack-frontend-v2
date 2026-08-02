@@ -17,6 +17,7 @@ export type ShellContextValue = {
   isImpersonating: boolean
   setActiveWorkspaceId: (id: string) => void
   exitImpersonation: () => void
+  signOut?: () => void | Promise<void>
 }
 
 export type ShellProviderProps = {
@@ -29,5 +30,7 @@ export type ShellProviderProps = {
     notificationCount: number
     canAccessOrgAdmin: boolean
     isImpersonating: boolean
+    onSwitchWorkspace?: (id: string) => void | Promise<void>
+    onSignOut?: () => void | Promise<void>
   }>
 }

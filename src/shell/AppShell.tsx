@@ -89,7 +89,7 @@ function WorkspaceSwitcher() {
 }
 
 function ProfileMenu() {
-  const { userDisplayName } = useShell()
+  const { userDisplayName, signOut } = useShell()
   const navigate = useNavigate()
   const initials = userDisplayName
     .split(/\s+/)
@@ -118,13 +118,22 @@ function ProfileMenu() {
       <DropdownMenuContent align="end" className="min-w-[12rem]">
         <DropdownMenuLabel className="font-normal">
           <span className="block text-sm font-medium">{userDisplayName}</span>
-          <span className="text-xs text-muted-foreground">Preview session</span>
+          <span className="text-xs text-muted-foreground">Signed in</span>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem onSelect={() => navigate('/profile')}>Profile</DropdownMenuItem>
         <DropdownMenuItem disabled>Settings (soon)</DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem disabled>Sign out (soon)</DropdownMenuItem>
+        <DropdownMenuItem
+          onSelect={() => {
+            void (async () => {
+              await signOut?.()
+              navigate('/sign-in')
+            })()
+          }}
+        >
+          Sign out
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   )
