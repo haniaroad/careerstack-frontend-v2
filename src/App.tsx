@@ -6,6 +6,7 @@ import { AppShell } from '@/shell/AppShell'
 import { ShellProvider } from '@/shell/ShellContext'
 import { SessionShellProvider } from '@/shell/SessionShellProvider'
 import { AuthCompletePage } from '@/pages/AuthCompletePage'
+import { BillingPage, BillingReturnPage } from '@/pages/BillingPage'
 import { CreateOrganizationPage } from '@/pages/CreateOrganizationPage'
 import { DesignSystemPage } from '@/pages/DesignSystemPage'
 import { ExplorePage } from '@/pages/ExplorePage'
@@ -73,6 +74,8 @@ export default function App() {
               <Route path="my-work" element={<MyWorkPage />} />
               <Route path="inbox" element={<InboxPage />} />
               <Route path="profile" element={<ProfilePage />} />
+              <Route path="billing" element={<BillingPage />} />
+              <Route path="billing/return" element={<BillingReturnPage />} />
               <Route path="organization" element={<OrgAdminPage />} />
               <Route path="more" element={<MorePage />} />
             </Route>

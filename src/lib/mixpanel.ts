@@ -26,3 +26,22 @@ export function trackIndependentActivation() {
     // fail soft
   }
 }
+
+/** Non-PII purchase funnel events. Fail soft. */
+export function trackPurchaseStarted() {
+  try {
+    if (!ensureInit()) return
+    mixpanel.track('purchase_started', { pack: 'personal_3_for_20' })
+  } catch {
+    // fail soft
+  }
+}
+
+export function trackPurchaseCompleted() {
+  try {
+    if (!ensureInit()) return
+    mixpanel.track('purchase_completed', { pack: 'personal_3_for_20' })
+  } catch {
+    // fail soft
+  }
+}

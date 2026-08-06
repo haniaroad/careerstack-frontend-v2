@@ -37,6 +37,7 @@ export function SessionShellProvider({ children }: { children: ReactNode }) {
       notificationCount: 0,
       canAccessOrgAdmin: session.can_access_org_admin,
       isImpersonating: false,
+      creditRemaining: session.credits?.remaining ?? null,
       onSwitchWorkspace: switchWorkspace,
       onSignOut: signOut,
     }

@@ -33,7 +33,13 @@ export type SessionPayload = {
   program_filter: {
     mode: 'all' | 'program'
     program_id: string | null
-  }
+  } | null
+  credits?: {
+    remaining: number
+    trial_remaining: number
+    purchased_remaining: number
+    owner_type: string
+  } | null
 }
 
 export type AuthStatus = 'loading' | 'anonymous' | 'authenticated'

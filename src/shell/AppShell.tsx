@@ -122,6 +122,9 @@ function ProfileMenu() {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem onSelect={() => navigate('/profile')}>Profile</DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => navigate('/billing')}>
+          Billing & Credits
+        </DropdownMenuItem>
         <DropdownMenuItem onSelect={() => navigate('/organizations/new')}>
           Create organization
         </DropdownMenuItem>
@@ -245,7 +248,7 @@ function MobileBottomNav() {
 }
 
 export function AppShell({ children }: { children: ReactNode }) {
-  const { notificationCount } = useShell()
+  const { notificationCount, creditRemaining } = useShell()
   const navigate = useNavigate()
 
   return (
@@ -280,6 +283,19 @@ export function AppShell({ children }: { children: ReactNode }) {
             </label>
           </div>
           <div className="flex items-center gap-1.5">
+            {typeof creditRemaining === 'number' ? (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="hidden sm:inline-flex"
+                data-testid="credit-cue"
+                aria-label={`${creditRemaining} credits remaining`}
+                onClick={() => navigate('/billing')}
+              >
+                {creditRemaining} credits
+              </Button>
+            ) : null}
             <Button
               type="button"
               variant="ghost"
