@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { AuthProvider } from '@/auth/AuthContext'
 import { ApiError } from '@/lib/api'
 import { OrgInvitedOnboardingPage } from './OrgInvitedOnboardingPage'
@@ -19,6 +19,19 @@ vi.mock('@/lib/api', async () => {
     ApiError: MockApiError,
     setApiTokenProvider: vi.fn(),
     apiFetch: vi.fn(async (path: string) => {
+      if (path === '/api/v1/session') {
+        return {
+          user: {
+            id: 'u1',
+            email: 'alex@example.com',
+            status: 'pending_onboarding',
+            age_status: 'unknown',
+            onboarding_path: null,
+          },
+          workspaces: [],
+          active_workspace_id: null,
+        }
+      }
       if (path === '/api/v1/taxonomies') {
         return { taxonomies: [{ key: 'roles', terms: [] }] }
       }
@@ -31,7 +44,28 @@ vi.mock('@/lib/api', async () => {
 })
 
 describe('OrgInvitedOnboardingPage', () => {
-  it('shows an invite error state for invalid tokens', async () => {
+  beforeEach(() => {
+    window.localStorage.clear()
+  })
+
+  it('asks anonymous visitors to sign in before opening an invite', async () => {
+    render(
+      <MemoryRouter initialEntries={['/invite/bad-token']}>
+        <AuthProvider>
+          <Routes>
+            <Route path="/invite/:token" element={<OrgInvitedOnboardingPage />} />
+          </Routes>
+        </AuthProvider>
+      </MemoryRouter>,
+    )
+
+    expect(await screen.findByRole('heading', { name: 'Sign in to continue' })).toBeInTheDocument()
+    expect(screen.getByLabelText('Invite token')).toHaveValue('bad-token')
+  })
+
+  it('shows an invite error state for invalid tokens when signed in', async () => {
+    window.localStorage.setItem('careerstack.stubToken', 'test:uid:alex@example.com')
+
     render(
       <MemoryRouter initialEntries={['/invite/bad-token']}>
         <AuthProvider>

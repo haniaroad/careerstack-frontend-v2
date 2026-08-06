@@ -23,7 +23,11 @@ export function AuthCompletePage() {
   }, [navigate, refreshSession])
 
   return (
-    <AuthLayout title="Completing sign-in" description="Confirming your magic link…">
+    <AuthLayout
+      eyebrow="Almost there"
+      title="Completing sign-in"
+      description="Confirming your magic link…"
+    >
       {error ? (
         <Alert tone="danger" title="Link invalid or expired">{error}</Alert>
       ) : (

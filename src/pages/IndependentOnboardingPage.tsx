@@ -77,27 +77,12 @@ export function IndependentOnboardingPage() {
 
   return (
     <AuthLayout
+      eyebrow="Step 1 of 3"
       title="Complete your profile"
       description="Confirm you are 18+, accept the terms, then share a minimum profile. Optional details can wait."
     >
       <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)} noValidate>
         {error ? <Alert tone="danger" title="Could not continue">{error}</Alert> : null}
-
-        <label className="flex items-start gap-2 text-sm">
-          <input type="checkbox" {...form.register('age_attested')} />
-          <span>I confirm I am at least 18 years old.</span>
-        </label>
-        {form.formState.errors.age_attested ? (
-          <p className="text-sm text-destructive">{form.formState.errors.age_attested.message}</p>
-        ) : null}
-
-        <label className="flex items-start gap-2 text-sm">
-          <input type="checkbox" {...form.register('terms_accepted')} />
-          <span>I accept the CareerStack terms.</span>
-        </label>
-        {form.formState.errors.terms_accepted ? (
-          <p className="text-sm text-destructive">{form.formState.errors.terms_accepted.message}</p>
-        ) : null}
 
         <div className="space-y-2">
           <Label htmlFor="display_name">Name</Label>
@@ -164,7 +149,27 @@ export function IndependentOnboardingPage() {
           <Input id="bio" {...form.register('bio')} />
         </div>
 
-        <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
+        <label className="flex items-start gap-2 text-sm">
+          <input type="checkbox" {...form.register('age_attested')} />
+          <span>I confirm I am at least 18 years old.</span>
+        </label>
+        {form.formState.errors.age_attested ? (
+          <p className="text-sm text-destructive">{form.formState.errors.age_attested.message}</p>
+        ) : null}
+
+        <label className="flex items-start gap-2 text-sm">
+          <input type="checkbox" {...form.register('terms_accepted')} />
+          <span>I accept the CareerStack terms.</span>
+        </label>
+        {form.formState.errors.terms_accepted ? (
+          <p className="text-sm text-destructive">{form.formState.errors.terms_accepted.message}</p>
+        ) : null}
+
+        <Button
+          type="submit"
+          className="h-10 w-full bg-ink text-canvas hover:bg-black"
+          disabled={form.formState.isSubmitting}
+        >
           Continue
         </Button>
       </form>

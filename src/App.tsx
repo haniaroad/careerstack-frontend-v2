@@ -50,13 +50,13 @@ export default function App() {
           <Route path="/status" element={<StatusPage />} />
           <Route path="/sign-in" element={<SignInPage />} />
           <Route path="/auth/complete" element={<AuthCompletePage />} />
+          <Route path="/invite" element={<OrgInvitedOnboardingPage />} />
+          <Route path="/invite/:token" element={<OrgInvitedOnboardingPage />} />
 
           <Route element={<RequireAuth />}>
             <Route path="/onboarding" element={<OnboardingRouterPage />} />
             <Route path="/welcome" element={<FirstWorkspaceLandingPage />} />
             <Route path="/organizations/new" element={<CreateOrganizationPage />} />
-            <Route path="/invite" element={<OrgInvitedOnboardingPage />} />
-            <Route path="/invite/:token" element={<OrgInvitedOnboardingPage />} />
           </Route>
 
           {isDesignSystemPreviewEnabled() ? (

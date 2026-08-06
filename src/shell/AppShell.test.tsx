@@ -140,4 +140,29 @@ describe('AppShell', () => {
       'page',
     )
   })
+
+  it('includes Create organization in the profile menu', async () => {
+    const user = userEvent.setup()
+    render(
+      <MemoryRouter>
+        <ShellProvider>
+          <Routes>
+            <Route
+              path="/"
+              element={
+                <AppShell>
+                  <h1>Home</h1>
+                </AppShell>
+              }
+            />
+            <Route path="/organizations/new" element={<h1>Create organization</h1>} />
+          </Routes>
+        </ShellProvider>
+      </MemoryRouter>,
+    )
+
+    await user.click(screen.getByLabelText('Profile menu'))
+    await user.click(screen.getByRole('menuitem', { name: 'Create organization' }))
+    expect(screen.getByRole('heading', { name: 'Create organization' })).toBeInTheDocument()
+  })
 })

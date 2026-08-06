@@ -11,6 +11,7 @@ export function FirstWorkspaceLandingPage() {
 
   return (
     <AuthLayout
+      eyebrow="Welcome"
       title="You're in"
       description="Use the workspace switcher anytime to move between Personal and Organization contexts."
     >
@@ -28,10 +29,10 @@ export function FirstWorkspaceLandingPage() {
             ))}
           </ul>
         </div>
-        <Button asChild className="w-full">
+        <Button asChild className="h-10 w-full bg-ink text-canvas hover:bg-black">
           <Link to="/home">Enter CareerStack</Link>
         </Button>
-        <Button asChild variant="outline" className="w-full">
+        <Button asChild variant="outline" className="h-10 w-full border-border bg-surface text-ink hover:bg-muted">
           <Link to="/organizations/new">Create an organization</Link>
         </Button>
       </div>

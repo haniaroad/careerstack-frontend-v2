@@ -31,7 +31,7 @@ type TaxonomyTerm = { id: string; key: string; label: string }
 export function OrgInvitedOnboardingPage() {
   const { token: routeToken } = useParams()
   const navigate = useNavigate()
-  const { setSession } = useAuth()
+  const { status, setSession } = useAuth()
   const [roles, setRoles] = useState<TaxonomyTerm[]>([])
   const [inviteError, setInviteError] = useState<string | null>(null)
   const [invitePreview, setInvitePreview] = useState<{
@@ -57,17 +57,19 @@ export function OrgInvitedOnboardingPage() {
   })
 
   const token = form.watch('invitation_token')
+  const authenticated = status === 'authenticated'
 
   useEffect(() => {
+    if (!authenticated) return
     void apiFetch<{ taxonomies: { key: string; terms: TaxonomyTerm[] }[] }>('/api/v1/taxonomies')
       .then((data) => {
         setRoles(data.taxonomies.find((item) => item.key === 'roles')?.terms ?? [])
       })
       .catch(() => undefined)
-  }, [])
+  }, [authenticated])
 
   useEffect(() => {
-    if (!token) return
+    if (!authenticated || !token) return
     setInviteError(null)
     void apiFetch<{
       invitation: { organization_name: string; program_name?: string | null }
@@ -78,10 +80,16 @@ export function OrgInvitedOnboardingPage() {
         if (err instanceof ApiError) setInviteError(err.message)
         else setInviteError('Invitation is invalid or expired')
       })
-  }, [token])
+  }, [authenticated, token])
 
   async function onSubmit(values: FormValues) {
     setError(null)
+    if (!authenticated) {
+      navigate('/sign-in', {
+        state: { from: values.invitation_token ? `/invite/${values.invitation_token}` : '/invite' },
+      })
+      return
+    }
     try {
       const session = await apiFetch<SessionPayload>('/api/v1/onboarding/organization_invited', {
         method: 'POST',
@@ -94,8 +102,54 @@ export function OrgInvitedOnboardingPage() {
     }
   }
 
+  if (status === 'loading') {
+    return (
+      <AuthLayout
+        eyebrow="Organization invite"
+        title="Organization invitation"
+        description="Checking your session…"
+      >
+        <p className="text-sm text-muted-foreground">One moment…</p>
+      </AuthLayout>
+    )
+  }
+
+  if (!authenticated) {
+    const resume = token ? `/invite/${token}` : '/invite'
+    return (
+      <AuthLayout
+        eyebrow="Organization invite"
+        title="Sign in to continue"
+        description="Organization invitations require a CareerStack account. Sign in or create an account, then return here with your invite token."
+      >
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="invitation_token">Invite token</Label>
+            <Input id="invitation_token" {...form.register('invitation_token')} />
+          </div>
+          <Button
+            type="button"
+            className="h-10 w-full bg-ink text-canvas hover:bg-black"
+            onClick={() =>
+              navigate('/sign-in', {
+                state: {
+                  from: form.getValues('invitation_token')
+                    ? `/invite/${form.getValues('invitation_token')}`
+                    : resume,
+                },
+              })
+            }
+          >
+            Continue to sign in
+          </Button>
+        </div>
+      </AuthLayout>
+    )
+  }
+
   return (
     <AuthLayout
+      eyebrow="Organization invite"
       title="Organization invitation"
       description="Join with your invite token, share your date of birth for age status, and complete a minimum profile."
     >
@@ -124,10 +178,6 @@ export function OrgInvitedOnboardingPage() {
           <Label htmlFor="invitation_token">Invite token</Label>
           <Input id="invitation_token" {...form.register('invitation_token')} />
         </div>
-        <label className="flex items-start gap-2 text-sm">
-          <input type="checkbox" {...form.register('terms_accepted')} />
-          <span>I accept the CareerStack terms.</span>
-        </label>
         <div className="space-y-2">
           <Label htmlFor="date_of_birth">Date of birth</Label>
           <Input id="date_of_birth" type="date" {...form.register('date_of_birth')} />
@@ -192,7 +242,18 @@ export function OrgInvitedOnboardingPage() {
             ))}
           </select>
         </div>
-        <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
+        <label className="flex items-start gap-2 text-sm">
+          <input type="checkbox" {...form.register('terms_accepted')} />
+          <span>I accept the CareerStack terms.</span>
+        </label>
+        {form.formState.errors.terms_accepted ? (
+          <p className="text-sm text-destructive">{form.formState.errors.terms_accepted.message}</p>
+        ) : null}
+        <Button
+          type="submit"
+          className="h-10 w-full bg-ink text-canvas hover:bg-black"
+          disabled={form.formState.isSubmitting}
+        >
           Join organization
         </Button>
       </form>
