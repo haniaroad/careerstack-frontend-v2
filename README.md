@@ -56,6 +56,18 @@ Serves the production build on http://localhost:5173. Point `VITE_API_BASE_URL` 
 
 Firebase authorized domains for staging should include `localhost` and the Netlify staging host.
 
+## Magic-link troubleshooting (staging)
+
+Emails are sent by **Firebase Auth**, not the Rails API. Continue URL is always `${origin}/auth/complete` (on Netlify: `https://careerstack-frontend-v2.netlify.app/auth/complete`).
+
+1. **Authentication → Sign-in method** — Email/Password enabled, and **Email link (passwordless sign-in)** enabled.
+2. **Authentication → Settings → Authorized domains** — must include `localhost` and `careerstack-frontend-v2.netlify.app`.
+3. Request a link from staging; the UI should show the check-your-email state (a red error usually means unauthorized continue URI or provider off).
+4. Check spam / promotions — Firebase’s default mailer is easy to miss.
+5. Open the link in the **same browser** that requested it when possible (`careerstack.emailForSignIn` in localStorage); otherwise `/auth/complete` will prompt for email.
+
+If Google sign-in succeeds in Firebase but you bounce back to **Create your account**, that is an API session failure (Cloud Run IAM / `FIREBASE_PROJECT_ID`), not a magic-link issue — see the backend `infra/README.md` org-policy checklist.
+
 ## Local Firebase + Compose
 
 Compose runs the API as `RAILS_ENV=production`, so `FIREBASE_AUTH_STUB` is ignored. For real Google / magic-link testing against Compose:
