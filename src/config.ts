@@ -1,7 +1,7 @@
 export function apiBaseUrl(): string {
   return (
     (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '') ??
-    'http://localhost:3000'
+    'http://127.0.0.1:3000'
   )
 }
 

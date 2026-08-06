@@ -20,6 +20,34 @@ export function setApiTokenProvider(provider: TokenProvider) {
   tokenProvider = provider
 }
 
+const HTML_AS_JSON_MESSAGE =
+  'API returned HTML instead of JSON — check VITE_API_BASE_URL; Design OS may be on port 3000'
+
+/** True when the response looks like an HTML document rather than JSON. */
+export function looksLikeHtmlResponse(contentType: string | null, bodyText: string): boolean {
+  const type = contentType?.toLowerCase() ?? ''
+  if (type.includes('text/html')) return true
+  const trimmed = bodyText.trimStart().slice(0, 15).toLowerCase()
+  return trimmed.startsWith('<!doctype') || trimmed.startsWith('<html')
+}
+
+async function parseJsonBody<T>(response: Response): Promise<T> {
+  const contentType = response.headers.get('content-type')
+  const bodyText = await response.text()
+  if (looksLikeHtmlResponse(contentType, bodyText)) {
+    throw new ApiError(response.status, 'invalid_response', HTML_AS_JSON_MESSAGE)
+  }
+  try {
+    return JSON.parse(bodyText) as T
+  } catch {
+    throw new ApiError(
+      response.status,
+      'invalid_response',
+      'API returned a non-JSON response — check VITE_API_BASE_URL',
+    )
+  }
+}
+
 export async function apiFetch<T>(
   path: string,
   init: RequestInit = {},
@@ -37,7 +65,11 @@ export async function apiFetch<T>(
   })
 
   if (response.status === 401) {
-    window.dispatchEvent(new CustomEvent('careerstack:unauthorized'))
+    // Only clear auth when a credential was rejected — unauthenticated probes
+    // (e.g. public invite page) must not wipe a live Firebase session.
+    if (token) {
+      window.dispatchEvent(new CustomEvent('careerstack:unauthorized'))
+    }
     throw new ApiError(401, 'unauthenticated', 'Authentication required')
   }
 
@@ -45,17 +77,18 @@ export async function apiFetch<T>(
     let code = 'request_failed'
     let message = response.statusText
     try {
-      const body = (await response.json()) as {
+      const body = await parseJsonBody<{
         error?: { code?: string; message?: string }
-      }
+      }>(response)
       code = body.error?.code ?? code
       message = body.error?.message ?? message
-    } catch {
-      // ignore parse errors
+    } catch (err) {
+      if (err instanceof ApiError && err.code === 'invalid_response') throw err
+      // ignore other parse errors; keep statusText
     }
     throw new ApiError(response.status, code, message)
   }
 
   if (response.status === 204) return undefined as T
-  return (await response.json()) as T
+  return parseJsonBody<T>(response)
 }

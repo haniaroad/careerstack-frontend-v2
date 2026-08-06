@@ -69,8 +69,9 @@ export function CreateOrganizationPage() {
 
   return (
     <AuthLayout
-      title="Create an organization"
-      description="You become the first administrator. Organization trial credits are granted once per verified adult."
+      eyebrow="Create organization"
+      title="Set up your organization"
+      description="Self-serve signup for workforce and STEM programs. Required metadata first—optional details can wait."
     >
       <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)} noValidate>
         {error ? <Alert tone="danger" title="Could not create">{error}</Alert> : null}
@@ -122,7 +123,11 @@ export function CreateOrganizationPage() {
           <Label htmlFor="website">Website (optional)</Label>
           <Input id="website" {...form.register('website')} />
         </div>
-        <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
+        <Button
+          type="submit"
+          className="h-10 w-full bg-ink text-canvas hover:bg-black"
+          disabled={form.formState.isSubmitting}
+        >
           Create organization
         </Button>
       </form>

@@ -12,7 +12,7 @@ describe('App', () => {
     )
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: 'Sign in' })).toBeInTheDocument()
+      expect(screen.getByRole('heading', { name: 'Create your account' })).toBeInTheDocument()
     })
     expect(screen.getByRole('button', { name: /continue with google/i })).toBeInTheDocument()
     expect(screen.queryByTestId('app-header')).not.toBeInTheDocument()
@@ -26,9 +26,10 @@ describe('App', () => {
     )
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: 'Sign in' })).toBeInTheDocument()
+      expect(screen.getByRole('heading', { name: 'Create your account' })).toBeInTheDocument()
     })
     expect(screen.getByLabelText('Email')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /email me a magic link/i })).toBeInTheDocument()
     expect(screen.queryByLabelText(/password/i)).not.toBeInTheDocument()
   })
 })

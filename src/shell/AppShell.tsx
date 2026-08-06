@@ -122,6 +122,9 @@ function ProfileMenu() {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem onSelect={() => navigate('/profile')}>Profile</DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => navigate('/organizations/new')}>
+          Create organization
+        </DropdownMenuItem>
         <DropdownMenuItem disabled>Settings (soon)</DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem
