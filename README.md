@@ -77,9 +77,23 @@ npm run build
 
 ## Staging deploy
 
-Staging deploys to Netlify via GitHub Actions after merge to `main`, using GitHub Environment `staging` secrets:
+Staging deploys to Netlify via GitHub Actions after merge to `main`. The workflow builds in Actions (Vite bakes `VITE_*` at build time), then uploads `dist` — Netlify site env vars alone will not configure Firebase.
 
+GitHub Environment **`staging`** needs:
+
+**Secrets**
 - `NETLIFY_AUTH_TOKEN`
-- `NETLIFY_SITE_ID`
 
-See `netlify.toml` for build command (`npm run build`) and publish directory (`dist`).
+**Variables**
+- `NETLIFY_SITE_ID`
+- `VITE_API_BASE_URL` — staging API origin (Cloud Run)
+- `VITE_FIREBASE_API_KEY`
+- `VITE_FIREBASE_AUTH_DOMAIN`
+- `VITE_FIREBASE_PROJECT_ID`
+- `VITE_FIREBASE_APP_ID`
+- `STAGING_SITE_URL` — optional smoke-check override
+- `VITE_MIXPANEL_TOKEN` / `VITE_SENTRY_DSN` / `VITE_ENABLE_DESIGN_SYSTEM_PREVIEW` — optional
+
+Firebase Authentication authorized domains must include `localhost` and the Netlify staging host (`*.netlify.app`).
+
+See `netlify.toml` for publish directory (`dist`). After changing staging variables, re-run **Deploy staging** (or merge to `main`) so a new build picks them up.
