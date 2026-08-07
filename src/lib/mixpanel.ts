@@ -45,3 +45,16 @@ export function trackPurchaseCompleted() {
     // fail soft
   }
 }
+
+/** Non-PII project activation after confirm. Fail soft. */
+export function trackProjectActivated(props: { workspace_type: 'personal' | 'organization' }) {
+  try {
+    if (!ensureInit()) return
+    mixpanel.track('project_activated', {
+      workspace_type: props.workspace_type,
+      mode: 'solo',
+    })
+  } catch {
+    // fail soft
+  }
+}

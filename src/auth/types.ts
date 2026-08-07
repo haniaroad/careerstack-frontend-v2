@@ -25,6 +25,7 @@ export type SessionPayload = {
   } | null
   workspaces: SessionWorkspace[]
   active_workspace_id: string | null
+  active_workspace?: SessionWorkspace | null
   can_access_org_admin: boolean
   age_visibility: {
     visibility_review_required: boolean
