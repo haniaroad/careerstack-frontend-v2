@@ -15,6 +15,8 @@ import { HomePage } from '@/pages/HomePage'
 import { InboxPage } from '@/pages/InboxPage'
 import { MorePage } from '@/pages/MorePage'
 import { MyWorkPage } from '@/pages/MyWorkPage'
+import { CreateProjectPage } from '@/pages/CreateProjectPage'
+import { ProjectDetailPage } from '@/pages/ProjectDetailPage'
 import { OnboardingRouterPage } from '@/pages/OnboardingRouterPage'
 import { OrgAdminPage } from '@/pages/OrgAdminPage'
 import { OrgInvitedOnboardingPage } from '@/pages/OrgInvitedOnboardingPage'
@@ -72,6 +74,9 @@ export default function App() {
               <Route path="home" element={<HomePage />} />
               <Route path="explore" element={<ExplorePage />} />
               <Route path="my-work" element={<MyWorkPage />} />
+              <Route path="projects/new" element={<CreateProjectPage />} />
+              <Route path="projects/:id/edit" element={<CreateProjectPage />} />
+              <Route path="projects/:id" element={<ProjectDetailPage />} />
               <Route path="inbox" element={<InboxPage />} />
               <Route path="profile" element={<ProfilePage />} />
               <Route path="billing" element={<BillingPage />} />
