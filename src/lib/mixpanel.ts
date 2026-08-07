@@ -58,3 +58,16 @@ export function trackProjectActivated(props: { workspace_type: 'personal' | 'org
     // fail soft
   }
 }
+
+/** Non-PII AI draft generation success. Fail soft — no prompt or titles. */
+export function trackAiDraftGenerated(props: { workspace_type: 'personal' | 'organization' }) {
+  try {
+    if (!ensureInit()) return
+    mixpanel.track('ai_project_draft_generated', {
+      workspace_type: props.workspace_type,
+      use_case: 'project_draft_generation',
+    })
+  } catch {
+    // fail soft
+  }
+}
