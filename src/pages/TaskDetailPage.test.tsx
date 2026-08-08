@@ -2,6 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import type { TaskDetail } from '@/lib/tasks'
 import { TaskDetailPage } from './TaskDetailPage'
 
 const apiFetch = vi.fn()
@@ -36,7 +37,7 @@ vi.mock('@/auth/AuthContext', () => ({
   }),
 }))
 
-function pendingTask() {
+function pendingTask(): TaskDetail {
   return {
     id: 't1',
     project_id: 'p1',
