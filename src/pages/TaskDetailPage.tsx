@@ -200,7 +200,7 @@ export function TaskDetailPage() {
       setLink('')
       setFiles([])
       if (data.task.project_mode === 'team') {
-        setInfo('Submission saved. The project creator will review it (creator approvals Inbox is coming next).')
+        setInfo('Submission saved. The project creator will review it from Inbox.')
       } else if (data.review?.status === 'succeeded' && data.review.decision) {
         trackAiReviewCompleted({ workspace_type: workspaceType, decision: data.review.decision })
       } else if (!data.review) {

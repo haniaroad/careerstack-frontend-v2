@@ -168,3 +168,37 @@ export function trackAiReviewCompleted(props: {
     // fail soft
   }
 }
+
+/** Non-PII Inbox destination open. Fail soft. */
+export function trackInboxOpened(props: { tab: string }) {
+  try {
+    if (!ensureInit()) return
+    mixpanel.track('inbox_opened', { tab: props.tab })
+  } catch {
+    // fail soft
+  }
+}
+
+/** Non-PII creator review decision from Inbox. Fail soft. */
+export function trackCreatorReviewDecided(props: {
+  decision: 'approved' | 'corrections_requested'
+}) {
+  try {
+    if (!ensureInit()) return
+    mixpanel.track('creator_review_decided', { decision: props.decision })
+  } catch {
+    // fail soft
+  }
+}
+
+/** Non-PII application decision from Inbox. Fail soft. */
+export function trackApplicationDecidedFromInbox(props: {
+  decision: 'approved' | 'rejected'
+}) {
+  try {
+    if (!ensureInit()) return
+    mixpanel.track('application_decided_from_inbox', { decision: props.decision })
+  } catch {
+    // fail soft
+  }
+}
