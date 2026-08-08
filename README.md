@@ -26,6 +26,7 @@ Useful routes:
 
 - `/sign-in`, `/auth/complete`, `/onboarding`, `/invite/:token`, `/welcome`, `/organizations/new` — AuthLayout (outside the shell)
 - `/home`, `/explore`, `/my-work`, `/inbox`, `/profile` — shell destinations (require completed onboarding)
+- `/projects/new`, `/projects/:id`, `/projects/:id/edit`, `/tasks/:id` — projects and tasks (solo + team joining on project detail)
 - `/status` — API health smoke page (outside the shell)
 - `/dev/design-system` — token/component gallery with preview shell stubs (local and staging only)
 

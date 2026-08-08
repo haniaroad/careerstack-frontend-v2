@@ -7,11 +7,14 @@ import { InsufficientCreditsInterception } from '@/components/InsufficientCredit
 import { apiFetch, ApiError } from '@/lib/api'
 import { trackAiDraftGenerated, trackProjectActivated } from '@/lib/mixpanel'
 import {
+  JOINING_MODES,
   PROJECT_SKILLS,
   SKILL_LEVELS,
   TIME_AVAILABLE,
   type AiGeneration,
+  type JoiningMode,
   type Project,
+  type ProjectMode,
   type ProposedTask,
 } from '@/lib/projects'
 import type { SessionPayload } from '@/auth/types'
@@ -56,6 +59,9 @@ export function CreateProjectPage() {
   const [rolesNeeded, setRolesNeeded] = useState('')
   const [submissionExpectations, setSubmissionExpectations] = useState('')
   const [proposedTasks, setProposedTasks] = useState<ProposedTask[]>([])
+  const [projectMode, setProjectMode] = useState<ProjectMode>('solo')
+  const [joiningMode, setJoiningMode] = useState<JoiningMode>('application')
+  const [capacity, setCapacity] = useState(3)
   const [aiLabeled, setAiLabeled] = useState(false)
 
   const [error, setError] = useState<string | null>(null)
@@ -69,20 +75,29 @@ export function CreateProjectPage() {
   const isPersonal = workspace?.kind === 'personal'
   const remaining = session?.credits?.remaining ?? 0
 
+  const rolesNeededList = useMemo(
+    () =>
+      rolesNeeded
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean),
+    [rolesNeeded],
+  )
+
   const draftPayload = useMemo(
     () => ({
       title,
       summary: summary || null,
       skills,
+      mode: projectMode,
+      joining_mode: projectMode === 'team' ? joiningMode : null,
+      capacity: projectMode === 'team' ? capacity : null,
       objective: objective || null,
       project_type: projectType || null,
       expected_duration: expectedDuration || null,
       ends_on: endsOn || null,
       definition_of_done: definitionOfDone || null,
-      roles_needed: rolesNeeded
-        .split(',')
-        .map((s) => s.trim())
-        .filter(Boolean),
+      roles_needed: projectMode === 'team' ? rolesNeededList : [],
       proposed_tasks: proposedTasks,
       submission_expectations: submissionExpectations || null,
     }),
@@ -90,16 +105,22 @@ export function CreateProjectPage() {
       title,
       summary,
       skills,
+      projectMode,
+      joiningMode,
+      capacity,
       objective,
       projectType,
       expectedDuration,
       endsOn,
       definitionOfDone,
-      rolesNeeded,
+      rolesNeededList,
       proposedTasks,
       submissionExpectations,
     ],
   )
+
+  const teamFieldsValid =
+    projectMode === 'solo' || (rolesNeededList.length > 0 && capacity >= 1 && capacity <= 5)
 
   useEffect(() => {
     if (!routeDraftId) return
@@ -128,6 +149,9 @@ export function CreateProjectPage() {
     setTitle(project.title)
     setSummary(project.summary ?? '')
     setSkills(project.skills ?? [])
+    setProjectMode(project.mode ?? 'solo')
+    setJoiningMode(project.joining_mode ?? 'application')
+    setCapacity(project.capacity ?? 3)
     setObjective(project.objective ?? '')
     setProjectType(project.project_type ?? '')
     setExpectedDuration(project.expected_duration ?? '')
@@ -258,6 +282,10 @@ export function CreateProjectPage() {
           title: draftPayload.title,
           summary: draftPayload.summary,
           skills: draftPayload.skills,
+          mode: draftPayload.mode,
+          joining_mode: draftPayload.joining_mode,
+          capacity: draftPayload.capacity,
+          roles_needed: draftPayload.roles_needed,
         }),
       })
       if (
@@ -310,7 +338,10 @@ export function CreateProjectPage() {
         { method: 'POST' },
       )
       setSession(data.session)
-      trackProjectActivated({ workspace_type: isPersonal ? 'personal' : 'organization' })
+      trackProjectActivated({
+        workspace_type: isPersonal ? 'personal' : 'organization',
+        mode: data.project.mode,
+      })
       navigate(`/projects/${data.project.id}`)
     } catch (err) {
       if (err instanceof ApiError) {
@@ -507,6 +538,69 @@ export function CreateProjectPage() {
                 maxLength={2000}
               />
             </label>
+
+            <fieldset className="space-y-3">
+              <legend className="text-sm font-medium text-ink">Audience</legend>
+              <div className="flex flex-col gap-2 sm:flex-row sm:gap-4">
+                <label className="flex items-center gap-2 text-sm text-ink">
+                  <input
+                    type="radio"
+                    name={`${formId}-mode`}
+                    checked={projectMode === 'solo'}
+                    onChange={() => setProjectMode('solo')}
+                  />
+                  Solo (just me)
+                </label>
+                <label className="flex items-center gap-2 text-sm text-ink">
+                  <input
+                    type="radio"
+                    name={`${formId}-mode`}
+                    checked={projectMode === 'team'}
+                    onChange={() => setProjectMode('team')}
+                  />
+                  Team
+                </label>
+              </div>
+              {projectMode === 'team' ? (
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <label className="block space-y-1">
+                    <span className="text-sm font-medium text-ink">Joining mode</span>
+                    <select
+                      className="w-full rounded-md border border-border bg-canvas px-3 py-2 text-ink"
+                      value={joiningMode}
+                      onChange={(e) => setJoiningMode(e.target.value as JoiningMode)}
+                    >
+                      {JOINING_MODES.map((mode) => (
+                        <option key={mode} value={mode}>
+                          {mode.replaceAll('_', ' ')}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="block space-y-1">
+                    <span className="text-sm font-medium text-ink">Capacity (1–5)</span>
+                    <input
+                      type="number"
+                      min={1}
+                      max={5}
+                      className="w-full rounded-md border border-border bg-canvas px-3 py-2 text-ink"
+                      value={capacity}
+                      onChange={(e) => setCapacity(Number(e.target.value))}
+                    />
+                  </label>
+                  <label className="block space-y-1 sm:col-span-2">
+                    <span className="text-sm font-medium text-ink">Roles needed (comma-separated)</span>
+                    <input
+                      className="w-full rounded-md border border-border bg-canvas px-3 py-2 text-ink"
+                      value={rolesNeeded}
+                      onChange={(e) => setRolesNeeded(e.target.value)}
+                      placeholder="Designer, Engineer"
+                    />
+                  </label>
+                </div>
+              ) : null}
+            </fieldset>
+
             {(step === 'review' || aiLabeled) && (
               <>
                 <label className="block space-y-1">
@@ -550,14 +644,6 @@ export function CreateProjectPage() {
                     className="min-h-20 w-full rounded-md border border-border bg-canvas px-3 py-2 text-ink"
                     value={definitionOfDone}
                     onChange={(e) => setDefinitionOfDone(e.target.value)}
-                  />
-                </label>
-                <label className="block space-y-1">
-                  <span className="text-sm font-medium text-ink">Roles needed (comma-separated)</span>
-                  <input
-                    className="w-full rounded-md border border-border bg-canvas px-3 py-2 text-ink"
-                    value={rolesNeeded}
-                    onChange={(e) => setRolesNeeded(e.target.value)}
                   />
                 </label>
                 <label className="block space-y-1">
@@ -611,14 +697,17 @@ export function CreateProjectPage() {
             </fieldset>
           </div>
 
-          <div className="flex flex-wrap gap-3">
-            <Button onClick={() => void handleConfirm()} disabled={saving || title.trim().length < 2}>
+          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+            <Button
+              onClick={() => void handleConfirm()}
+              disabled={saving || title.trim().length < 2 || !teamFieldsValid}
+            >
               Confirm project
             </Button>
             <Button
               variant="secondary"
               onClick={() => void handleSaveDraft()}
-              disabled={saving || title.trim().length < 2}
+              disabled={saving || title.trim().length < 2 || !teamFieldsValid}
             >
               Save draft
             </Button>

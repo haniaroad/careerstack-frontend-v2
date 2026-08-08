@@ -42,6 +42,7 @@ function pendingTask(): TaskDetail {
     id: 't1',
     project_id: 'p1',
     project_title: 'Portfolio site',
+    project_mode: 'solo',
     assignee_id: 'u1',
     title: 'Build landing page',
     acceptance_criteria: 'Responsive layout',
@@ -243,5 +244,59 @@ describe('TaskDetailPage', () => {
     expect(screen.queryByRole('button', { name: /^request ai review$/i })).not.toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: /retry ai review/i }))
     expect(await screen.findByText(/rate limit/i)).toBeInTheDocument()
+  })
+
+  it('submits team tasks for creator review without AI controls', async () => {
+    const user = userEvent.setup()
+    let task: TaskDetail = {
+      ...pendingTask(),
+      project_mode: 'team',
+      project_title: 'Team project',
+    }
+    apiFetch.mockImplementation(async (path: string, init?: RequestInit) => {
+      if (path === '/api/v1/tasks/t1' && !init?.method) {
+        return { task }
+      }
+      if (path === '/api/v1/tasks/t1/submissions' && init?.method === 'POST') {
+        task = {
+          ...task,
+          status: 'submitted',
+          submissions: [
+            {
+              id: 's1',
+              task_id: 't1',
+              attempt_number: 1,
+              body: 'Team evidence',
+              content_fingerprint: 'a',
+              submitted_at: '2026-01-02',
+              links: [],
+              files: [],
+            },
+          ],
+          latest_review: null,
+        }
+        return { task, submission: task.submissions[0], review: null }
+      }
+      throw new Error(`unexpected ${path}`)
+    })
+
+    render(
+      <MemoryRouter initialEntries={['/tasks/t1']}>
+        <Routes>
+          <Route path="/tasks/:id" element={<TaskDetailPage />} />
+        </Routes>
+      </MemoryRouter>,
+    )
+
+    expect(await screen.findByText(/submissions go to the project creator/i)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /^submit for review$/i })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /submit for ai review/i })).not.toBeInTheDocument()
+
+    await user.type(screen.getByLabelText(/submission text/i), 'Team evidence')
+    await user.click(screen.getByRole('button', { name: /^submit for review$/i }))
+
+    expect(await screen.findByText(/awaiting creator review/i)).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /request ai review/i })).not.toBeInTheDocument()
+    expect(trackAiReviewCompleted).not.toHaveBeenCalled()
   })
 })

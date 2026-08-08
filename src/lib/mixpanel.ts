@@ -47,12 +47,79 @@ export function trackPurchaseCompleted() {
 }
 
 /** Non-PII project activation after confirm. Fail soft. */
-export function trackProjectActivated(props: { workspace_type: 'personal' | 'organization' }) {
+export function trackProjectActivated(props: {
+  workspace_type: 'personal' | 'organization'
+  mode: 'solo' | 'team'
+}) {
   try {
     if (!ensureInit()) return
     mixpanel.track('project_activated', {
       workspace_type: props.workspace_type,
-      mode: 'solo',
+      mode: props.mode,
+    })
+  } catch {
+    // fail soft
+  }
+}
+
+/** Non-PII solo→team conversion. Fail soft. */
+export function trackProjectConvertedToTeam(props: {
+  workspace_type: 'personal' | 'organization'
+  joining_mode: 'application' | 'instant' | 'invite_only'
+}) {
+  try {
+    if (!ensureInit()) return
+    mixpanel.track('project_converted_to_team', {
+      workspace_type: props.workspace_type,
+      joining_mode: props.joining_mode,
+    })
+  } catch {
+    // fail soft
+  }
+}
+
+/** Non-PII project join. Fail soft. */
+export function trackProjectJoined(props: {
+  workspace_type: 'personal' | 'organization'
+  join_source: 'instant' | 'application' | 'invite'
+}) {
+  try {
+    if (!ensureInit()) return
+    mixpanel.track('project_joined', {
+      workspace_type: props.workspace_type,
+      join_source: props.join_source,
+    })
+  } catch {
+    // fail soft
+  }
+}
+
+/** Non-PII project leave. Fail soft. */
+export function trackProjectLeft(props: {
+  workspace_type: 'personal' | 'organization'
+  reason_category: string
+}) {
+  try {
+    if (!ensureInit()) return
+    mixpanel.track('project_left', {
+      workspace_type: props.workspace_type,
+      reason_category: props.reason_category,
+    })
+  } catch {
+    // fail soft
+  }
+}
+
+/** Non-PII member removal by creator. Fail soft. */
+export function trackMemberRemoved(props: {
+  workspace_type: 'personal' | 'organization'
+  reason_category: string
+}) {
+  try {
+    if (!ensureInit()) return
+    mixpanel.track('member_removed', {
+      workspace_type: props.workspace_type,
+      reason_category: props.reason_category,
     })
   } catch {
     // fail soft
