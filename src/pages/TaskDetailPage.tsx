@@ -199,7 +199,9 @@ export function TaskDetailPage() {
       setBody('')
       setLink('')
       setFiles([])
-      if (data.review?.status === 'succeeded' && data.review.decision) {
+      if (data.task.project_mode === 'team') {
+        setInfo('Submission saved. The project creator will review it (creator approvals Inbox is coming next).')
+      } else if (data.review?.status === 'succeeded' && data.review.decision) {
         trackAiReviewCompleted({ workspace_type: workspaceType, decision: data.review.decision })
       } else if (!data.review) {
         setInfo('Submission saved. AI review was not started (unavailable or blocked).')
@@ -266,8 +268,9 @@ export function TaskDetailPage() {
     )
   }
 
+  const isTeam = task.project_mode === 'team'
   const canSubmit = task.status === 'pending' || task.status === 'corrections_requested'
-  const review = task.latest_review
+  const review = !isTeam ? task.latest_review : null
   const reviewBadge = review ? reviewOutcomeBadge(review) : null
 
   return (
@@ -281,6 +284,9 @@ export function TaskDetailPage() {
             <p className="text-sm text-ink-muted">{task.project_title}</p>
             <h1 className="font-display text-3xl text-ink">{task.title}</h1>
             {task.due_on ? <p className="mt-2 text-sm text-ink-muted">Due {task.due_on}</p> : null}
+            {isTeam ? (
+              <p className="mt-2 text-sm text-ink-muted">Team task — submissions go to the project creator for review.</p>
+            ) : null}
           </div>
           <StatusBadge tone={taskTone(task.status)}>{task.status.replaceAll('_', ' ')}</StatusBadge>
         </div>
@@ -450,14 +456,24 @@ export function TaskDetailPage() {
           </div>
           <div className="flex flex-col gap-3 sm:flex-row">
             <Button type="button" disabled={submitting} onClick={() => void submit()}>
-              {submitting ? 'Submitting…' : 'Submit for AI review'}
+              {submitting
+                ? 'Submitting…'
+                : isTeam
+                  ? 'Submit for review'
+                  : 'Submit for AI review'}
             </Button>
           </div>
         </section>
       ) : null}
 
-      {/* Only when submitted with no review card action available (e.g. review never started). */}
-      {task.status === 'submitted' && !review ? (
+      {isTeam && task.status === 'submitted' ? (
+        <Alert tone="info" title="Awaiting creator review">
+          Your submission is with the project creator. AI review is only used on solo projects.
+        </Alert>
+      ) : null}
+
+      {/* Solo only: when submitted with no review card action available (e.g. review never started). */}
+      {!isTeam && task.status === 'submitted' && !review ? (
         <Button type="button" onClick={() => void requestReview()} disabled={submitting}>
           {submitting ? 'Requesting…' : 'Request AI review'}
         </Button>

@@ -9,7 +9,8 @@ export type TaskSummary = {
   id: string
   project_id: string
   project_title: string
-  assignee_id: string
+  project_mode: 'solo' | 'team'
+  assignee_id: string | null
   title: string
   acceptance_criteria: string | null
   submission_expectations: string | null
