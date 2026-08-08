@@ -110,12 +110,22 @@ export function MyWorkPage() {
         </Alert>
       ) : null}
 
-      {tab === 'applications' || tab === 'peer_reviews' ? (
+      {tab === 'applications' ? (
+        <div className="rounded-lg border border-border bg-surface p-6">
+          <p className="text-ink">Application decisions live in Inbox.</p>
+          <p className="mt-1 text-sm text-ink-muted">
+            Review pending join applications from the shared Approvals Inbox.
+          </p>
+          <Button asChild className="mt-4" size="sm">
+            <Link to="/inbox?tab=applications">Open Inbox applications</Link>
+          </Button>
+        </div>
+      ) : null}
+
+      {tab === 'peer_reviews' ? (
         <div className="rounded-lg border border-border bg-surface p-6">
           <p className="text-ink">Coming soon.</p>
-          <p className="mt-1 text-sm text-ink-muted">
-            This section ships with team joining and peer review work.
-          </p>
+          <p className="mt-1 text-sm text-ink-muted">This section ships with peer review work.</p>
         </div>
       ) : null}
 

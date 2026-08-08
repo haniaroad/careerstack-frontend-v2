@@ -75,6 +75,11 @@ export type AiReview = {
 export type TaskDetail = TaskSummary & {
   submissions: TaskSubmission[]
   latest_review: AiReview | null
+  review_overdue_at?: string | null
+  creator_review_decision?: 'approved' | 'corrections_requested' | null
+  creator_review_feedback?: string | null
+  creator_reviewed_by_id?: string | null
+  creator_reviewed_at?: string | null
 }
 
 export const MAX_FILES = 3
