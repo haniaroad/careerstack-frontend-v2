@@ -31,6 +31,12 @@ export type Project = {
   cancelled_at: string | null
   created_at: string
   updated_at: string
+  tasks?: Array<{
+    id: string
+    title: string
+    status: string
+    due_on: string | null
+  }>
 }
 
 export type AiGenerationStatus = 'pending' | 'running' | 'succeeded' | 'failed'
