@@ -8,9 +8,9 @@ import { apiFetch, ApiError } from '@/lib/api'
 import type { Project } from '@/lib/projects'
 import type { SessionPayload } from '@/auth/types'
 
-function statusTone(status: Project['status']): 'info' | 'success' | 'warning' {
-  if (status === 'active') return 'success'
-  if (status === 'cancelled') return 'warning'
+function statusTone(status: string): 'info' | 'success' | 'warning' {
+  if (status === 'active' || status === 'approved') return 'success'
+  if (status === 'cancelled' || status === 'corrections_requested' || status === 'incomplete') return 'warning'
   return 'info'
 }
 
@@ -106,9 +106,31 @@ export function ProjectDetailPage() {
         </Alert>
       ) : null}
 
-      <div className="rounded-lg border border-border bg-surface p-5 text-sm text-ink-muted">
-        Task workflows are not available in this release. Use cancel to restore the create credit
-        when ending an active solo project.
+      <div className="space-y-3">
+        <h2 className="font-display text-xl text-ink">Tasks</h2>
+        {!project.tasks || project.tasks.length === 0 ? (
+          <p className="text-sm text-ink-muted">
+            {project.status === 'draft'
+              ? 'Tasks are created when you confirm this project.'
+              : 'No tasks on this project yet.'}
+          </p>
+        ) : (
+          <ul className="space-y-2">
+            {project.tasks.map((task) => (
+              <li key={task.id}>
+                <Link
+                  to={`/tasks/${task.id}`}
+                  className="flex items-center justify-between gap-3 rounded-lg border border-border bg-surface px-4 py-3 hover:border-ink/20"
+                >
+                  <span className="font-medium text-ink">{task.title}</span>
+                  <StatusBadge tone={statusTone(task.status)}>
+                    {task.status.replaceAll('_', ' ')}
+                  </StatusBadge>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
 
       <div className="flex flex-wrap gap-3">

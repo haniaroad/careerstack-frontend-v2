@@ -71,3 +71,33 @@ export function trackAiDraftGenerated(props: { workspace_type: 'personal' | 'org
     // fail soft
   }
 }
+
+/** Non-PII task submission. Fail soft — no evidence text. */
+export function trackTaskSubmitted(props: { workspace_type: 'personal' | 'organization' }) {
+  try {
+    if (!ensureInit()) return
+    mixpanel.track('task_submitted', {
+      workspace_type: props.workspace_type,
+      mode: 'solo',
+    })
+  } catch {
+    // fail soft
+  }
+}
+
+/** Non-PII AI review outcome. Fail soft. */
+export function trackAiReviewCompleted(props: {
+  workspace_type: 'personal' | 'organization'
+  decision: 'approved' | 'corrections_requested' | 'failed'
+}) {
+  try {
+    if (!ensureInit()) return
+    mixpanel.track('ai_review_completed', {
+      workspace_type: props.workspace_type,
+      decision: props.decision,
+      use_case: 'task_review',
+    })
+  } catch {
+    // fail soft
+  }
+}
