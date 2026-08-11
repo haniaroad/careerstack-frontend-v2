@@ -122,6 +122,15 @@ export function CreateProjectPage() {
   const teamFieldsValid =
     projectMode === 'solo' || (rolesNeededList.length > 0 && capacity >= 1 && capacity <= 5)
 
+  const endsOnMissing = !endsOn.trim()
+  const tasksPastEndsOn = proposedTasks.some(
+    (task) =>
+      endsOn.trim() &&
+      task.recommended_due_date &&
+      task.recommended_due_date > endsOn.trim(),
+  )
+  const confirmBlocked = endsOnMissing || tasksPastEndsOn || title.trim().length < 2 || !teamFieldsValid
+
   useEffect(() => {
     if (!routeDraftId) return
     let cancelled = false
@@ -317,6 +326,16 @@ export function CreateProjectPage() {
   }
 
   async function handleConfirm() {
+    if (endsOnMissing) {
+      setError('Project end date is required before confirming.')
+      setErrorCode('ends_on_required')
+      return
+    }
+    if (tasksPastEndsOn) {
+      setError('Proposed task due dates must be on or before the project end date.')
+      setErrorCode('task_due_after_ends_on')
+      return
+    }
     setSaving(true)
     setError(null)
     setErrorCode(null)
@@ -438,8 +457,16 @@ export function CreateProjectPage() {
         'ai_unavailable',
         'ai_not_configured',
         'ai_schema_invalid',
+        'ends_on_required',
+        'task_due_after_ends_on',
       ].includes(errorCode ?? '') ? (
         <Alert tone="danger" title="Something went wrong">
+          {error}
+        </Alert>
+      ) : null}
+
+      {errorCode === 'ends_on_required' || errorCode === 'task_due_after_ends_on' ? (
+        <Alert tone="warning" title="End date required">
           {error}
         </Alert>
       ) : null}
@@ -630,15 +657,6 @@ export function CreateProjectPage() {
                   </label>
                 </div>
                 <label className="block space-y-1">
-                  <span className="text-sm font-medium text-ink">Project end date</span>
-                  <input
-                    type="date"
-                    className="w-full rounded-md border border-border bg-canvas px-3 py-2 text-ink"
-                    value={endsOn}
-                    onChange={(e) => setEndsOn(e.target.value)}
-                  />
-                </label>
-                <label className="block space-y-1">
                   <span className="text-sm font-medium text-ink">Definition of done</span>
                   <textarea
                     className="min-h-20 w-full rounded-md border border-border bg-canvas px-3 py-2 text-ink"
@@ -673,6 +691,24 @@ export function CreateProjectPage() {
                 ) : null}
               </>
             )}
+
+            <label className="block space-y-1">
+              <span className="text-sm font-medium text-ink">
+                Project end date <span className="text-ink-muted">(required to confirm)</span>
+              </span>
+              <input
+                type="date"
+                className="w-full rounded-md border border-border bg-canvas px-3 py-2 text-ink"
+                value={endsOn}
+                onChange={(e) => setEndsOn(e.target.value)}
+                required
+              />
+            </label>
+            {tasksPastEndsOn ? (
+              <p className="text-sm text-status-warning">
+                One or more proposed task due dates are after the project end date.
+              </p>
+            ) : null}
             <fieldset>
               <legend className="text-sm font-medium text-ink">Skills (optional)</legend>
               <div className="mt-2 flex flex-wrap gap-2">
@@ -700,7 +736,7 @@ export function CreateProjectPage() {
           <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
             <Button
               onClick={() => void handleConfirm()}
-              disabled={saving || title.trim().length < 2 || !teamFieldsValid}
+              disabled={saving || confirmBlocked}
             >
               Confirm project
             </Button>

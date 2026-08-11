@@ -3,17 +3,12 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { useAuth } from '@/auth/AuthContext'
 import { Alert } from '@/components/Alert'
 import { Button } from '@/components/Button'
+import { ProjectLifecycleBadge } from '@/components/ProjectLifecycleBadge'
 import { StatusBadge } from '@/components/StatusBadge'
 import { apiFetch, ApiError } from '@/lib/api'
 import type { Project } from '@/lib/projects'
 import type { TaskSummary } from '@/lib/tasks'
 import { useShell } from '@/shell/ShellContext'
-
-function projectTone(status: Project['status']): 'info' | 'success' | 'warning' {
-  if (status === 'active') return 'success'
-  if (status === 'cancelled') return 'warning'
-  return 'info'
-}
 
 function taskTone(status: TaskSummary['status']): 'info' | 'success' | 'warning' {
   if (status === 'approved') return 'success'
@@ -150,13 +145,16 @@ export function MyWorkPage() {
                   to={`/projects/${project.id}`}
                   className="flex items-start justify-between gap-4 rounded-lg border border-border bg-surface p-4 transition hover:border-ink/20"
                 >
-                  <div>
+                  <div className="min-w-0">
                     <p className="font-medium text-ink">{project.title}</p>
                     {project.summary ? (
                       <p className="mt-1 line-clamp-2 text-sm text-ink-muted">{project.summary}</p>
                     ) : null}
+                    {project.ends_on ? (
+                      <p className="mt-1 text-xs text-ink-muted">Ends {project.ends_on}</p>
+                    ) : null}
                   </div>
-                  <StatusBadge tone={projectTone(project.status)}>{project.status}</StatusBadge>
+                  <ProjectLifecycleBadge status={project.status} phase={project.phase} />
                 </Link>
               </li>
             ))}

@@ -77,4 +77,22 @@ describe('CreateProjectPage', () => {
 
     expect(await screen.findByText(/Generation already used/i)).toBeInTheDocument()
   })
+
+  it('blocks confirm when project end date is missing', async () => {
+    const user = userEvent.setup()
+    render(
+      <MemoryRouter initialEntries={['/projects/new?mode=manual']}>
+        <Routes>
+          <Route path="/projects/new" element={<CreateProjectPage />} />
+        </Routes>
+      </MemoryRouter>,
+    )
+
+    await user.type(screen.getByLabelText(/^Title$/i), 'Manual draft project')
+    expect(screen.getByLabelText(/Project end date/i)).toHaveValue('')
+    expect(screen.getByRole('button', { name: /Confirm project/i })).toBeDisabled()
+
+    await user.type(screen.getByLabelText(/Project end date/i), '2026-12-01')
+    expect(screen.getByRole('button', { name: /Confirm project/i })).toBeEnabled()
+  })
 })

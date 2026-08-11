@@ -140,6 +140,15 @@ describe('InboxPage', () => {
 
     apiFetch.mockImplementation(async (path: string, init?: RequestInit) => {
       if (path.startsWith('/api/v1/inbox/items')) return { items: [review] }
+      if (path === '/api/v1/projects/proj-1' && !init?.method) {
+        return {
+          project: {
+            id: 'proj-1',
+            status: 'active',
+            phase: 'normal',
+          },
+        }
+      }
       if (path === '/api/v1/tasks/task-1/creator_review' && init?.method === 'POST') {
         return { task: { id: 'task-1', status: 'approved' } }
       }
@@ -151,6 +160,7 @@ describe('InboxPage', () => {
     expect(await screen.findByText('Ship mock')).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: /Review submission/i }))
     expect(await screen.findByRole('heading', { name: /Creator review/i })).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: /^Approve$/i })).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: /^Approve$/i }))
 
     await waitFor(() => {
