@@ -1,4 +1,11 @@
-export type ProjectStatus = 'draft' | 'active' | 'cancelled'
+export type ProjectStatus =
+  | 'draft'
+  | 'active'
+  | 'completed'
+  | 'expired'
+  | 'cancelled'
+  | 'archived'
+export type ProjectPhase = 'normal' | 'ending_soon' | 'grace_period' | 'read_only'
 export type ProjectSource = 'manual' | 'ai'
 export type ProjectMode = 'solo' | 'team'
 export type JoiningMode = 'application' | 'instant' | 'invite_only'
@@ -58,6 +65,7 @@ export type Project = {
   skills: string[]
   mode: ProjectMode
   status: ProjectStatus
+  phase: ProjectPhase
   source: ProjectSource
   joining_mode: JoiningMode | null
   capacity: number | null
@@ -68,6 +76,7 @@ export type Project = {
   project_type: string | null
   expected_duration: string | null
   ends_on: string | null
+  final_expires_at: string | null
   definition_of_done: string | null
   roles_needed: string[]
   proposed_tasks: ProposedTask[]
@@ -76,6 +85,8 @@ export type Project = {
   workspace_id: string
   creator_id: string
   confirmed_at: string | null
+  completed_at: string | null
+  expired_at: string | null
   cancelled_at: string | null
   created_at: string
   updated_at: string
@@ -133,4 +144,82 @@ export type ReasonCategory = (typeof REASON_CATEGORIES)[number]
 
 export function formatReasonCategory(category: string): string {
   return category.replaceAll('_', ' ')
+}
+
+export function formatProjectPhase(phase: ProjectPhase | string): string {
+  switch (phase) {
+    case 'ending_soon':
+      return 'Ending soon'
+    case 'grace_period':
+      return 'Grace period'
+    case 'read_only':
+      return 'Read only'
+    case 'normal':
+      return 'Normal'
+    default:
+      return phase.replaceAll('_', ' ')
+  }
+}
+
+export function formatProjectStatus(status: ProjectStatus | string): string {
+  switch (status) {
+    case 'draft':
+      return 'Draft'
+    case 'active':
+      return 'Active'
+    case 'completed':
+      return 'Completed'
+    case 'expired':
+      return 'Expired'
+    case 'cancelled':
+      return 'Cancelled'
+    case 'archived':
+      return 'Archived'
+    default:
+      return status.replaceAll('_', ' ')
+  }
+}
+
+const READ_ONLY_STATUSES: ProjectStatus[] = ['completed', 'expired', 'cancelled', 'archived']
+
+export function projectIsReadOnly(
+  project: Pick<Project, 'status' | 'phase'>,
+): boolean {
+  return READ_ONLY_STATUSES.includes(project.status) || project.phase === 'read_only'
+}
+
+export function projectAllowsMutations(
+  project: Pick<Project, 'status' | 'phase'>,
+): boolean {
+  return !projectIsReadOnly(project)
+}
+
+export function projectAllowsSubmit(
+  project: Pick<Project, 'status' | 'phase'>,
+): boolean {
+  if (project.status !== 'active') return false
+  return (
+    project.phase === 'normal' ||
+    project.phase === 'ending_soon' ||
+    project.phase === 'grace_period'
+  )
+}
+
+export function projectAllowsJoin(
+  project: Pick<Project, 'mode' | 'status' | 'phase' | 'recruitment_state'>,
+): boolean {
+  if (project.mode !== 'team' || project.status !== 'active') return false
+  if (project.recruitment_state !== 'open') return false
+  if (project.phase === 'grace_period' || project.phase === 'read_only') return false
+  return true
+}
+
+/** True when creator may still change ends_on (before final expiration, not terminal). */
+export function projectAllowsEndDateEdit(
+  project: Pick<Project, 'status' | 'phase' | 'final_expires_at'>,
+): boolean {
+  if (projectIsReadOnly(project)) return false
+  if (project.status !== 'active' && project.status !== 'draft') return false
+  if (!project.final_expires_at) return project.status === 'active' || project.status === 'draft'
+  return new Date(project.final_expires_at).getTime() > Date.now()
 }

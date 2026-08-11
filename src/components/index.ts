@@ -54,6 +54,7 @@ export {
   SheetTrigger,
 } from './Sheet'
 export { Skeleton } from './Skeleton'
+export { ProjectLifecycleBadge } from './ProjectLifecycleBadge'
 export { StatusBadge } from './StatusBadge'
 export {
   Tooltip,

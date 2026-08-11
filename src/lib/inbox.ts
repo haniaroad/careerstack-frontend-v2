@@ -17,7 +17,25 @@ export type InboxItem = {
   is_overdue: boolean
   cta_label: string
   created_at: string
+  /** Alert payload may include `kind: "lifecycle"`; task reviews may include project_status/phase. */
   payload: Record<string, unknown>
+}
+
+export function inboxItemProjectIsReadOnly(item: InboxItem): boolean {
+  const status = String(item.payload.project_status ?? '')
+  const phase = String(item.payload.project_phase ?? '')
+  if (
+    status === 'expired' ||
+    status === 'completed' ||
+    status === 'cancelled' ||
+    status === 'archived'
+  ) {
+    return true
+  }
+  if (phase === 'read_only') return true
+  const haystack = `${item.status_label} ${item.title} ${item.description}`.toLowerCase()
+  if (haystack.includes('expired') || haystack.includes('completed — read')) return true
+  return false
 }
 
 export const INBOX_TABS: { id: InboxTab; label: string; category: InboxCategory }[] = [

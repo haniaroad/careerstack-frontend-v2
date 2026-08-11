@@ -30,6 +30,8 @@ Useful routes:
 - `/status` — API health smoke page (outside the shell)
 - `/dev/design-system` — token/component gallery with preview shell stubs (local and staging only)
 
+Confirming a project requires `ends_on` (client + API). Active projects expose derived lifecycle `phase` (`normal` | `ending_soon` | `grace_period` | `read_only`) plus `final_expires_at`; Home surfaces ending/grace/expired warnings, and expired/completed projects are read-only on detail.
+
 For local UI without Firebase, set `VITE_AUTH_STUB=true` and run the backend with `FIREBASE_AUTH_STUB=true`.
 
 ## Component imports

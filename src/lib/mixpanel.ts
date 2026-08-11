@@ -202,3 +202,82 @@ export function trackApplicationDecidedFromInbox(props: {
     // fail soft
   }
 }
+
+/** Non-PII project completed. Fail soft — opaque id / phase only. */
+export function trackProjectCompleted(props: { project_id: string; phase?: string }) {
+  try {
+    if (!ensureInit()) return
+    mixpanel.track('project_completed', {
+      project_id: props.project_id,
+      ...(props.phase ? { phase: props.phase } : {}),
+    })
+  } catch {
+    // fail soft
+  }
+}
+
+/** Non-PII project expired. Fail soft. */
+export function trackProjectExpired(props: { project_id: string }) {
+  try {
+    if (!ensureInit()) return
+    mixpanel.track('project_expired', { project_id: props.project_id })
+  } catch {
+    // fail soft
+  }
+}
+
+/** Non-PII end-date update. Fail soft. */
+export function trackProjectEndDateUpdated(props: { project_id: string }) {
+  try {
+    if (!ensureInit()) return
+    mixpanel.track('project_end_date_updated', { project_id: props.project_id })
+  } catch {
+    // fail soft
+  }
+}
+
+/** Non-PII grace period entered. Fail soft. */
+export function trackProjectGraceEntered(props: { project_id: string }) {
+  try {
+    if (!ensureInit()) return
+    mixpanel.track('project_grace_entered', { project_id: props.project_id })
+  } catch {
+    // fail soft
+  }
+}
+
+const LIFECYCLE_TRACK_PREFIX = 'cs_lifecycle_track:'
+
+/** Fire completed/expired once per browser session when observed on detail load. */
+export function trackProjectLifecycleObserved(props: {
+  project_id: string
+  status: string
+  phase?: string
+}) {
+  try {
+    const key = `${LIFECYCLE_TRACK_PREFIX}${props.status}:${props.project_id}`
+    if (typeof sessionStorage !== 'undefined' && sessionStorage.getItem(key)) return
+    if (props.status === 'completed') {
+      trackProjectCompleted({ project_id: props.project_id, phase: props.phase })
+    } else if (props.status === 'expired') {
+      trackProjectExpired({ project_id: props.project_id })
+    } else {
+      return
+    }
+    if (typeof sessionStorage !== 'undefined') sessionStorage.setItem(key, '1')
+  } catch {
+    // fail soft
+  }
+}
+
+/** Fire grace entered once per browser session when warning is shown. */
+export function trackProjectGraceObserved(props: { project_id: string }) {
+  try {
+    const key = `${LIFECYCLE_TRACK_PREFIX}grace:${props.project_id}`
+    if (typeof sessionStorage !== 'undefined' && sessionStorage.getItem(key)) return
+    trackProjectGraceEntered({ project_id: props.project_id })
+    if (typeof sessionStorage !== 'undefined') sessionStorage.setItem(key, '1')
+  } catch {
+    // fail soft
+  }
+}

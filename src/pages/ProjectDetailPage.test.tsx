@@ -33,6 +33,8 @@ vi.mock('@/lib/mixpanel', () => ({
   trackProjectJoined: (...args: unknown[]) => trackProjectJoined(...args),
   trackProjectLeft: (...args: unknown[]) => trackProjectLeft(...args),
   trackMemberRemoved: (...args: unknown[]) => trackMemberRemoved(...args),
+  trackProjectEndDateUpdated: vi.fn(),
+  trackProjectLifecycleObserved: vi.fn(),
 }))
 
 vi.mock('@/auth/AuthContext', () => ({
@@ -55,6 +57,7 @@ function baseProject(overrides: Partial<Project> = {}): Project {
     skills: ['React'],
     mode: 'team',
     status: 'active',
+    phase: 'normal',
     source: 'manual',
     joining_mode: 'application',
     capacity: 3,
@@ -64,7 +67,8 @@ function baseProject(overrides: Partial<Project> = {}): Project {
     objective: null,
     project_type: null,
     expected_duration: null,
-    ends_on: null,
+    ends_on: '2026-09-01',
+    final_expires_at: '2026-09-08T23:59:59Z',
     definition_of_done: null,
     roles_needed: ['Designer', 'Engineer'],
     proposed_tasks: [],
@@ -73,6 +77,8 @@ function baseProject(overrides: Partial<Project> = {}): Project {
     workspace_id: 'w1',
     creator_id: 'creator-1',
     confirmed_at: '2026-01-01',
+    completed_at: null,
+    expired_at: null,
     cancelled_at: null,
     created_at: '2026-01-01',
     updated_at: '2026-01-01',
@@ -415,5 +421,46 @@ describe('ProjectDetailPage', () => {
       workspace_type: 'personal',
       joining_mode: 'application',
     })
+  })
+
+  it('shows phase and hides mutations when expired', async () => {
+    authUserId = 'creator-1'
+    apiFetch.mockResolvedValue({
+      project: baseProject({
+        status: 'expired',
+        phase: 'read_only',
+        expired_at: '2026-08-01T12:00:00Z',
+        ends_on: '2026-07-20',
+        final_expires_at: '2026-07-27T23:59:59Z',
+        mode: 'solo',
+        joining_mode: null,
+        capacity: null,
+        participant_count: null,
+        seats_remaining: null,
+        recruitment_state: null,
+        roles_needed: [],
+      }),
+    })
+
+    renderPage()
+    expect(await screen.findByText(/Project expired — read only/i)).toBeInTheDocument()
+    expect(screen.getByText(/Ends on 2026-07-20/i)).toBeInTheDocument()
+    expect(screen.getByText(/^Read only$/i)).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Cancel project/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: /Convert to team/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: /Project end date/i })).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Wireframes/i })).toBeInTheDocument()
+  })
+
+  it('shows grace period phase on active projects', async () => {
+    apiFetch.mockResolvedValue({
+      project: baseProject({
+        phase: 'grace_period',
+        ends_on: '2026-08-01',
+      }),
+    })
+    renderPage()
+    expect(await screen.findByText(/Grace period/i)).toBeInTheDocument()
+    expect(screen.getByText(/Ends on 2026-08-01/i)).toBeInTheDocument()
   })
 })

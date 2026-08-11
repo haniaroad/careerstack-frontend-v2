@@ -12,18 +12,24 @@ import {
   DialogTitle,
 } from '@/components/Dialog'
 import { InsufficientCreditsInterception } from '@/components/InsufficientCreditsInterception'
+import { ProjectLifecycleBadge } from '@/components/ProjectLifecycleBadge'
 import { StatusBadge } from '@/components/StatusBadge'
 import { apiFetch, ApiError } from '@/lib/api'
 import {
   trackMemberRemoved,
   trackProjectConvertedToTeam,
+  trackProjectEndDateUpdated,
   trackProjectJoined,
   trackProjectLeft,
+  trackProjectLifecycleObserved,
 } from '@/lib/mixpanel'
 import {
   JOINING_MODES,
   REASON_CATEGORIES,
   formatReasonCategory,
+  projectAllowsEndDateEdit,
+  projectAllowsJoin,
+  projectIsReadOnly,
   type JoiningMode,
   type Project,
   type ReasonCategory,
@@ -76,6 +82,7 @@ export function ProjectDetailPage() {
   const [removeDetail, setRemoveDetail] = useState('')
   const [rejectAppId, setRejectAppId] = useState<string | null>(null)
   const [rejectReason, setRejectReason] = useState('')
+  const [endsOnDraft, setEndsOnDraft] = useState('')
 
   const workspace = session?.active_workspace
   const isPersonal = workspace?.kind === 'personal'
@@ -88,6 +95,12 @@ export function ProjectDetailPage() {
     try {
       const data = await apiFetch<{ project: Project }>(`/api/v1/projects/${id}`)
       setProject(data.project)
+      setEndsOnDraft(data.project.ends_on ?? '')
+      trackProjectLifecycleObserved({
+        project_id: data.project.id,
+        status: data.project.status,
+        phase: data.project.phase,
+      })
       if (data.project.roles_needed?.length) {
         setJoinRole((prev) => prev || data.project.roles_needed[0])
         setApplyRole((prev) => prev || data.project.roles_needed[0])
@@ -363,7 +376,7 @@ export function ProjectDetailPage() {
   }
 
   async function handleAssignTask(taskId: string, assigneeId: string | null) {
-    if (!project) return
+    if (!project || projectIsReadOnly(project)) return
     setBusy(true)
     setError(null)
     setErrorCode(null)
@@ -375,6 +388,29 @@ export function ProjectDetailPage() {
       await load()
     } catch (err) {
       handleApiError(err, 'Unable to update assignment')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function handleUpdateEndsOn() {
+    if (!project || !endsOnDraft.trim()) return
+    if (!projectAllowsEndDateEdit(project)) return
+    setBusy(true)
+    setError(null)
+    setErrorCode(null)
+    setNotice(null)
+    try {
+      const data = await apiFetch<{ project: Project }>(`/api/v1/projects/${project.id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ ends_on: endsOnDraft.trim() }),
+      })
+      setProject(data.project)
+      setEndsOnDraft(data.project.ends_on ?? '')
+      trackProjectEndDateUpdated({ project_id: data.project.id })
+      setNotice('Project end date updated.')
+    } catch (err) {
+      handleApiError(err, 'Unable to update end date')
     } finally {
       setBusy(false)
     }
@@ -402,13 +438,21 @@ export function ProjectDetailPage() {
   const memberships = project.memberships ?? []
   const myMembership = memberships.find((m) => m.user_id === userId)
   const isParticipant = Boolean(myMembership && myMembership.role !== 'creator')
+  const readOnly = projectIsReadOnly(project)
+  const canMutate = !readOnly
   const canJoin =
     Boolean(project.viewer_can_join) &&
     !isCreator &&
     !myMembership &&
-    project.mode === 'team' &&
-    project.status === 'active'
+    projectAllowsJoin(project)
+  const canEditEndsOn = isCreator && projectAllowsEndDateEdit(project)
   const roles = project.roles_needed ?? []
+  const finalExpiresLabel = project.final_expires_at
+    ? new Date(project.final_expires_at).toLocaleString(undefined, {
+        dateStyle: 'medium',
+        timeStyle: 'short',
+      })
+    : null
 
   return (
     <div className="mx-auto max-w-2xl space-y-8">
@@ -416,7 +460,7 @@ export function ProjectDetailPage() {
         <p className="text-sm font-medium text-ink-muted">Project</p>
         <div className="flex flex-wrap items-center gap-3">
           <h1 className="font-display text-3xl text-ink">{project.title}</h1>
-          <StatusBadge tone={statusTone(project.status)}>{project.status}</StatusBadge>
+          <ProjectLifecycleBadge status={project.status} phase={project.phase} />
           <StatusBadge tone="info">{project.mode}</StatusBadge>
           {project.recruitment_state ? (
             <StatusBadge tone={statusTone(project.recruitment_state)}>
@@ -425,6 +469,16 @@ export function ProjectDetailPage() {
           ) : null}
         </div>
         {project.summary ? <p className="text-ink-muted">{project.summary}</p> : null}
+        <div className="space-y-1 text-sm text-ink-muted">
+          {project.ends_on ? <p>Ends on {project.ends_on}</p> : null}
+          {finalExpiresLabel ? <p>Final expiration {finalExpiresLabel}</p> : null}
+          {project.completed_at ? (
+            <p>Completed {new Date(project.completed_at).toLocaleDateString()}</p>
+          ) : null}
+          {project.expired_at ? (
+            <p>Expired {new Date(project.expired_at).toLocaleDateString()}</p>
+          ) : null}
+        </div>
         {project.skills.length > 0 ? (
           <p className="text-sm text-ink-muted">Skills: {project.skills.join(', ')}</p>
         ) : null}
@@ -439,6 +493,46 @@ export function ProjectDetailPage() {
           <p className="text-sm text-ink-muted">Roles needed: {roles.join(', ')}</p>
         ) : null}
       </header>
+
+      {project.status === 'expired' || project.status === 'completed' ? (
+        <Alert
+          tone={project.status === 'expired' ? 'warning' : 'info'}
+          title={
+            project.status === 'expired' ? 'Project expired — read only' : 'Project completed — read only'
+          }
+        >
+          {project.status === 'expired'
+            ? 'This project has expired. Historical tasks remain visible, but joining, leaving, assigning, converting, and submitting are closed.'
+            : 'This project is completed. Historical tasks remain visible, but mutating actions are closed.'}
+        </Alert>
+      ) : null}
+
+      {canEditEndsOn ? (
+        <div className="space-y-3 rounded-lg border border-border bg-surface p-5">
+          <h2 className="font-display text-xl text-ink">Project end date</h2>
+          <p className="text-sm text-ink-muted">
+            Update the end date before final expiration. Participants are notified of changes.
+          </p>
+          <label className="block space-y-1">
+            <span className="text-sm font-medium text-ink">Ends on</span>
+            <input
+              type="date"
+              className="w-full rounded-md border border-border bg-canvas px-3 py-2 text-ink"
+              value={endsOnDraft}
+              onChange={(e) => setEndsOnDraft(e.target.value)}
+              disabled={busy}
+            />
+          </label>
+          <Button
+            type="button"
+            size="sm"
+            disabled={busy || !endsOnDraft.trim() || endsOnDraft === (project.ends_on ?? '')}
+            onClick={() => void handleUpdateEndsOn()}
+          >
+            Save end date
+          </Button>
+        </div>
+      ) : null}
 
       {errorCode === 'insufficient_credits' ? (
         <InsufficientCreditsInterception
@@ -483,7 +577,7 @@ export function ProjectDetailPage() {
                     {member.participant_role ? ` · ${member.participant_role}` : ''}
                   </p>
                 </div>
-                {isCreator && member.role !== 'creator' ? (
+                {isCreator && canMutate && member.role !== 'creator' ? (
                   <Button
                     variant="secondary"
                     size="sm"
@@ -502,7 +596,7 @@ export function ProjectDetailPage() {
         </div>
       ) : null}
 
-      {isCreator && project.status === 'active' && project.mode === 'solo' ? (
+      {isCreator && canMutate && project.status === 'active' && project.mode === 'solo' ? (
         <div className="space-y-4 rounded-lg border border-border bg-surface p-5">
           <h2 className="font-display text-xl text-ink">Convert to team</h2>
           <p className="text-sm text-ink-muted">
@@ -549,7 +643,7 @@ export function ProjectDetailPage() {
         </div>
       ) : null}
 
-      {isCreator && project.mode === 'team' && project.status === 'active' ? (
+      {isCreator && canMutate && project.mode === 'team' && project.status === 'active' ? (
         <div className="space-y-4">
           {(project.pending_applications?.length ?? 0) > 0 ? (
             <div className="space-y-3">
@@ -772,7 +866,10 @@ export function ProjectDetailPage() {
                   <p className="text-sm text-ink-muted">
                     Assignee: {assignee?.display_name ?? (task.assignee_id ? 'Member' : 'Unassigned')}
                   </p>
-                  {isCreator && project.mode === 'team' && task.status === 'pending' ? (
+                  {isCreator &&
+                  canMutate &&
+                  project.mode === 'team' &&
+                  task.status === 'pending' ? (
                     <label className="block space-y-1">
                       <span className="text-sm font-medium text-ink">Assign to</span>
                       <select
@@ -810,12 +907,12 @@ export function ProjectDetailPage() {
             </Button>
           </>
         ) : null}
-        {isCreator && project.status === 'active' ? (
+        {isCreator && canMutate && project.status === 'active' ? (
           <Button variant="secondary" onClick={() => void handleCancel()} disabled={busy}>
             Cancel project
           </Button>
         ) : null}
-        {isParticipant && project.status === 'active' ? (
+        {isParticipant && canMutate && project.status === 'active' ? (
           <Button variant="secondary" onClick={() => setLeaveOpen(true)} disabled={busy}>
             Leave project
           </Button>

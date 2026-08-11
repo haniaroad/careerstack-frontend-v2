@@ -6,6 +6,7 @@ import { StatusBadge } from '@/components/StatusBadge'
 import { apiFetch, ApiError } from '@/lib/api'
 import {
   INBOX_TABS,
+  inboxItemProjectIsReadOnly,
   type InboxCategory,
   type InboxItem,
   type InboxTab,
@@ -16,6 +17,7 @@ import {
   trackCreatorReviewDecided,
   trackInboxOpened,
 } from '@/lib/mixpanel'
+import { projectIsReadOnly, type Project } from '@/lib/projects'
 import { useShell } from '@/shell/ShellContext'
 
 const URGENCY_RANK: Record<InboxUrgency, number> = {
@@ -43,7 +45,7 @@ const EMPTY_COPY: Record<InboxTab, { title: string; description: string }> = {
   alerts: {
     title: 'No alerts',
     description:
-      'Creator reminders, escalations, and other material updates appear in Alerts.',
+      'Creator reminders, lifecycle notices (ending soon, grace, expiration), and escalations appear in Alerts.',
   },
 }
 
@@ -81,6 +83,7 @@ export function InboxPage() {
   const [rejectReason, setRejectReason] = useState('')
   const [reviewTaskId, setReviewTaskId] = useState<string | null>(null)
   const [reviewFeedback, setReviewFeedback] = useState('')
+  const [reviewReadOnly, setReviewReadOnly] = useState(false)
   const [counts, setCounts] = useState<Record<InboxTab, number>>({
     task_reviews: 0,
     applications: 0,
@@ -233,6 +236,16 @@ export function InboxPage() {
     if (item.category === 'task_review') {
       setReviewTaskId(item.related_id)
       setReviewFeedback('')
+      setReviewReadOnly(inboxItemProjectIsReadOnly(item))
+      void (async () => {
+        if (!item.project_id) return
+        try {
+          const data = await apiFetch<{ project: Project }>(`/api/v1/projects/${item.project_id}`)
+          setReviewReadOnly(projectIsReadOnly(data.project))
+        } catch {
+          setReviewReadOnly(true)
+        }
+      })()
       return
     }
     if (item.project_id) {
@@ -410,46 +423,69 @@ export function InboxPage() {
       {reviewTaskId ? (
         <div className="space-y-3 rounded-lg border border-border bg-surface p-4">
           <h2 className="font-display text-xl text-ink">Creator review</h2>
-          <p className="text-sm text-ink-muted">
-            Approve the submission or request corrections with written feedback.
-          </p>
-          <label className="block space-y-1">
-            <span className="text-sm font-medium text-ink">Feedback</span>
-            <textarea
-              value={reviewFeedback}
-              onChange={(event) => setReviewFeedback(event.target.value)}
-              rows={4}
-              className="w-full rounded-md border border-border bg-canvas px-3 py-2 text-ink"
-              placeholder="Required when requesting corrections"
-            />
-          </label>
-          <div className="flex flex-col gap-2 sm:flex-row">
-            <Button
-              type="button"
-              disabled={busyId === reviewTaskId}
-              onClick={() => void handleCreatorReview('approved')}
-            >
-              Approve
-            </Button>
-            <Button
-              type="button"
-              variant="secondary"
-              disabled={busyId === reviewTaskId}
-              onClick={() => void handleCreatorReview('corrections_requested')}
-            >
-              Request corrections
-            </Button>
+          {reviewReadOnly ? (
+            <Alert tone="warning" title="Project is read only">
+              This project is expired or completed. Approve and corrections are unavailable.
+            </Alert>
+          ) : (
+            <p className="text-sm text-ink-muted">
+              Approve the submission or request corrections with written feedback.
+            </p>
+          )}
+          {!reviewReadOnly ? (
+            <>
+              <label className="block space-y-1">
+                <span className="text-sm font-medium text-ink">Feedback</span>
+                <textarea
+                  value={reviewFeedback}
+                  onChange={(event) => setReviewFeedback(event.target.value)}
+                  rows={4}
+                  className="w-full rounded-md border border-border bg-canvas px-3 py-2 text-ink"
+                  placeholder="Required when requesting corrections"
+                />
+              </label>
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <Button
+                  type="button"
+                  disabled={busyId === reviewTaskId}
+                  onClick={() => void handleCreatorReview('approved')}
+                >
+                  Approve
+                </Button>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  disabled={busyId === reviewTaskId}
+                  onClick={() => void handleCreatorReview('corrections_requested')}
+                >
+                  Request corrections
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setReviewTaskId(null)
+                    setReviewFeedback('')
+                    setReviewReadOnly(false)
+                  }}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </>
+          ) : (
             <Button
               type="button"
               variant="outline"
               onClick={() => {
                 setReviewTaskId(null)
                 setReviewFeedback('')
+                setReviewReadOnly(false)
               }}
             >
-              Cancel
+              Close
             </Button>
-          </div>
+          )}
           <Link
             to={`/tasks/${reviewTaskId}`}
             className="inline-block text-sm text-ink underline-offset-2 hover:underline"
