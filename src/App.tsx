@@ -16,13 +16,12 @@ import { InboxPage } from '@/pages/InboxPage'
 import { MorePage } from '@/pages/MorePage'
 import { MyWorkPage } from '@/pages/MyWorkPage'
 import { CreateProjectPage } from '@/pages/CreateProjectPage'
-import { ProjectDetailPage } from '@/pages/ProjectDetailPage'
 import { TaskDetailPage } from '@/pages/TaskDetailPage'
 import { OnboardingRouterPage } from '@/pages/OnboardingRouterPage'
 import { OrgAdminPage } from '@/pages/OrgAdminPage'
 import { OrgInvitedOnboardingPage } from '@/pages/OrgInvitedOnboardingPage'
 import { ProfilePage } from '@/pages/ProfilePage'
-import { PublicProfilePage } from '@/pages/PublicProfilePage'
+import { ProfileSlugGate, ProjectParamGate } from '@/pages/PublicSurfaceGates'
 import { SignInPage } from '@/pages/SignInPage'
 import { StatusPage } from '@/pages/StatusPage'
 import { isDesignSystemPreviewEnabled } from '@/config'
@@ -58,6 +57,10 @@ export default function App() {
           <Route path="/invite" element={<OrgInvitedOnboardingPage />} />
           <Route path="/invite/:token" element={<OrgInvitedOnboardingPage />} />
 
+          {/* Public surfaces + auth-aware project/profile entry (outside RequireAuth). */}
+          <Route path="/profile/:slug" element={<ProfileSlugGate />} />
+          <Route path="/projects/:id" element={<ProjectParamGate />} />
+
           <Route element={<RequireAuth />}>
             <Route path="/onboarding" element={<OnboardingRouterPage />} />
             <Route path="/welcome" element={<FirstWorkspaceLandingPage />} />
@@ -79,10 +82,8 @@ export default function App() {
               <Route path="tasks/:id" element={<TaskDetailPage />} />
               <Route path="projects/new" element={<CreateProjectPage />} />
               <Route path="projects/:id/edit" element={<CreateProjectPage />} />
-              <Route path="projects/:id" element={<ProjectDetailPage />} />
               <Route path="inbox" element={<InboxPage />} />
               <Route path="profile" element={<ProfilePage />} />
-              <Route path="profile/:slug" element={<PublicProfilePage />} />
               <Route path="billing" element={<BillingPage />} />
               <Route path="billing/return" element={<BillingReturnPage />} />
               <Route path="organization" element={<OrgAdminPage />} />

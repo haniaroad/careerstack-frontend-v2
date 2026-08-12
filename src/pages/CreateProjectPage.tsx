@@ -62,6 +62,7 @@ export function CreateProjectPage() {
   const [projectMode, setProjectMode] = useState<ProjectMode>('solo')
   const [joiningMode, setJoiningMode] = useState<JoiningMode>('application')
   const [capacity, setCapacity] = useState(3)
+  const [visibility, setVisibility] = useState<'public' | 'private'>('public')
   const [aiLabeled, setAiLabeled] = useState(false)
 
   const [error, setError] = useState<string | null>(null)
@@ -92,6 +93,7 @@ export function CreateProjectPage() {
       mode: projectMode,
       joining_mode: projectMode === 'team' ? joiningMode : null,
       capacity: projectMode === 'team' ? capacity : null,
+      visibility,
       objective: objective || null,
       project_type: projectType || null,
       expected_duration: expectedDuration || null,
@@ -108,6 +110,7 @@ export function CreateProjectPage() {
       projectMode,
       joiningMode,
       capacity,
+      visibility,
       objective,
       projectType,
       expectedDuration,
@@ -161,6 +164,7 @@ export function CreateProjectPage() {
     setProjectMode(project.mode ?? 'solo')
     setJoiningMode(project.joining_mode ?? 'application')
     setCapacity(project.capacity ?? 3)
+    setVisibility(project.visibility ?? 'public')
     setObjective(project.objective ?? '')
     setProjectType(project.project_type ?? '')
     setExpectedDuration(project.expected_duration ?? '')
@@ -295,6 +299,7 @@ export function CreateProjectPage() {
           joining_mode: draftPayload.joining_mode,
           capacity: draftPayload.capacity,
           roles_needed: draftPayload.roles_needed,
+          visibility: draftPayload.visibility,
         }),
       })
       if (
@@ -588,6 +593,30 @@ export function CreateProjectPage() {
                   Team
                 </label>
               </div>
+              <div className="flex flex-col gap-2 sm:flex-row sm:gap-4">
+                <label className="flex items-center gap-2 text-sm text-ink">
+                  <input
+                    type="radio"
+                    name={`${formId}-visibility`}
+                    checked={visibility === 'public'}
+                    onChange={() => setVisibility('public')}
+                  />
+                  Public link
+                </label>
+                <label className="flex items-center gap-2 text-sm text-ink">
+                  <input
+                    type="radio"
+                    name={`${formId}-visibility`}
+                    checked={visibility === 'private'}
+                    onChange={() => setVisibility('private')}
+                  />
+                  Private
+                </label>
+              </div>
+              <p className="text-xs text-ink-muted">
+                Public projects can be opened from a shared link without signing in. Private projects
+                stay within the workspace.
+              </p>
               {projectMode === 'team' ? (
                 <div className="grid gap-4 sm:grid-cols-2">
                   <label className="block space-y-1">

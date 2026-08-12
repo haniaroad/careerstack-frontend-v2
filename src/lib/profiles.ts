@@ -46,7 +46,7 @@ export type ProfilePayload = {
     visibility_review_required: boolean
     public_identity_confirmed: boolean
     confirmed_at: string | null
-  }
+  } | null
   details: ProfileDetails
   stats: ProfileStats
   evidence: {
