@@ -22,6 +22,7 @@ import { OnboardingRouterPage } from '@/pages/OnboardingRouterPage'
 import { OrgAdminPage } from '@/pages/OrgAdminPage'
 import { OrgInvitedOnboardingPage } from '@/pages/OrgInvitedOnboardingPage'
 import { ProfilePage } from '@/pages/ProfilePage'
+import { PublicProfilePage } from '@/pages/PublicProfilePage'
 import { SignInPage } from '@/pages/SignInPage'
 import { StatusPage } from '@/pages/StatusPage'
 import { isDesignSystemPreviewEnabled } from '@/config'
@@ -81,6 +82,7 @@ export default function App() {
               <Route path="projects/:id" element={<ProjectDetailPage />} />
               <Route path="inbox" element={<InboxPage />} />
               <Route path="profile" element={<ProfilePage />} />
+              <Route path="profile/:slug" element={<PublicProfilePage />} />
               <Route path="billing" element={<BillingPage />} />
               <Route path="billing/return" element={<BillingReturnPage />} />
               <Route path="organization" element={<OrgAdminPage />} />
