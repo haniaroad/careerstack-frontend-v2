@@ -281,3 +281,52 @@ export function trackProjectGraceObserved(props: { project_id: string }) {
     // fail soft
   }
 }
+
+/** Non-PII profile events. Fail soft. */
+export function trackProfileViewed(props: { visibility: string; own: boolean }) {
+  try {
+    if (!ensureInit()) return
+    mixpanel.track('profile_viewed', {
+      visibility: props.visibility,
+      own: props.own,
+    })
+  } catch {
+    // fail soft
+  }
+}
+
+export function trackProfileSaved() {
+  try {
+    if (!ensureInit()) return
+    mixpanel.track('profile_saved', {})
+  } catch {
+    // fail soft
+  }
+}
+
+export function trackProfileVisibilityConfirmed() {
+  try {
+    if (!ensureInit()) return
+    mixpanel.track('profile_visibility_confirmed', {})
+  } catch {
+    // fail soft
+  }
+}
+
+export function trackProfileVisibilityReversed() {
+  try {
+    if (!ensureInit()) return
+    mixpanel.track('profile_visibility_reversed', {})
+  } catch {
+    // fail soft
+  }
+}
+
+export function trackProfileLinkCopied() {
+  try {
+    if (!ensureInit()) return
+    mixpanel.track('profile_link_copied', {})
+  } catch {
+    // fail soft
+  }
+}
