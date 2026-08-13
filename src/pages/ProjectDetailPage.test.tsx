@@ -52,12 +52,14 @@ vi.mock('@/auth/AuthContext', () => ({
 function baseProject(overrides: Partial<Project> = {}): Project {
   return {
     id: 'p1',
+    slug: 'team-portfolio',
     title: 'Team portfolio',
     summary: 'Build together',
     skills: ['React'],
     mode: 'team',
     status: 'active',
     phase: 'normal',
+    visibility: 'public',
     source: 'manual',
     joining_mode: 'application',
     capacity: 3,

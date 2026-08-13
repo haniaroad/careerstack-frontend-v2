@@ -16,6 +16,7 @@ import {
   requestMagicLink,
   signInWithGoogle,
 } from '@/lib/firebase'
+import { consumeReturnTo, peekReturnTo, storeReturnTo } from '@/lib/publicSurfaces'
 import { cn } from '@/lib/utils'
 
 const schema = z.object({
@@ -56,13 +57,14 @@ const secondaryButtonClass =
 export function SignInPage() {
   const navigate = useNavigate()
   const location = useLocation()
-  const resumePath =
+  const stateFrom =
     typeof location.state === 'object' &&
     location.state &&
     'from' in location.state &&
     typeof (location.state as { from?: unknown }).from === 'string'
       ? (location.state as { from: string }).from
-      : '/onboarding'
+      : null
+  const resumePath = stateFrom ?? peekReturnTo() ?? '/onboarding'
   const { stubSignIn, refreshSession } = useAuth()
   const [mode, setMode] = useState<'sign_in' | 'sign_up'>('sign_up')
   const [message, setMessage] = useState<string | null>(null)
@@ -78,6 +80,10 @@ export function SignInPage() {
   const busy = pendingGoogle || pendingMagic
 
   useEffect(() => {
+    if (stateFrom) storeReturnTo(stateFrom)
+  }, [stateFrom])
+
+  useEffect(() => {
     let cancelled = false
     void (async () => {
       if (authStubEnabled() || !isFirebaseConfigured()) return
@@ -85,7 +91,7 @@ export function SignInPage() {
         const user = await completeGoogleRedirect()
         if (cancelled || !user) return
         await refreshSession()
-        navigate(resumePath, { replace: true })
+        navigate(consumeReturnTo(resumePath), { replace: true })
       } catch (err) {
         if (!cancelled) {
           setError(err instanceof Error ? err.message : 'Google sign-in failed')
@@ -103,7 +109,7 @@ export function SignInPage() {
     try {
       if (authStubEnabled() && !isFirebaseConfigured()) {
         await stubSignIn('alex.morgan@example.com')
-        navigate(resumePath)
+        navigate(consumeReturnTo(resumePath))
         return
       }
       const result = await signInWithGoogle()
@@ -112,7 +118,7 @@ export function SignInPage() {
         return
       }
       await refreshSession()
-      navigate(resumePath)
+      navigate(consumeReturnTo(resumePath))
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Google sign-in failed')
       setPendingGoogle(false)
@@ -126,7 +132,7 @@ export function SignInPage() {
     try {
       if (authStubEnabled() && !isFirebaseConfigured()) {
         await stubSignIn(values.email)
-        navigate(resumePath)
+        navigate(consumeReturnTo(resumePath))
         return
       }
       await requestMagicLink(values.email)

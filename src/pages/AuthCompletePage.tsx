@@ -4,6 +4,7 @@ import { Alert } from '@/components/Alert'
 import { AuthLayout } from '@/auth/AuthLayout'
 import { useAuth } from '@/auth/AuthContext'
 import { completeMagicLink } from '@/lib/firebase'
+import { consumeReturnTo } from '@/lib/publicSurfaces'
 
 export function AuthCompletePage() {
   const navigate = useNavigate()
@@ -14,7 +15,17 @@ export function AuthCompletePage() {
     void (async () => {
       try {
         await completeMagicLink()
-        await refreshSession()
+        const session = await refreshSession()
+        const returnTo = consumeReturnTo('/onboarding')
+        if (
+          session &&
+          session.user.status !== 'pending_onboarding' &&
+          session.workspaces.length > 0 &&
+          returnTo !== '/onboarding'
+        ) {
+          navigate(returnTo, { replace: true })
+          return
+        }
         navigate('/onboarding', { replace: true })
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Could not complete sign-in')

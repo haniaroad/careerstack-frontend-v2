@@ -60,12 +60,14 @@ export type ProjectTask = {
 
 export type Project = {
   id: string
+  slug: string
   title: string
   summary: string | null
   skills: string[]
   mode: ProjectMode
   status: ProjectStatus
   phase: ProjectPhase
+  visibility: 'public' | 'private'
   source: ProjectSource
   joining_mode: JoiningMode | null
   capacity: number | null
