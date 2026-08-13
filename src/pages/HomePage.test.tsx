@@ -27,12 +27,14 @@ vi.mock('@/lib/mixpanel', () => ({
 function project(overrides: Partial<Project> = {}): Project {
   return {
     id: 'p-ending',
+    slug: 'shipping-checklist',
     title: 'Shipping checklist',
     summary: null,
     skills: [],
     mode: 'solo',
     status: 'active',
     phase: 'ending_soon',
+    visibility: 'public',
     source: 'manual',
     joining_mode: null,
     capacity: null,

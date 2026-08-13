@@ -292,14 +292,14 @@ export function ProfilePage() {
 
       {error ? <Alert tone="danger" title="Something went wrong">{error}</Alert> : null}
 
-      {profile?.age_visibility.visibility_review_required ? (
+      {profile?.age_visibility?.visibility_review_required ? (
         <Alert tone="info" title="Visibility review">
           Your profile stays private until you confirm public identity. You can reverse this later.
           <div className="mt-3 flex flex-wrap gap-2">
             <Button type="button" onClick={() => void onVisibility('confirm')}>
               Confirm public visibility
             </Button>
-            {profile.age_visibility.public_identity_confirmed ? (
+            {profile.age_visibility?.public_identity_confirmed ? (
               <Button type="button" variant="secondary" onClick={() => void onVisibility('reverse')}>
                 Keep private
               </Button>
@@ -308,7 +308,9 @@ export function ProfilePage() {
         </Alert>
       ) : null}
 
-      {profile && !profile.age_visibility.visibility_review_required && profile.public_identity_visible ? (
+      {profile &&
+      !profile.age_visibility?.visibility_review_required &&
+      profile.public_identity_visible ? (
         <div className="flex justify-end">
           <Button type="button" variant="secondary" onClick={() => void onVisibility('reverse')}>
             Make profile private

@@ -33,12 +33,14 @@ vi.mock('@/auth/AuthContext', () => ({
 function project(overrides: Partial<Project> = {}): Project {
   return {
     id: 'p1',
+    slug: 'grace-work',
     title: 'Grace work',
     summary: 'Summary',
     skills: [],
     mode: 'solo',
     status: 'active',
     phase: 'grace_period',
+    visibility: 'public',
     source: 'manual',
     joining_mode: null,
     capacity: null,
