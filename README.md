@@ -27,7 +27,7 @@ Useful routes:
 - `/sign-in`, `/auth/complete`, `/onboarding`, `/invite/:token`, `/welcome`, `/organizations/new` — AuthLayout (outside the shell)
 - `/projects/:slug`, `/profile/:slug` — shell-less public surfaces for anonymous visitors (create-account / sign-in preserve return-to intent)
 - `/home`, `/explore`, `/my-work`, `/inbox`, `/profile` — shell destinations (require completed onboarding)
-- `/organization` — Organization administration (staff in an Organization workspace: Programs · Members · Reports placeholder · Credits). Query `?tab=members|reports|credits` and `?program=<id>` for program detail.
+- `/organization` — Organization administration (staff in an Organization workspace: Programs · Members · Reports · Credits). Query `?tab=members|reports|credits` and `?program=<id>` for program detail.
 - `/projects/new`, `/projects/:id` (UUID), `/projects/:id/edit`, `/tasks/:id` — projects and tasks (solo + team joining on project detail). Organization projects require an active program.
 
 - `/status` — API health smoke page (outside the shell)
@@ -37,7 +37,9 @@ Public project and profile pages call `GET /api/v1/public/projects/:slug` and `G
 
 Organization workspaces show a **program filter** (All programs vs a specific program) in the shell header. It calls `POST /api/v1/workspaces/program_filter` and scopes My Work project lists. The control is hidden in Personal.
 
-Organization administration is reconstituted from the Evidence Standard (not an iframe): staff-only Programs, Members, Credits, and a Reports placeholder (no PDF/CSV). Inviting members is always free. Upgrade requests persist for administrators; Mixpanel only records `upgrade_request_submitted` with `workspace_type` — never notes or date of birth.
+Organization administration is reconstituted from the Evidence Standard (not an iframe): staff-only Programs, Members, Reports, and Credits. Reports generate branded PDF/CSV snapshots (named or aggregate-only) with a 15-minute signed download. Named exports that include minor names require confirmation. Mixpanel `report_generated` includes only `workspace_type`, `format`, and `aggregate_only` — never names, emails, notes, or outcome text. Inviting members is always free. Upgrade requests persist for administrators; Mixpanel only records `upgrade_request_submitted` with `workspace_type` — never notes or date of birth.
+
+Own Profile Settings includes private self-reported outcome capture when the user has an Organization workspace. Outcomes never appear on public profiles.
 
 
 Confirming a project requires `ends_on` (client + API). Active projects expose derived lifecycle `phase` (`normal` | `ending_soon` | `grace_period` | `read_only`) plus `final_expires_at`; Home surfaces ending/grace/expired warnings, and expired/completed projects are read-only on detail.

@@ -21,6 +21,7 @@ import {
   updateOwnProfile,
   updateProfileVisibility,
 } from '@/lib/profiles'
+import { OutcomesSettings } from '@/pages/profile/OutcomesSettings'
 
 type Tab = 'details' | 'activity' | 'skills' | 'settings'
 
@@ -222,6 +223,12 @@ export function ProfilePage() {
   const remaining = session?.credits?.remaining
   const isPersonal =
     session?.workspaces.find((w) => w.id === session.active_workspace_id)?.kind === 'personal'
+  const hasOrganizationWorkspace = Boolean(
+    session?.workspaces.some((workspace) => workspace.kind === 'organization'),
+  )
+  const activeWorkspaceIsOrganization =
+    session?.active_workspace?.kind === 'organization' ||
+    session?.workspaces.find((w) => w.id === session.active_workspace_id)?.kind === 'organization'
 
   async function onSave(event: React.FormEvent) {
     event.preventDefault()
@@ -485,26 +492,32 @@ export function ProfilePage() {
       ) : null}
 
       {tab === 'settings' ? (
-        <section className="space-y-3 rounded-lg border border-border bg-surface p-5">
-          <h2 className="text-lg font-semibold text-ink">Billing & Credits</h2>
-          <p className="text-sm text-ink-muted">
-            {typeof remaining === 'number'
-              ? `${remaining} credit${remaining === 1 ? '' : 's'} remaining in this workspace.`
-              : 'View your credit balance, purchase history, and refund options.'}
-          </p>
-          <Button asChild>
-            <Link to="/billing">Open Billing & Credits</Link>
-          </Button>
-          {!isPersonal ? (
-            <Alert tone="info" title="Organization workspace">
-              Organization credits are pooled. Personal pack purchase is only available in Personal
-              workspace.
-            </Alert>
-          ) : null}
-          <p className="pt-2 text-sm text-ink-muted">
-            Email notification preferences will land with the notifications change.
-          </p>
-        </section>
+        <div className="space-y-4">
+          <section className="space-y-3 rounded-lg border border-border bg-surface p-5">
+            <h2 className="text-lg font-semibold text-ink">Billing & Credits</h2>
+            <p className="text-sm text-ink-muted">
+              {typeof remaining === 'number'
+                ? `${remaining} credit${remaining === 1 ? '' : 's'} remaining in this workspace.`
+                : 'View your credit balance, purchase history, and refund options.'}
+            </p>
+            <Button asChild>
+              <Link to="/billing">Open Billing & Credits</Link>
+            </Button>
+            {!isPersonal ? (
+              <Alert tone="info" title="Organization workspace">
+                Organization credits are pooled. Personal pack purchase is only available in Personal
+                workspace.
+              </Alert>
+            ) : null}
+            <p className="pt-2 text-sm text-ink-muted">
+              Email notification preferences will land with the notifications change.
+            </p>
+          </section>
+          <OutcomesSettings
+            hasOrganizationWorkspace={hasOrganizationWorkspace}
+            activeWorkspaceIsOrganization={Boolean(activeWorkspaceIsOrganization)}
+          />
+        </div>
       ) : null}
     </div>
   )
