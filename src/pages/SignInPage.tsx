@@ -135,7 +135,7 @@ export function SignInPage() {
         navigate(consumeReturnTo(resumePath))
         return
       }
-      await requestMagicLink(values.email)
+      await requestMagicLink(values.email, resumePath)
       setSentEmail(values.email)
       setMessage(`We sent a sign-in link to ${values.email}. It expires in 15 minutes.`)
     } catch (err) {

@@ -16,6 +16,7 @@ import {
   type User,
 } from 'firebase/auth'
 import { firebaseConfig, isFirebaseConfigured } from '@/config'
+import { isSafeReturnTo, peekReturnTo } from '@/lib/publicSurfaces'
 
 let app: FirebaseApp | null = null
 let auth: Auth | null = null
@@ -84,11 +85,14 @@ export async function completeGoogleRedirect(): Promise<User | null> {
   }
 }
 
-export async function requestMagicLink(email: string): Promise<void> {
+export async function requestMagicLink(email: string, returnTo?: string | null): Promise<void> {
   const firebaseAuth = getFirebaseAuth()
   if (!firebaseAuth) throw new Error('Firebase is not configured')
+  const continueUrl = new URL(`${window.location.origin}/auth/complete`)
+  const resume = (returnTo && isSafeReturnTo(returnTo) ? returnTo : null) ?? peekReturnTo()
+  if (resume) continueUrl.searchParams.set('returnTo', resume)
   const actionCodeSettings = {
-    url: `${window.location.origin}/auth/complete`,
+    url: continueUrl.toString(),
     handleCodeInApp: true,
   }
   window.localStorage.setItem('careerstack.emailForSignIn', email)

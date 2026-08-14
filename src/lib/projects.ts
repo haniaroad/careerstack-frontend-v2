@@ -85,6 +85,7 @@ export type Project = {
   submission_expectations: string | null
   ai_generation_succeeded_at: string | null
   workspace_id: string
+  program_id?: string | null
   creator_id: string
   confirmed_at: string | null
   completed_at: string | null

@@ -17,7 +17,8 @@ import {
   type ProjectMode,
   type ProposedTask,
 } from '@/lib/projects'
-import type { SessionPayload } from '@/auth/types'
+import type { ProgramFilterProgram, SessionPayload } from '@/auth/types'
+import { fetchPrograms } from '@/lib/organizationAdmin'
 
 type Step = 'prompt' | 'generating' | 'review' | 'manual'
 
@@ -62,8 +63,13 @@ export function CreateProjectPage() {
   const [projectMode, setProjectMode] = useState<ProjectMode>('solo')
   const [joiningMode, setJoiningMode] = useState<JoiningMode>('application')
   const [capacity, setCapacity] = useState(3)
-  const [visibility, setVisibility] = useState<'public' | 'private'>('public')
+  const [visibility, setVisibility] = useState<'public' | 'private'>(
+    session?.active_workspace?.kind === 'organization' ? 'private' : 'public',
+  )
   const [aiLabeled, setAiLabeled] = useState(false)
+  const [programId, setProgramId] = useState(
+    session?.program_filter?.mode === 'program' ? (session.program_filter.program_id ?? '') : '',
+  )
 
   const [error, setError] = useState<string | null>(null)
   const [errorCode, setErrorCode] = useState<string | null>(null)
@@ -71,10 +77,64 @@ export function CreateProjectPage() {
   const [draftId, setDraftId] = useState<string | null>(routeDraftId ?? null)
   const [loadingDraft, setLoadingDraft] = useState(Boolean(routeDraftId))
   const [generationStatus, setGenerationStatus] = useState<string | null>(null)
+  const [livePrograms, setLivePrograms] = useState<ProgramFilterProgram[] | null>(null)
 
   const workspace = session?.active_workspace
   const isPersonal = workspace?.kind === 'personal'
   const remaining = session?.credits?.remaining ?? 0
+  const workspaceStatus = workspace?.workspace_status
+  const orgReadOnly =
+    workspaceStatus === 'offboarding_readonly' || workspaceStatus === 'disabled'
+  const activePrograms = (
+    livePrograms ??
+    session?.program_filter?.available_programs ??
+    []
+  ).filter((program) => program.status === 'active')
+
+  useEffect(() => {
+    if (workspace?.kind !== 'organization' || !workspace.organization_id) return
+    const orgId = workspace.organization_id
+    let cancelled = false
+    void (async () => {
+      const next = await refreshSession()
+      if (cancelled) return
+      if (next?.can_access_org_admin || session?.can_access_org_admin) {
+        try {
+          const data = await fetchPrograms(orgId)
+          if (cancelled) return
+          setLivePrograms(
+            data.programs.map((program) => ({
+              id: program.id,
+              name: program.name,
+              status: program.status,
+            })),
+          )
+          return
+        } catch {
+          // Staff list failed; fall through to the refreshed session catalog.
+        }
+      }
+      const catalog = next?.program_filter?.available_programs
+      if (catalog) setLivePrograms(catalog)
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [
+    refreshSession,
+    session?.can_access_org_admin,
+    workspace?.kind,
+    workspace?.organization_id,
+  ])
+
+  useEffect(() => {
+    if (isPersonal || programId) return
+    if (session?.program_filter?.mode === 'program' && session.program_filter.program_id) {
+      setProgramId(session.program_filter.program_id)
+      return
+    }
+    if (activePrograms.length === 1) setProgramId(activePrograms[0].id)
+  }, [activePrograms, isPersonal, programId, session?.program_filter])
 
   const rolesNeededList = useMemo(
     () =>
@@ -102,6 +162,7 @@ export function CreateProjectPage() {
       roles_needed: projectMode === 'team' ? rolesNeededList : [],
       proposed_tasks: proposedTasks,
       submission_expectations: submissionExpectations || null,
+      program_id: isPersonal ? null : programId || null,
     }),
     [
       title,
@@ -119,6 +180,8 @@ export function CreateProjectPage() {
       rolesNeededList,
       proposedTasks,
       submissionExpectations,
+      isPersonal,
+      programId,
     ],
   )
 
@@ -132,7 +195,14 @@ export function CreateProjectPage() {
       task.recommended_due_date &&
       task.recommended_due_date > endsOn.trim(),
   )
-  const confirmBlocked = endsOnMissing || tasksPastEndsOn || title.trim().length < 2 || !teamFieldsValid
+  const programMissing = !isPersonal && !programId
+  const confirmBlocked =
+    endsOnMissing ||
+    tasksPastEndsOn ||
+    title.trim().length < 2 ||
+    !teamFieldsValid ||
+    programMissing ||
+    orgReadOnly
 
   useEffect(() => {
     if (!routeDraftId) return
@@ -174,6 +244,7 @@ export function CreateProjectPage() {
     setProposedTasks(project.proposed_tasks ?? [])
     setSubmissionExpectations(project.submission_expectations ?? '')
     setAiLabeled(project.source === 'ai')
+    setProgramId(project.program_id ?? '')
   }
 
   function applyGenerationResult(result: Record<string, unknown>) {
@@ -227,6 +298,11 @@ export function CreateProjectPage() {
   }
 
   async function handleGenerate() {
+    if (programMissing) {
+      setError('Choose an active program before generating a draft.')
+      setErrorCode('program_required')
+      return
+    }
     setSaving(true)
     setError(null)
     setErrorCode(null)
@@ -256,7 +332,10 @@ export function CreateProjectPage() {
       applyGenerationResult(generation.result)
       const accepted = await apiFetch<{ project: Project; generation: AiGeneration }>(
         `/api/v1/ai/project_generations/${generation.id}/accept`,
-        { method: 'POST' },
+        {
+          method: 'POST',
+          body: JSON.stringify(isPersonal ? {} : { program_id: programId }),
+        },
       )
       applyProjectToForm(accepted.project)
       setDraftId(accepted.project.id)
@@ -300,6 +379,7 @@ export function CreateProjectPage() {
           capacity: draftPayload.capacity,
           roles_needed: draftPayload.roles_needed,
           visibility: draftPayload.visibility,
+          program_id: draftPayload.program_id,
         }),
       })
       if (
@@ -400,6 +480,29 @@ export function CreateProjectPage() {
     return <p className="text-ink-muted">Loading draft…</p>
   }
 
+  const programSelect = !isPersonal ? (
+    <label className="block space-y-1">
+      <span className="text-sm font-medium text-ink">Program</span>
+      <select
+        aria-label="Program"
+        className="w-full rounded-md border border-border bg-canvas px-3 py-2 text-ink"
+        value={programId}
+        onChange={(e) => setProgramId(e.target.value)}
+        disabled={orgReadOnly}
+      >
+        <option value="">Select a program</option>
+        {activePrograms.map((program) => (
+          <option key={program.id} value={program.id}>
+            {program.name}
+          </option>
+        ))}
+      </select>
+      <span className="text-xs text-ink-muted">
+        Organization projects must belong to an active program.
+      </span>
+    </label>
+  ) : null
+
   return (
     <div className="mx-auto max-w-2xl space-y-8">
       <header>
@@ -412,6 +515,24 @@ export function CreateProjectPage() {
           from this workspace ({remaining} remaining).
         </p>
       </header>
+
+      {orgReadOnly ? (
+        <Alert tone="warning" title="Organization is read-only">
+          New projects cannot be created while this organization is offboarding or disabled.
+        </Alert>
+      ) : null}
+
+      {errorCode === 'program_required' ? (
+        <Alert tone="warning" title="Program required">
+          {error || 'Choose an active program for this organization project.'}
+        </Alert>
+      ) : null}
+
+      {errorCode === 'organization_read_only' ? (
+        <Alert tone="warning" title="Organization is read-only">
+          {error}
+        </Alert>
+      ) : null}
 
       {errorCode === 'insufficient_credits' ? (
         <InsufficientCreditsInterception
@@ -464,6 +585,8 @@ export function CreateProjectPage() {
         'ai_schema_invalid',
         'ends_on_required',
         'task_due_after_ends_on',
+        'program_required',
+        'organization_read_only',
       ].includes(errorCode ?? '') ? (
         <Alert tone="danger" title="Something went wrong">
           {error}
@@ -478,6 +601,7 @@ export function CreateProjectPage() {
 
       {step === 'prompt' ? (
         <div className="space-y-4 rounded-lg border border-border bg-surface p-5">
+          {programSelect}
           <label className="block space-y-1" htmlFor={`${formId}-prompt`}>
             <span className="text-sm font-medium text-ink">Describe the project you want</span>
             <textarea
@@ -521,7 +645,7 @@ export function CreateProjectPage() {
           </div>
           <p className="text-sm text-ink-muted">Audience: Just me (solo)</p>
           <div className="flex flex-wrap gap-3">
-            <Button onClick={() => void handleGenerate()} disabled={saving || prompt.trim().length < 8}>
+            <Button onClick={() => void handleGenerate()} disabled={saving || prompt.trim().length < 8 || programMissing || orgReadOnly}>
               Generate with AI
             </Button>
             <Button variant="secondary" onClick={goManual} disabled={saving}>
@@ -551,6 +675,7 @@ export function CreateProjectPage() {
           ) : null}
 
           <div className="space-y-4 rounded-lg border border-border bg-surface p-5">
+            {programSelect}
             <label className="block space-y-1">
               <span className="text-sm font-medium text-ink">Title</span>
               <input
@@ -772,7 +897,7 @@ export function CreateProjectPage() {
             <Button
               variant="secondary"
               onClick={() => void handleSaveDraft()}
-              disabled={saving || title.trim().length < 2 || !teamFieldsValid}
+              disabled={saving || title.trim().length < 2 || !teamFieldsValid || programMissing || orgReadOnly}
             >
               Save draft
             </Button>

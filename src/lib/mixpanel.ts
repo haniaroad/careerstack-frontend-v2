@@ -330,3 +330,12 @@ export function trackProfileLinkCopied() {
     // fail soft
   }
 }
+
+export function trackUpgradeRequestSubmitted() {
+  try {
+    if (!ensureInit()) return
+    mixpanel.track('upgrade_request_submitted', { workspace_type: 'organization' })
+  } catch {
+    // fail soft — never send notes, emails, or date of birth
+  }
+}

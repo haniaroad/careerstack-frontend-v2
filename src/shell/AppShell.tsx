@@ -42,6 +42,43 @@ function Wordmark({ compact = false }: { compact?: boolean }) {
   )
 }
 
+function ProgramFilterControl() {
+  const { programFilter, setProgramFilter, activeWorkspaceId, workspaces } = useShell()
+  const activeWorkspace = workspaces.find((workspace) => workspace.id === activeWorkspaceId)
+  if (activeWorkspace?.type !== 'organization' || !programFilter) return null
+
+  const value = programFilter.mode === 'program' && programFilter.programId
+    ? programFilter.programId
+    : 'all'
+
+  return (
+    <label className="hidden min-w-0 sm:block">
+      <span className="sr-only">Program filter</span>
+      <select
+        data-testid="program-filter"
+        aria-label="Program filter"
+        className="h-9 max-w-[11rem] rounded-md border border-border bg-canvas px-2 text-sm"
+        value={value}
+        onChange={(event) => {
+          const next = event.target.value
+          if (next === 'all') {
+            void setProgramFilter('all')
+          } else {
+            void setProgramFilter('program', next)
+          }
+        }}
+      >
+        <option value="all">All programs</option>
+        {programFilter.availablePrograms.map((program) => (
+          <option key={program.id} value={program.id}>
+            {program.name}
+          </option>
+        ))}
+      </select>
+    </label>
+  )
+}
+
 function WorkspaceSwitcher() {
   const { workspaces, activeWorkspaceId, setActiveWorkspaceId } = useShell()
   const active =
@@ -268,6 +305,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               <Wordmark />
             </div>
             <WorkspaceSwitcher />
+            <ProgramFilterControl />
             <label className="relative hidden min-w-0 flex-1 md:block lg:max-w-md">
               <span className="sr-only">Search</span>
               <Search

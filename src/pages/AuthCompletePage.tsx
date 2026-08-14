@@ -4,7 +4,19 @@ import { Alert } from '@/components/Alert'
 import { AuthLayout } from '@/auth/AuthLayout'
 import { useAuth } from '@/auth/AuthContext'
 import { completeMagicLink } from '@/lib/firebase'
-import { consumeReturnTo } from '@/lib/publicSurfaces'
+import { consumeReturnTo, isInviteReturnTo, isSafeReturnTo } from '@/lib/publicSurfaces'
+
+function resumeAfterMagicLink() {
+  let fromQuery: string | null = null
+  try {
+    const value = new URLSearchParams(window.location.search).get('returnTo')
+    if (value && isSafeReturnTo(value)) fromQuery = value
+  } catch {
+    // ignore malformed query strings
+  }
+  const stored = consumeReturnTo('/onboarding')
+  return fromQuery ?? stored
+}
 
 export function AuthCompletePage() {
   const navigate = useNavigate()
@@ -16,7 +28,11 @@ export function AuthCompletePage() {
       try {
         await completeMagicLink()
         const session = await refreshSession()
-        const returnTo = consumeReturnTo('/onboarding')
+        const returnTo = resumeAfterMagicLink()
+        if (isInviteReturnTo(returnTo)) {
+          navigate(returnTo, { replace: true })
+          return
+        }
         if (
           session &&
           session.user.status !== 'pending_onboarding' &&

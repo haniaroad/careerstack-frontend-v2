@@ -68,9 +68,29 @@ export function projectAbsoluteUrl(slug: string) {
 
 const RETURN_TO_KEY = 'careerstack.returnTo'
 
+function readReturnTo() {
+  try {
+    return window.localStorage.getItem(RETURN_TO_KEY) ?? window.sessionStorage.getItem(RETURN_TO_KEY)
+  } catch {
+    return null
+  }
+}
+
+function clearReturnTo() {
+  try {
+    window.localStorage.removeItem(RETURN_TO_KEY)
+    window.sessionStorage.removeItem(RETURN_TO_KEY)
+  } catch {
+    // ignore
+  }
+}
+
 export function storeReturnTo(path: string) {
   try {
     if (!isSafeReturnTo(path)) return
+    // localStorage survives magic-link clicks that open a new tab; sessionStorage
+    // does not. Keep both so same-tab Google redirect still works.
+    window.localStorage.setItem(RETURN_TO_KEY, path)
     window.sessionStorage.setItem(RETURN_TO_KEY, path)
   } catch {
     // ignore storage failures
@@ -78,24 +98,24 @@ export function storeReturnTo(path: string) {
 }
 
 export function consumeReturnTo(fallback = '/onboarding') {
-  try {
-    const value = window.sessionStorage.getItem(RETURN_TO_KEY)
-    window.sessionStorage.removeItem(RETURN_TO_KEY)
-    if (value && isSafeReturnTo(value)) return value
-  } catch {
-    // ignore
-  }
+  const value = readReturnTo()
+  clearReturnTo()
+  if (value && isSafeReturnTo(value)) return value
   return fallback
 }
 
 export function peekReturnTo() {
-  try {
-    const value = window.sessionStorage.getItem(RETURN_TO_KEY)
-    if (value && isSafeReturnTo(value)) return value
-  } catch {
-    // ignore
-  }
+  const value = readReturnTo()
+  if (value && isSafeReturnTo(value)) return value
   return null
+}
+
+/** Organization invite links used to resume after Google or magic-link sign-in. */
+export function isInviteReturnTo(path: string) {
+  if (path === '/invite') return true
+  if (!path.startsWith('/invite/')) return false
+  const token = path.slice('/invite/'.length)
+  return token.length > 0 && !token.includes('/') && !token.includes('..') && !token.includes('?')
 }
 
 /** Same-origin relative paths only; public surfaces + shell destinations. */
@@ -103,6 +123,7 @@ export function isSafeReturnTo(path: string) {
   if (!path.startsWith('/') || path.startsWith('//')) return false
   if (path.includes('://')) return false
   return (
+    isInviteReturnTo(path) ||
     path.startsWith('/projects/') ||
     path.startsWith('/profile/') ||
     path === '/home' ||

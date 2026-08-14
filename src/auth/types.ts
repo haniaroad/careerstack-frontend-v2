@@ -1,8 +1,31 @@
+export type WorkspaceStatus = 'active' | 'offboarding_readonly' | 'disabled'
+
 export type SessionWorkspace = {
   id: string
   kind: 'personal' | 'organization'
   name: string
   organization_id: string | null
+  workspace_status?: WorkspaceStatus | null
+}
+
+export type OrgAdminCapabilities = {
+  can_archive_programs: boolean
+  can_delete_empty_drafts: boolean
+  can_remove_members: boolean
+  can_view_credit_history: boolean
+  can_submit_upgrade_request: boolean
+}
+
+export type ProgramFilterProgram = {
+  id: string
+  name: string
+  status: 'draft' | 'active' | 'archived'
+}
+
+export type ProgramFilter = {
+  mode: 'all' | 'program'
+  program_id: string | null
+  available_programs: ProgramFilterProgram[]
 }
 
 export type SessionPayload = {
@@ -27,14 +50,12 @@ export type SessionPayload = {
   active_workspace_id: string | null
   active_workspace?: SessionWorkspace | null
   can_access_org_admin: boolean
+  org_admin_capabilities: OrgAdminCapabilities | null
   age_visibility: {
     visibility_review_required: boolean
     public_identity_confirmed: boolean
   }
-  program_filter: {
-    mode: 'all' | 'program'
-    program_id: string | null
-  } | null
+  program_filter: ProgramFilter | null
   credits?: {
     remaining: number
     trial_remaining: number
