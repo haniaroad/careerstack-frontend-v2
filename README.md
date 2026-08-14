@@ -27,11 +27,18 @@ Useful routes:
 - `/sign-in`, `/auth/complete`, `/onboarding`, `/invite/:token`, `/welcome`, `/organizations/new` — AuthLayout (outside the shell)
 - `/projects/:slug`, `/profile/:slug` — shell-less public surfaces for anonymous visitors (create-account / sign-in preserve return-to intent)
 - `/home`, `/explore`, `/my-work`, `/inbox`, `/profile` — shell destinations (require completed onboarding)
-- `/projects/new`, `/projects/:id` (UUID), `/projects/:id/edit`, `/tasks/:id` — projects and tasks (solo + team joining on project detail)
+- `/organization` — Organization administration (staff in an Organization workspace: Programs · Members · Reports placeholder · Credits). Query `?tab=members|reports|credits` and `?program=<id>` for program detail.
+- `/projects/new`, `/projects/:id` (UUID), `/projects/:id/edit`, `/tasks/:id` — projects and tasks (solo + team joining on project detail). Organization projects require an active program.
+
 - `/status` — API health smoke page (outside the shell)
 - `/dev/design-system` — token/component gallery with preview shell stubs (local and staging only)
 
 Public project and profile pages call `GET /api/v1/public/projects/:slug` and `GET /api/v1/public/profiles/:slug` without a Firebase token. Onboarded users opening those URLs are routed into the authenticated shell. Project create/edit includes a Public link / Private visibility control.
+
+Organization workspaces show a **program filter** (All programs vs a specific program) in the shell header. It calls `POST /api/v1/workspaces/program_filter` and scopes My Work project lists. The control is hidden in Personal.
+
+Organization administration is reconstituted from the Evidence Standard (not an iframe): staff-only Programs, Members, Credits, and a Reports placeholder (no PDF/CSV). Inviting members is always free. Upgrade requests persist for administrators; Mixpanel only records `upgrade_request_submitted` with `workspace_type` — never notes or date of birth.
+
 
 Confirming a project requires `ends_on` (client + API). Active projects expose derived lifecycle `phase` (`normal` | `ending_soon` | `grace_period` | `read_only`) plus `final_expires_at`; Home surfaces ending/grace/expired warnings, and expired/completed projects are read-only on detail.
 

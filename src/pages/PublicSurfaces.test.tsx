@@ -35,6 +35,8 @@ describe('public surfaces', () => {
   beforeEach(() => {
     fetchPublicProject.mockReset()
     fetchPublicProfile.mockReset()
+    window.localStorage.clear()
+    window.sessionStorage.clear()
   })
 
   it('renders a public project without shell chrome', async () => {
@@ -129,5 +131,6 @@ describe('public surfaces', () => {
     await user.click(screen.getAllByRole('button', { name: 'Create account' })[0])
     expect(await screen.findByRole('heading', { name: 'Sign in' })).toBeInTheDocument()
     expect(window.sessionStorage.getItem('careerstack.returnTo')).toBe('/projects/public-portfolio')
+    expect(window.localStorage.getItem('careerstack.returnTo')).toBe('/projects/public-portfolio')
   })
 })

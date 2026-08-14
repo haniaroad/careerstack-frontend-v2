@@ -62,6 +62,34 @@ describe('AppShell', () => {
     expect(screen.getByTestId('org-admin-nav')).toBeInTheDocument()
   })
 
+  it('shows a program filter in organization workspaces', async () => {
+    const user = userEvent.setup()
+    const onSetProgramFilter = vi.fn()
+    renderShell('/home', {
+      canAccessOrgAdmin: true,
+      activeWorkspaceId: 'org-demo',
+      programFilter: {
+        mode: 'all',
+        programId: null,
+        availablePrograms: [{ id: 'prog-1', name: 'Fall Cohort', status: 'active' }],
+      },
+      onSetProgramFilter,
+    })
+
+    const filter = screen.getByTestId('program-filter')
+    expect(filter).toBeInTheDocument()
+    await user.selectOptions(filter, 'prog-1')
+    expect(onSetProgramFilter).toHaveBeenCalledWith('program', 'prog-1')
+  })
+
+  it('hides the program filter in a personal workspace', () => {
+    renderShell('/home', {
+      activeWorkspaceId: 'personal',
+      programFilter: null,
+    })
+    expect(screen.queryByTestId('program-filter')).not.toBeInTheDocument()
+  })
+
   it('switches the active workspace from the switcher', async () => {
     const user = userEvent.setup()
     renderShell()

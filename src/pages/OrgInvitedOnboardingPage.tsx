@@ -11,6 +11,7 @@ import { AuthLayout } from '@/auth/AuthLayout'
 import { useAuth } from '@/auth/AuthContext'
 import type { SessionPayload } from '@/auth/types'
 import { apiFetch, ApiError } from '@/lib/api'
+import { storeReturnTo } from '@/lib/publicSurfaces'
 
 const schema = z.object({
   invitation_token: z.string().min(1, 'Invite token is required'),
@@ -31,7 +32,7 @@ type TaxonomyTerm = { id: string; key: string; label: string }
 export function OrgInvitedOnboardingPage() {
   const { token: routeToken } = useParams()
   const navigate = useNavigate()
-  const { status, setSession } = useAuth()
+  const { status, session, setSession } = useAuth()
   const [roles, setRoles] = useState<TaxonomyTerm[]>([])
   const [inviteError, setInviteError] = useState<string | null>(null)
   const [invitePreview, setInvitePreview] = useState<{
@@ -58,6 +59,12 @@ export function OrgInvitedOnboardingPage() {
 
   const token = form.watch('invitation_token')
   const authenticated = status === 'authenticated'
+  const alreadyOnboarded =
+    session?.user.status === 'active' && (session.workspaces?.length ?? 0) > 0
+
+  useEffect(() => {
+    if (token) storeReturnTo(`/invite/${token}`)
+  }, [token])
 
   useEffect(() => {
     if (!authenticated) return
@@ -102,6 +109,24 @@ export function OrgInvitedOnboardingPage() {
     }
   }
 
+  async function joinExistingAccount() {
+    if (!token) {
+      setError('Invite token is required')
+      return
+    }
+    setError(null)
+    try {
+      const next = await apiFetch<SessionPayload>(
+        `/api/v1/invitations/${encodeURIComponent(token)}/accept`,
+        { method: 'POST' },
+      )
+      setSession(next)
+      navigate('/welcome')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unable to join organization')
+    }
+  }
+
   if (status === 'loading') {
     return (
       <AuthLayout
@@ -141,6 +166,50 @@ export function OrgInvitedOnboardingPage() {
             }
           >
             Continue to sign in
+          </Button>
+        </div>
+      </AuthLayout>
+    )
+  }
+
+  if (alreadyOnboarded) {
+    return (
+      <AuthLayout
+        eyebrow="Organization invite"
+        title="Join this organization"
+        description="Your CareerStack account is ready. Accept this invitation to add the organization to your workspace switcher."
+      >
+        <div className="space-y-4">
+          {inviteError ? (
+            <div data-testid="invite-error">
+              <Alert tone="danger" title="Invite problem">
+                {inviteError}
+              </Alert>
+            </div>
+          ) : null}
+          {error ? (
+            <Alert tone="danger" title="Could not continue">
+              {error}
+            </Alert>
+          ) : null}
+          {invitePreview ? (
+            <Alert tone="info" title={invitePreview.organization_name}>
+              {invitePreview.program_name
+                ? `Program: ${invitePreview.program_name}`
+                : 'Organization invitation'}
+            </Alert>
+          ) : null}
+          <div className="space-y-2">
+            <Label htmlFor="invitation_token">Invite token</Label>
+            <Input id="invitation_token" {...form.register('invitation_token')} />
+          </div>
+          <Button
+            type="button"
+            className="h-10 w-full bg-ink text-canvas hover:bg-black"
+            disabled={!token || Boolean(inviteError)}
+            onClick={() => void joinExistingAccount()}
+          >
+            Join organization
           </Button>
         </div>
       </AuthLayout>

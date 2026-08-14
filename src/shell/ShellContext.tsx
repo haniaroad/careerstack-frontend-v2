@@ -43,6 +43,13 @@ export function ShellProvider({ children, initial }: ShellProviderProps) {
     [initial],
   )
 
+  const setProgramFilter = useCallback(
+    (mode: 'all' | 'program', programId?: string | null) => {
+      void initial?.onSetProgramFilter?.(mode, programId)
+    },
+    [initial],
+  )
+
   const value = useMemo<ShellContextValue>(
     () => ({
       userDisplayName: initial?.userDisplayName ?? 'Preview User',
@@ -52,7 +59,10 @@ export function ShellProvider({ children, initial }: ShellProviderProps) {
       canAccessOrgAdmin: initial?.canAccessOrgAdmin ?? false,
       isImpersonating,
       creditRemaining: initial?.creditRemaining ?? null,
+      programFilter: initial?.programFilter ?? null,
+      workspaceStatus: initial?.workspaceStatus ?? null,
       setActiveWorkspaceId,
+      setProgramFilter,
       exitImpersonation,
       signOut: initial?.onSignOut,
     }),
@@ -63,9 +73,12 @@ export function ShellProvider({ children, initial }: ShellProviderProps) {
       initial?.creditRemaining,
       initial?.notificationCount,
       initial?.onSignOut,
+      initial?.programFilter,
       initial?.userDisplayName,
+      initial?.workspaceStatus,
       isImpersonating,
       setActiveWorkspaceId,
+      setProgramFilter,
       workspaces,
     ],
   )
