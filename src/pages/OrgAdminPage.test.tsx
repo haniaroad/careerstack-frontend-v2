@@ -27,6 +27,7 @@ vi.mock('@/auth/AuthContext', () => ({
 
 vi.mock('@/lib/mixpanel', () => ({
   trackUpgradeRequestSubmitted: vi.fn(),
+  trackReportGenerated: vi.fn(),
 }))
 
 const adminCapabilities = {
@@ -35,6 +36,7 @@ const adminCapabilities = {
   can_remove_members: true,
   can_view_credit_history: true,
   can_submit_upgrade_request: true,
+  can_export_reports: true,
 }
 
 const managerCapabilities = {
@@ -43,6 +45,7 @@ const managerCapabilities = {
   can_remove_members: false,
   can_view_credit_history: false,
   can_submit_upgrade_request: false,
+  can_export_reports: true,
 }
 
 const program = {
@@ -185,6 +188,111 @@ function staffSession(canAccess = true): SessionPayload {
 function mockStaffApis(capabilities = adminCapabilities) {
   apiFetch.mockImplementation(async (path: string, init?: RequestInit) => {
     if (String(path).includes('/admin')) return adminPayload(capabilities)
+    if (String(path).includes('/outcome_aggregates')) {
+      return {
+        outcomes: [
+          { outcome_type: 'internship', label: 'Internship', count: 3, reporting_label: 'self_reported' },
+        ],
+      }
+    }
+    if (String(path).includes('/organization_reports') && String(path).includes('/generate')) {
+      return {
+        report: {
+          id: 'rep-1',
+          organization_id: 'org-1',
+          title: 'Fall Cohort · Jan 1, 2026 – Mar 31, 2026',
+          program_id: 'prog-1',
+          program_name: 'Fall Cohort',
+          period_starts_on: '2026-01-01',
+          period_ends_on: '2026-03-31',
+          period_label: 'Jan 1, 2026 – Mar 31, 2026',
+          format: 'pdf',
+          aggregate_only: false,
+          includes_minor_names: true,
+          status: 'ready',
+          generated_at: '2026-08-14T00:00:00Z',
+          methodology_note: 'Snapshot',
+          error_code: null,
+        },
+      }
+    }
+    if (/\/organization_reports\/[^/]+$/.test(String(path)) && init?.method !== 'POST') {
+      return {
+        report: {
+          id: 'rep-1',
+          organization_id: 'org-1',
+          title: 'Fall Cohort · Jan 1, 2026 – Mar 31, 2026',
+          program_id: 'prog-1',
+          program_name: 'Fall Cohort',
+          period_starts_on: '2026-01-01',
+          period_ends_on: '2026-03-31',
+          period_label: 'Jan 1, 2026 – Mar 31, 2026',
+          format: 'pdf',
+          aggregate_only: false,
+          includes_minor_names: true,
+          status: 'ready',
+          generated_at: '2026-08-14T00:00:00Z',
+          methodology_note: 'Snapshot',
+          error_code: null,
+        },
+      }
+    }
+    if (String(path).includes('/organization_reports') && String(path).includes('/download')) {
+      const body = init?.body ? JSON.parse(String(init.body)) : {}
+      if (!body.confirm_minor_names) {
+        const { ApiError } = await import('@/lib/api')
+        throw new ApiError(
+          422,
+          'minor_names_confirmation_required',
+          'This report includes minor names. Confirm before download.',
+        )
+      }
+      return { url: 'https://files.example/report.pdf', expires_at: '2026-08-14T12:15:00Z' }
+    }
+    if (String(path).includes('/reports') && init?.method === 'POST') {
+      return {
+        report: {
+          id: 'rep-new',
+          organization_id: 'org-1',
+          title: 'All programs · Jan 1, 2026 – Dec 31, 2026',
+          program_id: null,
+          program_name: null,
+          period_starts_on: '2026-01-01',
+          period_ends_on: '2026-12-31',
+          period_label: 'Jan 1, 2026 – Dec 31, 2026',
+          format: 'csv',
+          aggregate_only: true,
+          includes_minor_names: false,
+          status: 'draft',
+          generated_at: null,
+          methodology_note: 'Snapshot',
+          error_code: null,
+        },
+      }
+    }
+    if (String(path).includes('/reports')) {
+      return {
+        reports: [
+          {
+            id: 'rep-1',
+            organization_id: 'org-1',
+            title: 'Fall Cohort · Jan 1, 2026 – Mar 31, 2026',
+            program_id: 'prog-1',
+            program_name: 'Fall Cohort',
+            period_starts_on: '2026-01-01',
+            period_ends_on: '2026-03-31',
+            period_label: 'Jan 1, 2026 – Mar 31, 2026',
+            format: 'pdf',
+            aggregate_only: false,
+            includes_minor_names: true,
+            status: 'ready',
+            generated_at: '2026-08-14T00:00:00Z',
+            methodology_note: 'Snapshot',
+            error_code: null,
+          },
+        ],
+      }
+    }
     if (String(path).includes('/programs') && !init?.method) return { programs: [program, draftProgram] }
     if (String(path).includes('/memberships')) return { memberships: [lastAdmin, participantMember] }
     if (String(path).includes('/invitations')) {
@@ -255,6 +363,7 @@ describe('OrgAdminPage', () => {
   beforeEach(() => {
     apiFetch.mockReset()
     session = staffSession(true)
+    vi.stubGlobal('open', vi.fn())
   })
 
   it('blocks participants from organization administration', () => {
@@ -333,14 +442,92 @@ describe('OrgAdminPage', () => {
     expect(upgradeCall).toBeTruthy()
   })
 
-  it('renders Reports as a deferred placeholder', async () => {
+  it('renders Reports with generate/download instead of a placeholder', async () => {
     mockStaffApis()
     const user = userEvent.setup()
     renderPage()
     expect(await screen.findByRole('heading', { name: 'Organization administration' })).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: /Reports/i }))
-    expect(screen.getByText(/Reports are coming later/i)).toBeInTheDocument()
-    expect(screen.getByText(/No files are generated here/i)).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: /New report/i })).not.toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: /New report/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /Self-reported outcomes/i })).toBeInTheDocument()
+    expect(screen.queryByText(/Reports are coming later/i)).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: /Download/i }))
+    expect(await screen.findByText(/Report includes minor names/i)).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: /Continue download/i }))
+    await waitFor(() => {
+      expect(apiFetch).toHaveBeenCalledWith(
+        expect.stringContaining('/download'),
+        expect.objectContaining({ method: 'POST' }),
+      )
+    })
+  })
+
+  it('polls a generating snapshot until it is ready', async () => {
+    const user = userEvent.setup()
+    const generating = {
+      id: 'rep-new',
+      organization_id: 'org-1',
+      title: 'All programs · Jan 1, 2026 – Dec 31, 2026',
+      program_id: null,
+      program_name: null,
+      period_starts_on: '2026-01-01',
+      period_ends_on: '2026-12-31',
+      period_label: 'Jan 1, 2026 – Dec 31, 2026',
+      format: 'csv' as const,
+      aggregate_only: true,
+      includes_minor_names: false,
+      status: 'generating' as const,
+      generated_at: null,
+      methodology_note: 'Snapshot',
+      error_code: null,
+    }
+    mockStaffApis()
+    const fallback = apiFetch.getMockImplementation()!
+    let polls = 0
+    apiFetch.mockImplementation(async (path: string, init?: RequestInit) => {
+      if (String(path).includes('/generate')) {
+        return { report: generating }
+      }
+      if (/\/organization_reports\/rep-new$/.test(String(path))) {
+        polls += 1
+        return {
+          report: {
+            ...generating,
+            status: polls >= 2 ? 'ready' : 'generating',
+            generated_at: polls >= 2 ? '2026-08-14T00:00:00Z' : null,
+          },
+        }
+      }
+      if (String(path).includes('/reports') && init?.method !== 'POST') {
+        return { reports: [] }
+      }
+      return fallback(path, init)
+    })
+
+    renderPage()
+    await screen.findByRole('heading', { name: 'Organization administration' })
+    await user.click(screen.getByRole('button', { name: /Reports/i }))
+    await user.click(await screen.findByRole('button', { name: /New report/i }))
+    await user.click(screen.getByRole('button', { name: /Create and generate/i }))
+    expect(await screen.findByText('Ready')).toBeInTheDocument()
+    expect(apiFetch).toHaveBeenCalledWith(expect.stringMatching(/\/organization_reports\/rep-new$/))
+  })
+
+  it('lets staff create an aggregate-only CSV', async () => {
+    mockStaffApis()
+    const user = userEvent.setup()
+    renderPage()
+    await screen.findByRole('heading', { name: 'Organization administration' })
+    await user.click(screen.getByRole('button', { name: /Reports/i }))
+    await user.click(await screen.findByRole('button', { name: /New report/i }))
+    await user.selectOptions(screen.getByLabelText('Format'), 'csv')
+    await user.click(screen.getByLabelText(/Aggregate only/i))
+    await user.click(screen.getByRole('button', { name: /Create and generate/i }))
+    await waitFor(() => {
+      expect(apiFetch).toHaveBeenCalledWith(
+        expect.stringContaining('/reports'),
+        expect.objectContaining({ method: 'POST' }),
+      )
+    })
   })
 })

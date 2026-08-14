@@ -14,6 +14,7 @@ export type OrgAdminCapabilities = {
   can_remove_members: boolean
   can_view_credit_history: boolean
   can_submit_upgrade_request: boolean
+  can_export_reports: boolean
 }
 
 export type ProgramFilterProgram = {

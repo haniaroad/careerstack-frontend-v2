@@ -109,6 +109,21 @@ describe('ProfilePage', () => {
     expect(screen.getByText('Projects completed')).toBeInTheDocument()
   })
 
+  it('omits organization outcome capture for personal-only Settings', async () => {
+    const user = userEvent.setup()
+    apiFetch.mockResolvedValue({ profile: ownProfile })
+    render(
+      <MemoryRouter>
+        <ProfilePage />
+      </MemoryRouter>,
+    )
+
+    await screen.findByText('/profile/alex-morgan')
+    await user.click(screen.getByRole('tab', { name: 'Settings' }))
+    expect(screen.queryByRole('heading', { name: /Self-reported outcomes/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Add outcome/i })).not.toBeInTheDocument()
+  })
+
   it('saves details via PATCH', async () => {
     const user = userEvent.setup()
     apiFetch

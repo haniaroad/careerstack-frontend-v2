@@ -28,6 +28,7 @@ export type OrgAdminCapabilities = {
   can_remove_members: boolean
   can_view_credit_history: boolean
   can_submit_upgrade_request: boolean
+  can_export_reports: boolean
 }
 
 export type OrganizationAdminOrg = {
@@ -279,4 +280,119 @@ export function creditHistoryLabel(entry: CreditHistoryEntry) {
   if (entry.event === 'restore') return 'Credit restored'
   if (entry.event === 'refund_reversal') return 'Refund reversal'
   return entry.reason.replaceAll('_', ' ')
+}
+
+export type ReportFormat = 'pdf' | 'csv'
+export type ReportStatus = 'draft' | 'generating' | 'ready' | 'failed'
+
+export type OrganizationReport = {
+  id: string
+  organization_id: string
+  title: string
+  program_id: string | null
+  program_name: string | null
+  period_starts_on: string
+  period_ends_on: string
+  period_label: string
+  format: ReportFormat
+  aggregate_only: boolean
+  includes_minor_names: boolean
+  status: ReportStatus
+  generated_at: string | null
+  methodology_note: string | null
+  error_code: string | null
+}
+
+export type OutcomeAggregate = {
+  outcome_type: string
+  label: string
+  count: number
+  reporting_label: 'self_reported'
+}
+
+export type SelfReportedOutcome = {
+  id: string
+  organization_id: string
+  program_id: string | null
+  project_id: string | null
+  outcome_type: string
+  label: string
+  occurred_on: string
+  month: number
+  year: number
+  careerstack_contribution: 'yes' | 'partially' | 'not_sure'
+  institution: string | null
+  title: string | null
+  note: string | null
+  reporting_label: 'self_reported'
+}
+
+export function fetchReports(organizationId: string) {
+  return apiFetch<{ reports: OrganizationReport[] }>(
+    `/api/v1/organizations/${organizationId}/reports`,
+  )
+}
+
+export function createReport(
+  organizationId: string,
+  params: {
+    period_starts_on: string
+    period_ends_on: string
+    program_id?: string | null
+    format: ReportFormat
+    aggregate_only: boolean
+  },
+) {
+  return apiFetch<{ report: OrganizationReport }>(`/api/v1/organizations/${organizationId}/reports`, {
+    method: 'POST',
+    body: JSON.stringify(params),
+  })
+}
+
+export function fetchReport(reportId: string) {
+  return apiFetch<{ report: OrganizationReport }>(`/api/v1/organization_reports/${reportId}`)
+}
+
+export function generateReport(reportId: string) {
+  return apiFetch<{ report: OrganizationReport }>(`/api/v1/organization_reports/${reportId}/generate`, {
+    method: 'POST',
+  })
+}
+
+export function downloadReport(reportId: string, confirmMinorNames = false) {
+  return apiFetch<{ url: string; expires_at: string }>(
+    `/api/v1/organization_reports/${reportId}/download`,
+    {
+      method: 'POST',
+      body: JSON.stringify({ confirm_minor_names: confirmMinorNames }),
+    },
+  )
+}
+
+export function fetchOutcomeAggregates(organizationId: string, programId?: string | null) {
+  const query = programId ? `?program_id=${programId}` : ''
+  return apiFetch<{ outcomes: OutcomeAggregate[] }>(
+    `/api/v1/organizations/${organizationId}/outcome_aggregates${query}`,
+  )
+}
+
+export function fetchOwnOutcomes() {
+  return apiFetch<{ outcomes: SelfReportedOutcome[] }>('/api/v1/outcomes')
+}
+
+export function createOutcome(params: {
+  outcome_type: string
+  month: number
+  year: number
+  careerstack_contribution: 'yes' | 'partially' | 'not_sure'
+  institution?: string
+  title?: string
+  note?: string
+  program_id?: string | null
+  project_id?: string | null
+}) {
+  return apiFetch<{ outcome: SelfReportedOutcome }>('/api/v1/outcomes', {
+    method: 'POST',
+    body: JSON.stringify(params),
+  })
 }

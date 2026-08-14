@@ -339,3 +339,21 @@ export function trackUpgradeRequestSubmitted() {
     // fail soft — never send notes, emails, or date of birth
   }
 }
+
+/** Non-PII report generation. Fail soft — never names, emails, notes, or outcome text. */
+export function trackReportGenerated(props: {
+  workspace_type: 'organization'
+  format: 'pdf' | 'csv'
+  aggregate_only: boolean
+}) {
+  try {
+    if (!ensureInit()) return
+    mixpanel.track('report_generated', {
+      workspace_type: props.workspace_type,
+      format: props.format,
+      aggregate_only: props.aggregate_only,
+    })
+  } catch {
+    // fail soft
+  }
+}

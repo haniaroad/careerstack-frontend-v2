@@ -13,6 +13,7 @@ import {
   fetchMemberships,
   fetchOrganizationAdmin,
   fetchPrograms,
+  fetchReports,
   removeMembership,
   updateMembership,
   updateProgram,
@@ -29,7 +30,7 @@ import { MembersPanel } from './org-admin/MembersPanel'
 import { OperationalPulseBar } from './org-admin/OperationalPulseBar'
 import { OrgEdgeBanner } from './org-admin/OrgEdgeBanner'
 import { ProgramsPanel } from './org-admin/ProgramsPanel'
-import { ReportsPlaceholder } from './org-admin/ReportsPlaceholder'
+import { ReportsPanel } from './org-admin/ReportsPanel'
 
 const TABS: { id: OrgAdminTab; label: string }[] = [
   { id: 'programs', label: 'Programs' },
@@ -51,6 +52,7 @@ export function OrgAdminPage() {
   const [invitations, setInvitations] = useState<OrgInvitation[]>([])
   const [history, setHistory] = useState<CreditHistoryEntry[]>([])
   const [historyForbidden, setHistoryForbidden] = useState(false)
+  const [reportCount, setReportCount] = useState(0)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -59,16 +61,19 @@ export function OrgAdminPage() {
     setLoading(true)
     setError(null)
     try {
-      const [adminPayload, programPayload, memberPayload, invitePayload] = await Promise.all([
-        fetchOrganizationAdmin(organizationId),
-        fetchPrograms(organizationId),
-        fetchMemberships(organizationId),
-        fetchInvitations(organizationId),
-      ])
+      const [adminPayload, programPayload, memberPayload, invitePayload, reportPayload] =
+        await Promise.all([
+          fetchOrganizationAdmin(organizationId),
+          fetchPrograms(organizationId),
+          fetchMemberships(organizationId),
+          fetchInvitations(organizationId),
+          fetchReports(organizationId),
+        ])
       setAdmin(adminPayload)
       setPrograms(programPayload.programs)
       setMemberships(memberPayload.memberships)
       setInvitations(invitePayload.invitations)
+      setReportCount(reportPayload.reports.length)
 
       if (adminPayload.capabilities.can_view_credit_history) {
         try {
@@ -105,10 +110,10 @@ export function OrgAdminPage() {
       programs: programs.filter((program) => program.status !== 'archived' || program.name.trim())
         .length,
       members: memberships.length,
-      reports: 0,
+      reports: reportCount,
       credits: admin?.credits.remaining ?? 0,
     }),
-    [admin?.credits.remaining, memberships.length, programs],
+    [admin?.credits.remaining, memberships.length, programs, reportCount],
   )
 
   function setTab(next: OrgAdminTab) {
@@ -288,7 +293,14 @@ export function OrgAdminPage() {
         />
       ) : null}
 
-      {tab === 'reports' ? <ReportsPlaceholder /> : null}
+      {tab === 'reports' ? (
+        <ReportsPanel
+          organizationId={organizationId}
+          programs={programs}
+          workspaceStatus={admin.organization.workspace_status}
+          onCountChange={setReportCount}
+        />
+      ) : null}
 
       {tab === 'credits' ? (
         <CreditsPanel
