@@ -1,4 +1,4 @@
-import { useCallback, useMemo, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useRef, type ReactNode } from 'react'
 import { useAuth } from '@/auth/AuthContext'
 import type { SessionPayload } from '@/auth/types'
 import { apiFetch } from '@/lib/api'
@@ -15,7 +15,7 @@ function toShellWorkspaces(session: SessionPayload): ShellWorkspace[] {
 }
 
 export function SessionShellProvider({ children }: { children: ReactNode }) {
-  const { session, setSession, signOut } = useAuth()
+  const { session, setSession, signOut, refreshSession } = useAuth()
 
   const switchWorkspace = useCallback(
     async (workspaceId: string) => {
@@ -63,6 +63,25 @@ export function SessionShellProvider({ children }: { children: ReactNode }) {
       onSignOut: signOut,
     }
   }, [session, signOut, switchWorkspace, onSetProgramFilter])
+
+  const timezoneSynced = useRef(false)
+  useEffect(() => {
+    if (!session?.user || timezoneSynced.current) return
+    const detected = Intl.DateTimeFormat().resolvedOptions().timeZone
+    if (!detected || session.user.timezone === detected) {
+      timezoneSynced.current = true
+      return
+    }
+    timezoneSynced.current = true
+    void apiFetch('/api/v1/profiles/me', {
+      method: 'PATCH',
+      body: JSON.stringify({ timezone: detected }),
+    })
+      .then(() => refreshSession())
+      .catch(() => {
+        // fail soft — timezone can be retried next session
+      })
+  }, [session, refreshSession])
 
   return <ShellProvider initial={initial}>{children}</ShellProvider>
 }

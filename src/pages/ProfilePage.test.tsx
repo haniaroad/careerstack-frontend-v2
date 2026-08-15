@@ -40,6 +40,7 @@ vi.mock('@/lib/mixpanel', () => ({
   trackProfileVisibilityConfirmed: vi.fn(),
   trackProfileVisibilityReversed: vi.fn(),
   trackProfileLinkCopied: vi.fn(),
+  trackNotificationPreferenceUpdated: vi.fn(),
 }))
 
 const ownProfile = {
@@ -85,10 +86,38 @@ const ownProfile = {
   links: [],
 }
 
+const samplePreferences = [
+  {
+    id: 'account',
+    label: 'Security and account',
+    description: 'Invitations, removals, cancellations, receipts, and required account notices.',
+    tier: 'mandatory' as const,
+    can_disable: false,
+    email_enabled: true,
+    digest_cadence: null,
+  },
+  {
+    id: 'project_activity',
+    label: 'Project activity',
+    description: 'Assignments and submissions.',
+    tier: 'realtime_config' as const,
+    can_disable: true,
+    email_enabled: true,
+    digest_cadence: 'realtime',
+  },
+]
+
 describe('ProfilePage', () => {
   beforeEach(() => {
     apiFetch.mockReset()
     refreshSession.mockClear()
+    apiFetch.mockImplementation(async (path: unknown) => {
+      const url = String(path)
+      if (url.includes('/api/v1/notification_preferences')) {
+        return { preferences: samplePreferences }
+      }
+      return { profile: ownProfile }
+    })
   })
 
   afterEach(() => {
@@ -96,7 +125,6 @@ describe('ProfilePage', () => {
   })
 
   it('renders own profile tabs and slug', async () => {
-    apiFetch.mockResolvedValue({ profile: ownProfile })
     render(
       <MemoryRouter>
         <ProfilePage />
@@ -111,7 +139,6 @@ describe('ProfilePage', () => {
 
   it('omits organization outcome capture for personal-only Settings', async () => {
     const user = userEvent.setup()
-    apiFetch.mockResolvedValue({ profile: ownProfile })
     render(
       <MemoryRouter>
         <ProfilePage />
@@ -122,18 +149,28 @@ describe('ProfilePage', () => {
     await user.click(screen.getByRole('tab', { name: 'Settings' }))
     expect(screen.queryByRole('heading', { name: /Self-reported outcomes/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /Add outcome/i })).not.toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: /Email notifications/i })).toBeInTheDocument()
+    expect(screen.getByRole('checkbox', { name: /Security and account email notifications/i })).toBeDisabled()
+    expect(screen.getByRole('checkbox', { name: /Project activity email notifications/i })).toBeEnabled()
   })
 
   it('saves details via PATCH', async () => {
     const user = userEvent.setup()
-    apiFetch
-      .mockResolvedValueOnce({ profile: ownProfile })
-      .mockResolvedValueOnce({
-        profile: {
-          ...ownProfile,
-          details: { ...ownProfile.details, display_name: 'Alex Updated', bio: 'Hello' },
-        },
-      })
+    apiFetch.mockImplementation(async (path: unknown, init?: { method?: string }) => {
+      const url = String(path)
+      if (url.includes('/api/v1/notification_preferences')) {
+        return { preferences: samplePreferences }
+      }
+      if (init?.method === 'PATCH') {
+        return {
+          profile: {
+            ...ownProfile,
+            details: { ...ownProfile.details, display_name: 'Alex Updated', bio: 'Hello' },
+          },
+        }
+      }
+      return { profile: ownProfile }
+    })
 
     render(
       <MemoryRouter>
@@ -156,17 +193,23 @@ describe('ProfilePage', () => {
   })
 
   it('shows age-up confirm when review is required', async () => {
-    apiFetch.mockResolvedValue({
-      profile: {
-        ...ownProfile,
-        visibility: 'restricted',
-        public_identity_visible: false,
-        age_visibility: {
-          visibility_review_required: true,
-          public_identity_confirmed: false,
-          confirmed_at: null,
+    apiFetch.mockImplementation(async (path: unknown) => {
+      const url = String(path)
+      if (url.includes('/api/v1/notification_preferences')) {
+        return { preferences: samplePreferences }
+      }
+      return {
+        profile: {
+          ...ownProfile,
+          visibility: 'restricted',
+          public_identity_visible: false,
+          age_visibility: {
+            visibility_review_required: true,
+            public_identity_confirmed: false,
+            confirmed_at: null,
+          },
         },
-      },
+      }
     })
 
     render(

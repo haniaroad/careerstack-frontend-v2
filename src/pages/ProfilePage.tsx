@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '@/auth/AuthContext'
 import { Alert } from '@/components/Alert'
 import { Button } from '@/components/Button'
@@ -12,6 +12,7 @@ import {
   trackProfileViewed,
   trackProfileVisibilityConfirmed,
   trackProfileVisibilityReversed,
+  trackNotificationPreferenceUpdated,
 } from '@/lib/mixpanel'
 import {
   fetchOwnProfile,
@@ -22,6 +23,12 @@ import {
   updateProfileVisibility,
 } from '@/lib/profiles'
 import { OutcomesSettings } from '@/pages/profile/OutcomesSettings'
+import { NotificationSettings } from '@/pages/profile/NotificationSettings'
+import {
+  fetchNotificationPreferences,
+  updateNotificationPreferences,
+  type NotificationPreference,
+} from '@/lib/notifications'
 
 type Tab = 'details' | 'activity' | 'skills' | 'settings'
 
@@ -173,8 +180,10 @@ function CopyLinkControl({
 export function ProfilePage() {
   const { session, refreshSession } = useAuth()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const [tab, setTab] = useState<Tab>('details')
   const [profile, setProfile] = useState<ProfilePayload | null>(null)
+  const [preferences, setPreferences] = useState<NotificationPreference[]>([])
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [form, setForm] = useState({
@@ -214,6 +223,19 @@ export function ProfilePage() {
   useEffect(() => {
     void load()
   }, [load])
+
+  useEffect(() => {
+    if (searchParams.get('tab') === 'settings') setTab('settings')
+  }, [searchParams])
+
+  useEffect(() => {
+    if (tab !== 'settings') return
+    void fetchNotificationPreferences()
+      .then((rows) => setPreferences(rows ?? []))
+      .catch(() => {
+        setPreferences([])
+      })
+  }, [tab])
 
   const genuinelyPublic = useMemo(
     () => profile?.visibility === 'public_adult' && profile.public_identity_visible,
@@ -510,8 +532,23 @@ export function ProfilePage() {
               </Alert>
             ) : null}
             <p className="pt-2 text-sm text-ink-muted">
-              Email notification preferences will land with the notifications change.
+              Email notification preferences apply in Personal and Organization workspaces.
             </p>
+          </section>
+          <section className="space-y-3 rounded-lg border border-border bg-surface p-5">
+            <h2 className="text-lg font-semibold text-ink">Email notifications</h2>
+            <NotificationSettings
+              preferences={preferences}
+              onToggle={(id, emailEnabled) => {
+                const workspaceType = isPersonal ? 'personal' : 'organization'
+                trackNotificationPreferenceUpdated({ category: id, workspace_type: workspaceType })
+                void updateNotificationPreferences([{ id, email_enabled: emailEnabled }])
+                  .then(setPreferences)
+                  .catch(() => {
+                    setError('Could not update notification preferences')
+                  })
+              }}
+            />
           </section>
           <OutcomesSettings
             hasOrganizationWorkspace={hasOrganizationWorkspace}
