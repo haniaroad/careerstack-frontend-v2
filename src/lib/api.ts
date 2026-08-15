@@ -90,5 +90,10 @@ export async function apiFetch<T>(
   }
 
   if (response.status === 204) return undefined as T
-  return parseJsonBody<T>(response)
+  const payload = await parseJsonBody<T>(response)
+  const method = (init.method || 'GET').toUpperCase()
+  if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(method)) {
+    window.dispatchEvent(new CustomEvent('careerstack:notifications-refresh'))
+  }
+  return payload
 }

@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { Bell, ChevronDown, Menu, Search } from 'lucide-react'
+import { ChevronDown, Menu, Search } from 'lucide-react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { Avatar, AvatarFallback } from '@/components/Avatar'
 import { Button } from '@/components/Button'
@@ -14,6 +14,7 @@ import {
 import { Input } from '@/components/Input'
 import { cn } from '@/lib/utils'
 import { ImpersonationBanner } from './ImpersonationBanner'
+import { NotificationCenter } from './NotificationCenter'
 import { useShell } from './ShellContext'
 import {
   MOBILE_BOTTOM_DESTINATIONS,
@@ -285,7 +286,7 @@ function MobileBottomNav() {
 }
 
 export function AppShell({ children }: { children: ReactNode }) {
-  const { notificationCount, creditRemaining } = useShell()
+  const { creditRemaining } = useShell()
   const navigate = useNavigate()
 
   return (
@@ -334,26 +335,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 {creditRemaining} credits
               </Button>
             ) : null}
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="relative"
-              aria-label={
-                notificationCount > 0
-                  ? `Notifications, ${notificationCount} unread`
-                  : 'Notifications'
-              }
-              onClick={() => navigate('/inbox')}
-            >
-              <Bell className="size-[18px]" strokeWidth={1.75} aria-hidden />
-              {notificationCount > 0 ? (
-                <span
-                  className="absolute top-2 right-2 size-2 rounded-full bg-primary ring-2 ring-surface"
-                  aria-hidden
-                />
-              ) : null}
-            </Button>
+            <NotificationCenter />
             <ProfileMenu />
           </div>
         </header>

@@ -340,6 +340,38 @@ export function trackUpgradeRequestSubmitted() {
   }
 }
 
+/** Non-PII notification center open. Fail soft — never body copy, emails, or DOB. */
+export function trackNotificationOpened(props: {
+  event_key: string
+  workspace_type: 'personal' | 'organization'
+}) {
+  try {
+    if (!ensureInit()) return
+    mixpanel.track('notification_opened', {
+      event_key: props.event_key,
+      workspace_type: props.workspace_type,
+    })
+  } catch {
+    // fail soft
+  }
+}
+
+/** Non-PII preference update. Fail soft — category only. */
+export function trackNotificationPreferenceUpdated(props: {
+  category: string
+  workspace_type: 'personal' | 'organization'
+}) {
+  try {
+    if (!ensureInit()) return
+    mixpanel.track('notification_preference_updated', {
+      category: props.category,
+      workspace_type: props.workspace_type,
+    })
+  } catch {
+    // fail soft
+  }
+}
+
 /** Non-PII report generation. Fail soft — never names, emails, notes, or outcome text. */
 export function trackReportGenerated(props: {
   workspace_type: 'organization'

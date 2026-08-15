@@ -1,9 +1,19 @@
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { AppShell } from './AppShell'
 import { ShellProvider } from './ShellContext'
+
+const apiFetch = vi.fn()
+
+vi.mock('@/lib/api', () => ({
+  apiFetch: (...args: unknown[]) => apiFetch(...args),
+}))
+
+vi.mock('@/lib/mixpanel', () => ({
+  trackNotificationOpened: vi.fn(),
+}))
 
 function renderShell(
   initialPath = '/home',
@@ -36,6 +46,30 @@ function renderShell(
 }
 
 describe('AppShell', () => {
+  beforeEach(() => {
+    apiFetch.mockReset()
+    apiFetch.mockImplementation(async (path: unknown) => {
+      const url = String(path)
+      if (url.includes('unread_count')) return { unread_count: 1 }
+      if (url.includes('/api/v1/notifications')) {
+        return {
+          notifications: [
+            {
+              id: 'n1',
+              event_key: 'task_assigned',
+              title: 'Task assigned',
+              body: 'Logo task is ready',
+              path: '/my-work',
+              read: false,
+              created_at: '2026-08-14T12:00:00Z',
+              project_id: null,
+            },
+          ],
+        }
+      }
+      return {}
+    })
+  })
   it('renders desktop sidebar and mobile bottom nav landmarks', () => {
     renderShell()
     expect(screen.getByTestId('desktop-sidebar')).toBeInTheDocument()
@@ -192,5 +226,63 @@ describe('AppShell', () => {
     await user.click(screen.getByLabelText('Profile menu'))
     await user.click(screen.getByRole('menuitem', { name: 'Create organization' }))
     expect(screen.getByRole('heading', { name: 'Create organization' })).toBeInTheDocument()
+  })
+
+  it('opens the notification center from the bell instead of Inbox', async () => {
+    const user = userEvent.setup()
+    render(
+      <MemoryRouter initialEntries={['/home']}>
+        <ShellProvider>
+          <Routes>
+            <Route
+              path="/home"
+              element={
+                <AppShell>
+                  <h1>Home</h1>
+                </AppShell>
+              }
+            />
+            <Route
+              path="/inbox"
+              element={
+                <AppShell>
+                  <h1>Inbox</h1>
+                </AppShell>
+              }
+            />
+            <Route
+              path="/my-work"
+              element={
+                <AppShell>
+                  <h1>My Work</h1>
+                </AppShell>
+              }
+            />
+          </Routes>
+        </ShellProvider>
+      </MemoryRouter>,
+    )
+
+    const bell = await screen.findByLabelText(/Notifications, 1 unread/i)
+    await user.click(bell)
+    expect(screen.queryByRole('heading', { name: 'Inbox' })).not.toBeInTheDocument()
+    expect(await screen.findByTestId('notification-center')).toBeInTheDocument()
+    expect(screen.getByText('Task assigned')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: /Task assigned/i }))
+    expect(await screen.findByRole('heading', { name: 'My Work' })).toBeInTheDocument()
+    expect(apiFetch).toHaveBeenCalledWith(
+      '/api/v1/notifications/n1/read',
+      expect.objectContaining({ method: 'POST' }),
+    )
+  })
+
+  it('closes the notification center with Escape', async () => {
+    const user = userEvent.setup()
+    renderShell()
+    await user.click(await screen.findByTestId('notification-bell'))
+    expect(await screen.findByTestId('notification-center')).toBeInTheDocument()
+    await user.keyboard('{Escape}')
+    expect(screen.queryByTestId('notification-center')).not.toBeInTheDocument()
   })
 })
