@@ -28,6 +28,8 @@ Useful routes:
 - `/projects/:slug`, `/profile/:slug` — shell-less public surfaces for anonymous visitors (create-account / sign-in preserve return-to intent)
 - `/home`, `/explore`, `/my-work`, `/inbox`, `/profile` — shell destinations (require completed onboarding)
 
+My Work **Peer reviews** lists optional teammate confirmation slots for completed team projects in the active workspace. Public and by-slug profiles add a Peer reviews tab (no authoring). Minors are labeled **Verified project teammate**. Mixpanel `peer_review_submitted` / `peer_review_reported` include only `workspace_type` — never names, comments, or ratings. Hide remains a platform-admin action.
+
 The header **bell opens the notification center** (desktop popover / mobile sheet). Inbox stays a separate operational queue for applications, reviews, and escalations. Unread count polls every 60s while the tab is visible, on window focus, and after mutating API calls. Own Profile Settings includes email preference categories (mandatory account mail cannot be disabled). Detected IANA timezone is sent on session via `PATCH /api/v1/profiles/me` and is never shown on public or by-slug profiles.
 
 Firebase Auth still owns magic-link sign-in email. Mixpanel `notification_opened` / `notification_preference_updated` include only `event_key` or `category` plus `workspace_type` — never notification body copy, emails, or date of birth.

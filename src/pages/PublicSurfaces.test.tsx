@@ -93,6 +93,74 @@ describe('public surfaces', () => {
     expect(await screen.findByRole('heading', { name: 'Page not found' })).toBeInTheDocument()
   })
 
+  it('shows the public peer reviews tab without a report control', async () => {
+    const user = userEvent.setup()
+    fetchPublicProfile.mockResolvedValue({
+      profile: {
+        user_id: 'u1',
+        visibility: 'public_adult',
+        public_identity_visible: true,
+        age_visibility: null,
+        details: {
+          display_name: 'Alex Morgan',
+          country: 'United States',
+          state_region: 'MA',
+          career_goal: 'Get hired',
+          experience_level: 'intermediate',
+          bio: null,
+          image_url: null,
+          github_url: null,
+          linkedin_url: null,
+          portfolio_url: null,
+          interests: [],
+          slug: 'alex-morgan',
+        },
+        stats: {
+          projects_completed: 1,
+          active_projects: 0,
+          tasks_approved: 2,
+          on_time_submission_rate: null,
+          late_submissions: null,
+          unsubmitted_tasks: null,
+          ai_approved_tasks: null,
+          creator_reviewed_approved_tasks: null,
+          average_creator_review_hours: null,
+          peer_review_total: 1,
+          activity: [],
+        },
+        evidence: { skills: [], artifacts: [] },
+        projects: [],
+        peer_reviews: [
+          {
+            id: 'rev-1',
+            reviewer_display_name: 'Verified project teammate',
+            reviewer_is_anonymized: true,
+            project_title: 'Team ship',
+            body: 'Public teammate note',
+            created_at: '2026-09-01T00:00:00Z',
+          },
+        ],
+        links: [],
+      },
+      canonical_path: '/profile/alex-morgan',
+      indexable: true,
+    })
+
+    render(
+      <MemoryRouter initialEntries={['/profile/alex-morgan']}>
+        <Routes>
+          <Route path="/profile/:slug" element={<PublicSurfaceProfilePage />} />
+        </Routes>
+      </MemoryRouter>,
+    )
+
+    expect(await screen.findByRole('heading', { name: 'Alex Morgan' })).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Peer reviews' }))
+    expect(await screen.findByText('Public teammate note')).toBeInTheDocument()
+    expect(screen.getAllByText('Verified project teammate').length).toBeGreaterThan(0)
+    expect(screen.queryByRole('button', { name: 'Report review' })).not.toBeInTheDocument()
+  })
+
   it('stores returnTo when create account is clicked', async () => {
     const user = userEvent.setup()
     fetchPublicProject.mockResolvedValue({

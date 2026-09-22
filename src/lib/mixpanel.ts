@@ -372,6 +372,34 @@ export function trackNotificationPreferenceUpdated(props: {
   }
 }
 
+/** Non-PII peer review submit. Fail soft — never names, comments, or ratings. */
+export function trackPeerReviewSubmitted(props: {
+  workspace_type: 'personal' | 'organization'
+}) {
+  try {
+    if (!ensureInit()) return
+    mixpanel.track('peer_review_submitted', {
+      workspace_type: props.workspace_type,
+    })
+  } catch {
+    // fail soft
+  }
+}
+
+/** Non-PII peer review report. Fail soft — never names, comments, or ratings. */
+export function trackPeerReviewReported(props: {
+  workspace_type: 'personal' | 'organization'
+}) {
+  try {
+    if (!ensureInit()) return
+    mixpanel.track('peer_review_reported', {
+      workspace_type: props.workspace_type,
+    })
+  } catch {
+    // fail soft
+  }
+}
+
 /** Non-PII report generation. Fail soft — never names, emails, notes, or outcome text. */
 export function trackReportGenerated(props: {
   workspace_type: 'organization'

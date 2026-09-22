@@ -58,6 +58,9 @@ function StatsRow({ stats }: { stats: ProfilePayload['stats'] }) {
       value: `${stats.average_creator_review_hours}h`,
     })
   }
+  if (stats.peer_review_total) {
+    specialized.push({ label: 'Peer reviews', value: String(stats.peer_review_total) })
+  }
 
   return (
     <div className="space-y-3">

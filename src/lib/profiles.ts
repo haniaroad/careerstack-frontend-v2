@@ -1,4 +1,5 @@
 import { apiFetch } from '@/lib/api'
+import type { ProfilePeerReview } from '@/lib/peerReviews'
 
 export type ProfileVisibility = 'public_adult' | 'restricted'
 
@@ -35,6 +36,7 @@ export type ProfileStats = {
   ai_approved_tasks: number | null
   creator_reviewed_approved_tasks: number | null
   average_creator_review_hours: number | null
+  peer_review_total: number | null
   activity: { week_start: string; count: number }[]
 }
 
@@ -59,6 +61,7 @@ export type ProfilePayload = {
     }[]
   }
   projects: Record<string, unknown>[]
+  peer_reviews: ProfilePeerReview[]
   links: { provider: string; url: string }[]
 }
 
