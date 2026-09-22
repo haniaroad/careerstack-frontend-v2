@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { Alert } from '@/components/Alert'
+import { ProfileSurfaceSections } from '@/components/ProfileSurfaceSections'
 import { PublicPageFrame } from '@/components/public/PublicPageFrame'
 import {
   CopyPublicLink,
@@ -97,62 +98,76 @@ export function PublicSurfaceProfilePage() {
           <CopyPublicLink absoluteUrl={profileAbsoluteUrl(details.slug)} />
         </header>
 
-        <section className="space-y-2">
-          <h2 className="text-sm font-semibold text-ink">Contribution</h2>
-          <dl className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-            {[
-              ['Projects completed', profile.stats.projects_completed],
-              ['Active projects', profile.stats.active_projects],
-              ['Tasks approved', profile.stats.tasks_approved],
-            ].map(([label, value]) => (
-              <div
-                key={String(label)}
-                className="rounded-lg border border-border bg-surface px-3.5 py-3"
-              >
-                <dt className="text-[11px] font-semibold tracking-wide text-ink-muted uppercase">
-                  {label}
-                </dt>
-                <dd className="mt-1 font-display text-2xl text-ink">{value}</dd>
-              </div>
-            ))}
-          </dl>
-        </section>
+        <ProfileSurfaceSections
+          profile={profile}
+          canReport={false}
+          overview={
+            <>
+              <section className="space-y-2">
+                <h2 className="text-sm font-semibold text-ink">Contribution</h2>
+                <dl className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                  {[
+                    ['Projects completed', profile.stats.projects_completed],
+                    ['Active projects', profile.stats.active_projects],
+                    ['Tasks approved', profile.stats.tasks_approved],
+                  ].map(([label, value]) => (
+                    <div
+                      key={String(label)}
+                      className="rounded-lg border border-border bg-surface px-3.5 py-3"
+                    >
+                      <dt className="text-[11px] font-semibold tracking-wide text-ink-muted uppercase">
+                        {label}
+                      </dt>
+                      <dd className="mt-1 font-display text-2xl text-ink">{value}</dd>
+                    </div>
+                  ))}
+                </dl>
+                {profile.stats.peer_review_total ? (
+                  <p className="text-sm text-ink">
+                    <span className="text-ink-muted">Peer reviews: </span>
+                    {profile.stats.peer_review_total}
+                  </p>
+                ) : null}
+              </section>
 
-        {profile.evidence.skills.length ? (
-          <section className="space-y-2">
-            <h2 className="text-sm font-semibold text-ink">Skills</h2>
-            <ul className="flex flex-wrap gap-2">
-              {profile.evidence.skills.map((skill) => (
-                <li
-                  key={skill.name}
-                  className="rounded-full border border-border bg-surface px-3 py-1 text-xs text-ink"
-                >
-                  {skill.name}
-                </li>
-              ))}
-            </ul>
-          </section>
-        ) : null}
+              {profile.evidence.skills.length ? (
+                <section className="space-y-2">
+                  <h2 className="text-sm font-semibold text-ink">Skills</h2>
+                  <ul className="flex flex-wrap gap-2">
+                    {profile.evidence.skills.map((skill) => (
+                      <li
+                        key={skill.name}
+                        className="rounded-full border border-border bg-surface px-3 py-1 text-xs text-ink"
+                      >
+                        {skill.name}
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              ) : null}
 
-        {profile.links.length ? (
-          <section className="space-y-2">
-            <h2 className="text-sm font-semibold text-ink">Links</h2>
-            <ul className="space-y-1 text-sm">
-              {profile.links.map((link) => (
-                <li key={link.provider}>
-                  <a
-                    className="underline-offset-2 hover:underline"
-                    href={link.url}
-                    target="_blank"
-                    rel="noopener noreferrer nofollow"
-                  >
-                    {link.provider}: {link.url}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </section>
-        ) : null}
+              {profile.links.length ? (
+                <section className="space-y-2">
+                  <h2 className="text-sm font-semibold text-ink">Links</h2>
+                  <ul className="space-y-1 text-sm">
+                    {profile.links.map((link) => (
+                      <li key={link.provider}>
+                        <a
+                          className="underline-offset-2 hover:underline"
+                          href={link.url}
+                          target="_blank"
+                          rel="noopener noreferrer nofollow"
+                        >
+                          {link.provider}: {link.url}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              ) : null}
+            </>
+          }
+        />
 
         <section className="space-y-3 rounded-xl border border-border bg-surface p-5">
           <h2 className="font-display text-2xl text-ink">Join CareerStack</h2>

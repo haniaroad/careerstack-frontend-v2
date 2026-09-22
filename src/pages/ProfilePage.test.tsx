@@ -41,6 +41,8 @@ vi.mock('@/lib/mixpanel', () => ({
   trackProfileVisibilityReversed: vi.fn(),
   trackProfileLinkCopied: vi.fn(),
   trackNotificationPreferenceUpdated: vi.fn(),
+  trackPeerReviewSubmitted: vi.fn(),
+  trackPeerReviewReported: vi.fn(),
 }))
 
 const ownProfile = {
@@ -76,6 +78,7 @@ const ownProfile = {
     ai_approved_tasks: null,
     creator_reviewed_approved_tasks: null,
     average_creator_review_hours: null,
+    peer_review_total: null,
     activity: Array.from({ length: 26 }, (_, i) => ({
       week_start: `2026-01-${String(i + 1).padStart(2, '0')}`,
       count: 0,
@@ -83,6 +86,7 @@ const ownProfile = {
   },
   evidence: { skills: [], artifacts: [] },
   projects: [],
+  peer_reviews: [],
   links: [],
 }
 
@@ -134,7 +138,9 @@ describe('ProfilePage', () => {
     expect(await screen.findByText('/profile/alex-morgan')).toBeInTheDocument()
     expect(screen.getByRole('tab', { name: 'Details' })).toBeInTheDocument()
     expect(screen.getByRole('tab', { name: 'Activity' })).toBeInTheDocument()
+    expect(screen.queryByRole('tab', { name: 'Peer reviews' })).not.toBeInTheDocument()
     expect(screen.getByText('Projects completed')).toBeInTheDocument()
+    expect(screen.queryByText(/^Peer reviews$/)).not.toBeInTheDocument()
   })
 
   it('omits organization outcome capture for personal-only Settings', async () => {
@@ -246,5 +252,42 @@ describe('PublicProfilePage', () => {
 
     expect(await screen.findByRole('heading', { name: /Profile not found/i })).toBeInTheDocument()
     expect(screen.getByText(/This profile is unavailable/i)).toBeInTheDocument()
+  })
+
+  it('opens the peer reviews tab with an anonymized public list', async () => {
+    const user = userEvent.setup()
+    apiFetch.mockResolvedValue({
+      profile: {
+        ...ownProfile,
+        user_id: 'u2',
+        stats: { ...ownProfile.stats, peer_review_total: 1 },
+        peer_reviews: [
+          {
+            id: 'rev-1',
+            reviewer_display_name: 'Verified project teammate',
+            reviewer_is_anonymized: true,
+            project_title: 'Team ship',
+            body: 'Clear facilitation notes',
+            created_at: '2026-09-01T00:00:00Z',
+          },
+        ],
+      },
+    })
+
+    render(
+      <MemoryRouter initialEntries={['/profile/alex-morgan']}>
+        <Routes>
+          <Route path="/profile/:slug" element={<PublicProfilePage />} />
+        </Routes>
+      </MemoryRouter>,
+    )
+
+    expect(await screen.findByRole('heading', { name: 'Alex Morgan' })).toBeInTheDocument()
+    expect(screen.getByText((_, node) => node?.textContent === 'Peer reviews: 1')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Peer reviews' }))
+    expect(await screen.findByText('Clear facilitation notes')).toBeInTheDocument()
+    expect(screen.getAllByText('Verified project teammate').length).toBeGreaterThan(0)
+    expect(screen.queryByText(/5 \/ 5/)).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Report review' })).toBeInTheDocument()
   })
 })
