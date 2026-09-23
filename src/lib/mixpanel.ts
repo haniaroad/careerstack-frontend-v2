@@ -372,6 +372,22 @@ export function trackNotificationPreferenceUpdated(props: {
   }
 }
 
+/** Non-PII Explore view. Fail soft — tab and workspace type only. */
+export function trackExploreViewed(props: {
+  workspace_type: 'personal' | 'organization'
+  tab: 'projects' | 'people'
+}) {
+  try {
+    if (!ensureInit()) return
+    mixpanel.track('explore_viewed', {
+      workspace_type: props.workspace_type,
+      tab: props.tab,
+    })
+  } catch {
+    // fail soft
+  }
+}
+
 /** Non-PII peer review submit. Fail soft — never names, comments, or ratings. */
 export function trackPeerReviewSubmitted(props: {
   workspace_type: 'personal' | 'organization'
