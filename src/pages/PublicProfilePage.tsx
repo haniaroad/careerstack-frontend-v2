@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { Alert } from '@/components/Alert'
 import { Button } from '@/components/Button'
+import { InviteControl } from '@/components/InviteControl'
 import { ProfileSurfaceSections } from '@/components/ProfileSurfaceSections'
 import { ApiError } from '@/lib/api'
 import { trackProfileViewed } from '@/lib/mixpanel'
@@ -94,6 +95,7 @@ export function PublicProfilePage() {
           {profile.details.state_region ? ` · ${profile.details.state_region}` : ''}
         </p>
         {profile.details.bio ? <p className="text-ink">{profile.details.bio}</p> : null}
+        <InviteControl userId={profile.user_id} displayName={profile.details.display_name} />
       </header>
 
       <Stats stats={profile.stats} />
