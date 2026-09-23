@@ -133,7 +133,7 @@ export function InviteControl({ userId, displayName }: Props) {
               ))}
             </select>
           </div>
-          {error ? <Alert tone="danger">{error}</Alert> : null}
+          {error ? <Alert tone="danger" title="Could not send the invitation">{error}</Alert> : null}
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
               Cancel

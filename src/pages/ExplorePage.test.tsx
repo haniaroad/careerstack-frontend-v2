@@ -19,8 +19,10 @@ vi.mock('@/lib/api', () => {
   return { apiFetch: (...args: unknown[]) => apiFetch(...args), ApiError }
 })
 
-const session = {
-  active_workspace: { id: 'ws-1', kind: 'personal' as const, name: 'Personal' },
+const session: {
+  active_workspace: { id: string; kind: 'personal' | 'organization'; name: string }
+} = {
+  active_workspace: { id: 'ws-1', kind: 'personal', name: 'Personal' },
 }
 
 vi.mock('@/auth/AuthContext', () => ({
