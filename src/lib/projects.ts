@@ -97,6 +97,7 @@ export type Project = {
   pending_applications?: ProjectApplication[]
   pending_invitations?: ProjectInvitation[]
   viewer_can_join?: boolean
+  messages_unread?: boolean
   tasks?: ProjectTask[]
 }
 
