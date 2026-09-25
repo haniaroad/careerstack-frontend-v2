@@ -388,6 +388,20 @@ export function trackExploreViewed(props: {
   }
 }
 
+/** Non-PII project message post. Fail soft — never bodies or names. */
+export function trackProjectMessageSent(props: {
+  workspace_type: 'personal' | 'organization'
+}) {
+  try {
+    if (!ensureInit()) return
+    mixpanel.track('project_message_sent', {
+      workspace_type: props.workspace_type,
+    })
+  } catch {
+    // fail soft
+  }
+}
+
 /** Non-PII peer review submit. Fail soft — never names, comments, or ratings. */
 export function trackPeerReviewSubmitted(props: {
   workspace_type: 'personal' | 'organization'

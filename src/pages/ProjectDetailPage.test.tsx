@@ -35,6 +35,7 @@ vi.mock('@/lib/mixpanel', () => ({
   trackMemberRemoved: (...args: unknown[]) => trackMemberRemoved(...args),
   trackProjectEndDateUpdated: vi.fn(),
   trackProjectLifecycleObserved: vi.fn(),
+  trackProjectMessageSent: vi.fn(),
 }))
 
 vi.mock('@/auth/AuthContext', () => ({
@@ -121,6 +122,32 @@ function renderPage() {
   )
 }
 
+function messagesApi(path: string, init?: RequestInit) {
+  if (path === '/api/v1/projects/p1/messages' && !init?.method) {
+    return { messages: [], unread: false, messages_last_read_at: null }
+  }
+  if (path === '/api/v1/projects/p1/messages/read' && init?.method === 'POST') {
+    return { unread: false, messages_last_read_at: '2026-01-02T12:00:00Z' }
+  }
+  if (path === '/api/v1/projects/p1/messages' && init?.method === 'POST') {
+    const payload = JSON.parse(String(init.body ?? '{}')) as { body?: string }
+    return {
+      message: {
+        id: `msg-${Math.random().toString(16).slice(2, 8)}`,
+        project_id: 'p1',
+        author_id: authUserId,
+        author_display_name: 'Creator',
+        body: payload.body ?? '',
+        created_at: '2026-01-02T12:00:00Z',
+      },
+    }
+  }
+  if (path.startsWith('/api/v1/project_messages/') && path.endsWith('/reports') && init?.method === 'POST') {
+    return { report: { id: 'report-1' } }
+  }
+  return null
+}
+
 describe('ProjectDetailPage', () => {
   beforeEach(() => {
     apiFetch.mockReset()
@@ -182,6 +209,8 @@ describe('ProjectDetailPage', () => {
         }
         return { application: project.pending_applications![0] }
       }
+      const handled = messagesApi(path, init)
+      if (handled) return handled
       throw new Error(`Unexpected ${init?.method ?? 'GET'} ${path}`)
     })
 
@@ -249,6 +278,8 @@ describe('ProjectDetailPage', () => {
           application: { id: 'app1', status: 'approved' },
         }
       }
+      const handled = messagesApi(path, init)
+      if (handled) return handled
       throw new Error(`Unexpected ${init?.method ?? 'GET'} ${path}`)
     })
 
@@ -304,6 +335,8 @@ describe('ProjectDetailPage', () => {
       if (path === '/api/v1/projects/p1/join' && init?.method === 'POST') {
         throw new ApiError(409, 'capacity_full', 'Project is at capacity')
       }
+      const handled = messagesApi(path, init)
+      if (handled) return handled
       throw new Error(`Unexpected ${init?.method ?? 'GET'} ${path}`)
     })
 
@@ -363,6 +396,8 @@ describe('ProjectDetailPage', () => {
         }
         return { project, membership: { id: 'm2', status: 'departed' } }
       }
+      const handled = messagesApi(path, init)
+      if (handled) return handled
       throw new Error(`Unexpected ${init?.method ?? 'GET'} ${path}`)
     })
 
@@ -406,6 +441,8 @@ describe('ProjectDetailPage', () => {
         }
         return { project }
       }
+      const handled = messagesApi(path, init)
+      if (handled) return handled
       throw new Error(`Unexpected ${init?.method ?? 'GET'} ${path}`)
     })
 
@@ -427,21 +464,28 @@ describe('ProjectDetailPage', () => {
 
   it('shows phase and hides mutations when expired', async () => {
     authUserId = 'creator-1'
-    apiFetch.mockResolvedValue({
-      project: baseProject({
-        status: 'expired',
-        phase: 'read_only',
-        expired_at: '2026-08-01T12:00:00Z',
-        ends_on: '2026-07-20',
-        final_expires_at: '2026-07-27T23:59:59Z',
-        mode: 'solo',
-        joining_mode: null,
-        capacity: null,
-        participant_count: null,
-        seats_remaining: null,
-        recruitment_state: null,
-        roles_needed: [],
-      }),
+    apiFetch.mockImplementation(async (path: string, init?: RequestInit) => {
+      if (path === '/api/v1/projects/p1' && !init?.method) {
+        return {
+          project: baseProject({
+            status: 'expired',
+            phase: 'read_only',
+            expired_at: '2026-08-01T12:00:00Z',
+            ends_on: '2026-07-20',
+            final_expires_at: '2026-07-27T23:59:59Z',
+            mode: 'solo',
+            joining_mode: null,
+            capacity: null,
+            participant_count: null,
+            seats_remaining: null,
+            recruitment_state: null,
+            roles_needed: [],
+          }),
+        }
+      }
+      const handled = messagesApi(path, init)
+      if (handled) return handled
+      throw new Error(`Unexpected ${init?.method ?? 'GET'} ${path}`)
     })
 
     renderPage()
@@ -452,17 +496,166 @@ describe('ProjectDetailPage', () => {
     expect(screen.queryByRole('heading', { name: /Convert to team/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: /Project end date/i })).not.toBeInTheDocument()
     expect(screen.getByRole('link', { name: /Wireframes/i })).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: /Project messages/i })).not.toBeInTheDocument()
   })
 
   it('shows grace period phase on active projects', async () => {
-    apiFetch.mockResolvedValue({
-      project: baseProject({
-        phase: 'grace_period',
-        ends_on: '2026-08-01',
-      }),
+    apiFetch.mockImplementation(async (path: string, init?: RequestInit) => {
+      if (path === '/api/v1/projects/p1' && !init?.method) {
+        return {
+          project: baseProject({
+            phase: 'grace_period',
+            ends_on: '2026-08-01',
+          }),
+        }
+      }
+      const handled = messagesApi(path, init)
+      if (handled) return handled
+      throw new Error(`Unexpected ${init?.method ?? 'GET'} ${path}`)
     })
     renderPage()
     expect(await screen.findByText(/Grace period/i)).toBeInTheDocument()
     expect(screen.getByText(/Ends on 2026-08-01/i)).toBeInTheDocument()
+  })
+
+  it('posts and lists project messages for team members', async () => {
+    const user = userEvent.setup()
+    authUserId = 'creator-1'
+    const project = baseProject()
+    let messages: Array<{
+      id: string
+      project_id: string
+      author_id: string
+      author_display_name: string
+      body: string
+      created_at: string
+    }> = []
+
+    apiFetch.mockImplementation(async (path: string, init?: RequestInit) => {
+      if (path === '/api/v1/projects/p1' && !init?.method) {
+        return { project }
+      }
+      if (path === '/api/v1/projects/p1/messages' && !init?.method) {
+        return { messages, unread: messages.length > 0, messages_last_read_at: null }
+      }
+      if (path === '/api/v1/projects/p1/messages/read' && init?.method === 'POST') {
+        return { unread: false, messages_last_read_at: '2026-01-02T12:05:00Z' }
+      }
+      if (path === '/api/v1/projects/p1/messages' && init?.method === 'POST') {
+        const payload = JSON.parse(String(init.body ?? '{}')) as { body?: string }
+        const message = {
+          id: 'msg-new',
+          project_id: 'p1',
+          author_id: 'creator-1',
+          author_display_name: 'Creator',
+          body: payload.body ?? '',
+          created_at: '2026-01-02T12:00:00Z',
+        }
+        messages = [...messages, message]
+        return { message }
+      }
+      throw new Error(`Unexpected ${init?.method ?? 'GET'} ${path}`)
+    })
+
+    renderPage()
+    expect(await screen.findByRole('heading', { name: /Project messages/i })).toBeInTheDocument()
+    expect(screen.getByText(/visible to program staff/i)).toBeInTheDocument()
+
+    await user.type(screen.getByLabelText(/Write a message/i), 'Hello teammates')
+    await user.click(screen.getByRole('button', { name: /Send message/i }))
+
+    expect(await screen.findByText('Hello teammates')).toBeInTheDocument()
+    expect(apiFetch).toHaveBeenCalledWith(
+      '/api/v1/projects/p1/messages',
+      expect.objectContaining({ method: 'POST' }),
+    )
+  })
+
+  it('hides the message thread on solo projects', async () => {
+    authUserId = 'creator-1'
+    apiFetch.mockImplementation(async (path: string, init?: RequestInit) => {
+      if (path === '/api/v1/projects/p1' && !init?.method) {
+        return {
+          project: baseProject({
+            mode: 'solo',
+            joining_mode: null,
+            capacity: null,
+            participant_count: null,
+            seats_remaining: null,
+            recruitment_state: null,
+            roles_needed: [],
+          }),
+        }
+      }
+      throw new Error(`Unexpected ${init?.method ?? 'GET'} ${path}`)
+    })
+
+    renderPage()
+    expect(await screen.findByRole('heading', { name: /Team portfolio/i })).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: /Project messages/i })).not.toBeInTheDocument()
+  })
+
+  it('reports another member message and hides the thread when access is denied', async () => {
+    const user = userEvent.setup()
+    authUserId = 'creator-1'
+    const project = baseProject({
+      memberships: [
+        {
+          id: 'm1',
+          user_id: 'creator-1',
+          role: 'creator',
+          participant_role: null,
+          status: 'active',
+          join_source: null,
+          display_name: 'Creator',
+        },
+        {
+          id: 'm2',
+          user_id: 'participant-1',
+          role: 'participant',
+          participant_role: 'Designer',
+          status: 'active',
+          join_source: 'instant',
+          display_name: 'Participant',
+        },
+      ],
+    })
+
+    apiFetch.mockImplementation(async (path: string, init?: RequestInit) => {
+      if (path === '/api/v1/projects/p1' && !init?.method) {
+        return { project }
+      }
+      if (path === '/api/v1/projects/p1/messages' && !init?.method) {
+        return {
+          messages: [
+            {
+              id: 'msg-other',
+              project_id: 'p1',
+              author_id: 'participant-1',
+              author_display_name: 'Participant',
+              body: 'Please report this',
+              created_at: '2026-01-02T12:00:00Z',
+            },
+          ],
+          unread: true,
+          messages_last_read_at: null,
+        }
+      }
+      if (path === '/api/v1/projects/p1/messages/read' && init?.method === 'POST') {
+        return { unread: false, messages_last_read_at: '2026-01-02T12:05:00Z' }
+      }
+      if (path === '/api/v1/project_messages/msg-other/reports' && init?.method === 'POST') {
+        return { report: { id: 'report-1' } }
+      }
+      throw new Error(`Unexpected ${init?.method ?? 'GET'} ${path}`)
+    })
+
+    renderPage()
+    expect(await screen.findByText('Please report this')).toBeInTheDocument()
+    expect(apiFetch).toHaveBeenCalledWith('/api/v1/projects/p1/messages/read', expect.objectContaining({ method: 'POST' }))
+
+    await user.click(screen.getByRole('button', { name: 'Report' }))
+    await user.click(screen.getByRole('button', { name: /Submit report/i }))
+    expect(await screen.findByText(/Report received/i)).toBeInTheDocument()
   })
 })

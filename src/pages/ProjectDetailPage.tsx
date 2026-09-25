@@ -13,6 +13,7 @@ import {
 } from '@/components/Dialog'
 import { InsufficientCreditsInterception } from '@/components/InsufficientCreditsInterception'
 import { ProjectLifecycleBadge } from '@/components/ProjectLifecycleBadge'
+import { ProjectMessageThread } from '@/components/ProjectMessageThread'
 import { StatusBadge } from '@/components/StatusBadge'
 import { apiFetch, ApiError } from '@/lib/api'
 import {
@@ -493,6 +494,14 @@ export function ProjectDetailPage() {
           <p className="text-sm text-ink-muted">Roles needed: {roles.join(', ')}</p>
         ) : null}
       </header>
+
+      {project.mode === 'team' && myMembership && userId ? (
+        <ProjectMessageThread
+          projectId={project.id}
+          currentUserId={userId}
+          workspaceType={session?.active_workspace?.kind === 'organization' ? 'organization' : 'personal'}
+        />
+      ) : null}
 
       {project.status === 'expired' || project.status === 'completed' ? (
         <Alert
