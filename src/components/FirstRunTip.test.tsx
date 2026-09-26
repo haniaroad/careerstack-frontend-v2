@@ -27,7 +27,7 @@ describe('FirstRunTip', () => {
   it('shows one inline tip and dismisses it without opening a dialog', async () => {
     const user = userEvent.setup()
     apiFetch.mockImplementation(async (path: string, init?: { method?: string }) => {
-      if (init?.method === 'POST') return {}
+      if (path.includes('/dismiss') && init?.method === 'POST') return {}
       return {
         tip: {
           key: 'home',
