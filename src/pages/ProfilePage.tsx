@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '@/auth/AuthContext'
 import { Alert } from '@/components/Alert'
 import { Button } from '@/components/Button'
+import { FirstRunTip, notifyFirstRunTipsReplayed, replayFirstRunTips } from '@/components/FirstRunTip'
 import { Input } from '@/components/Input'
 import { Label } from '@/components/Label'
 import { ApiError } from '@/lib/api'
@@ -322,6 +323,8 @@ export function ProfilePage() {
         ) : null}
       </header>
 
+      <FirstRunTip destination="profile" />
+
       {error ? <Alert tone="danger" title="Something went wrong">{error}</Alert> : null}
 
       {profile?.age_visibility?.visibility_review_required ? (
@@ -537,6 +540,28 @@ export function ProfilePage() {
             <p className="pt-2 text-sm text-ink-muted">
               Email notification preferences apply in Personal and Organization workspaces.
             </p>
+          </section>
+          <section className="space-y-3 rounded-lg border border-border bg-surface p-5">
+            <h2 className="text-lg font-semibold text-ink">First-run tips</h2>
+            <p className="text-sm text-ink-muted">
+              Show the short tips for Home, My Work, Inbox, and Profile again.
+            </p>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                void replayFirstRunTips()
+                  .then(() => {
+                    notifyFirstRunTipsReplayed()
+                    setError(null)
+                  })
+                  .catch(() => {
+                    setError('Could not replay tips')
+                  })
+              }}
+            >
+              Replay tips
+            </Button>
           </section>
           <section className="space-y-3 rounded-lg border border-border bg-surface p-5">
             <h2 className="text-lg font-semibold text-ink">Email notifications</h2>

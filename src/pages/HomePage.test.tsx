@@ -1,4 +1,5 @@
 import { cleanup, render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Project } from '@/lib/projects'
@@ -98,6 +99,9 @@ describe('HomePage', () => {
       if (path.startsWith('/api/v1/inbox/items')) {
         return { items: [] }
       }
+      if (path.startsWith('/api/v1/first_run_tips')) {
+        return { tip: null }
+      }
       throw new Error(`Unexpected ${path}`)
     })
 
@@ -128,6 +132,9 @@ describe('HomePage', () => {
       if (path.startsWith('/api/v1/inbox/items')) {
         return { items: [] }
       }
+      if (path.startsWith('/api/v1/first_run_tips')) {
+        return { tip: null }
+      }
       throw new Error(`Unexpected ${path}`)
     })
 
@@ -135,5 +142,31 @@ describe('HomePage', () => {
     expect(await screen.findByText(/Grace project — Grace period/i)).toBeInTheDocument()
     const warnings = screen.getAllByText(/Open project/i)
     expect(warnings[0].closest('a')).toHaveAttribute('href', '/projects/p-grace')
+  })
+
+  it('shows the home tip without replacing the create-project action', async () => {
+    const user = userEvent.setup()
+    apiFetch.mockImplementation(async (path: string, init?: { method?: string }) => {
+      if (path === '/api/v1/projects') return { projects: [] }
+      if (path.startsWith('/api/v1/inbox/items')) return { items: [] }
+      if (init?.method === 'POST' && path.includes('/dismiss')) return {}
+      if (path.startsWith('/api/v1/first_run_tips')) {
+        return {
+          tip: {
+            key: 'home',
+            label: 'Start here',
+            body: 'Home shows your next action, including a first project in your Personal workspace if you still have a credit.',
+          },
+        }
+      }
+      throw new Error(`Unexpected ${path}`)
+    })
+
+    renderHome()
+    expect(await screen.findByRole('region', { name: 'Start here' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Create project/i })).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Dismiss tip' }))
+    expect(screen.queryByRole('region', { name: 'Start here' })).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Create project/i })).toBeInTheDocument()
   })
 })

@@ -30,5 +30,6 @@ describe('BillingReturnPage', () => {
 
     expect(screen.getByText(/checkout cancelled/i)).toBeInTheDocument()
     expect(screen.getByText(/nothing was charged/i)).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Dismiss tip' })).not.toBeInTheDocument()
   })
 })

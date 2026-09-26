@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { Alert } from '@/components/Alert'
 import { Button } from '@/components/Button'
+import { FirstRunTip } from '@/components/FirstRunTip'
 import { StatusBadge } from '@/components/StatusBadge'
 import { apiFetch, ApiError } from '@/lib/api'
 import {
@@ -263,6 +264,8 @@ export function InboxPage() {
           applications stay here, not as separate global destinations.
         </p>
       </header>
+
+      <FirstRunTip destination="inbox" />
 
       {error ? (
         <Alert tone="danger" title="Something went wrong">

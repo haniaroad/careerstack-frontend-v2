@@ -76,6 +76,7 @@ describe('public surfaces', () => {
     expect(screen.getByText('Wireframe')).toBeInTheDocument()
     expect(screen.queryByRole('navigation')).not.toBeInTheDocument()
     expect(screen.getAllByRole('button', { name: 'Create account' }).length).toBeGreaterThan(0)
+    expect(screen.queryByRole('button', { name: 'Dismiss tip' })).not.toBeInTheDocument()
   })
 
   it('shows not found for missing public profiles', async () => {

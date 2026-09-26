@@ -12,6 +12,7 @@ import {
   DialogTitle,
 } from '@/components/Dialog'
 import { EmptyState } from '@/components/EmptyState'
+import { FirstRunTip } from '@/components/FirstRunTip'
 import { Label } from '@/components/Label'
 import { PeerReviewCard } from '@/components/PeerReviewCard'
 import { ProjectLifecycleBadge } from '@/components/ProjectLifecycleBadge'
@@ -135,6 +136,8 @@ export function MyWorkPage() {
           </Button>
         ) : null}
       </header>
+
+      <FirstRunTip destination="my_work" />
 
       <nav className="flex flex-wrap gap-2 border-b border-border pb-3" aria-label="My Work sections">
         {(

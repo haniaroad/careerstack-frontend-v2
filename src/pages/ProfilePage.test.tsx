@@ -158,6 +158,47 @@ describe('ProfilePage', () => {
     expect(await screen.findByRole('heading', { name: /Email notifications/i })).toBeInTheDocument()
     expect(screen.getByRole('checkbox', { name: /Security and account email notifications/i })).toBeDisabled()
     expect(screen.getByRole('checkbox', { name: /Project activity email notifications/i })).toBeEnabled()
+    expect(screen.getByRole('button', { name: 'Replay tips' })).toBeInTheDocument()
+  })
+
+  it('replays tips from Settings and shows the profile tip again', async () => {
+    const user = userEvent.setup()
+    let dismissed = true
+    apiFetch.mockImplementation(async (path: unknown, init?: { method?: string }) => {
+      const url = String(path)
+      if (url.includes('/api/v1/notification_preferences')) {
+        return { preferences: samplePreferences }
+      }
+      if (url.includes('/api/v1/first_run_tips/replay') && init?.method === 'POST') {
+        dismissed = false
+        return { restored_keys: ['profile'] }
+      }
+      if (url.includes('/api/v1/first_run_tips')) {
+        return dismissed
+          ? { tip: null }
+          : {
+              tip: {
+                key: 'profile',
+                label: 'Your profile',
+                body: 'Profile is your contribution record, and Settings is where you control what is public.',
+              },
+            }
+      }
+      return { profile: ownProfile }
+    })
+
+    render(
+      <MemoryRouter>
+        <ProfilePage />
+      </MemoryRouter>,
+    )
+
+    await screen.findByText('/profile/alex-morgan')
+    expect(screen.queryByRole('region', { name: 'Your profile' })).not.toBeInTheDocument()
+    await user.click(screen.getByRole('tab', { name: 'Settings' }))
+    await user.click(screen.getByRole('button', { name: 'Replay tips' }))
+    expect(await screen.findByRole('region', { name: 'Your profile' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /Email notifications/i })).toBeInTheDocument()
   })
 
   it('saves details via PATCH', async () => {

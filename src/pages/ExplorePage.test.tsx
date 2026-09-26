@@ -115,6 +115,7 @@ describe('ExplorePage', () => {
     expect(await screen.findByRole('tab', { name: 'Projects', selected: true })).toBeInTheDocument()
     expect(await screen.findByRole('link', { name: /Public studio/i })).toHaveAttribute('href', '/projects/proj-public')
     expect(screen.queryByText(/Coming soon/i)).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Dismiss tip' })).not.toBeInTheDocument()
   })
 
   it('lists organization projects when that workspace payload is returned', async () => {

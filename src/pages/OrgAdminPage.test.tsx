@@ -382,6 +382,7 @@ describe('OrgAdminPage', () => {
     expect(screen.getByText('Fall Cohort')).toBeInTheDocument()
     expect(screen.getAllByRole('button', { name: /^Archive$/i }).length).toBeGreaterThan(0)
     expect(screen.getByRole('button', { name: /Delete draft/i })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Dismiss tip' })).not.toBeInTheDocument()
   })
 
   it('hides archive, delete, and remove for managers', async () => {
