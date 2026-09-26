@@ -1,5 +1,8 @@
 [build]
-  command = "npm run build"
+  # GitHub Actions "Deploy staging" builds with VITE_FIREBASE_* and publishes
+  # production. Netlify's own Git builds do not receive those variables, and a
+  # successful empty build replaces the configured production deploy.
+  command = "node -e \"const missing=['VITE_FIREBASE_API_KEY','VITE_FIREBASE_AUTH_DOMAIN','VITE_FIREBASE_PROJECT_ID','VITE_FIREBASE_APP_ID'].filter((key)=>!process.env[key]); if(missing.length){console.error('Refusing Netlify build without '+missing.join(', ')+'. Staging is published by the Deploy staging GitHub Action.'); process.exit(1)}\" && npm run build"
   publish = "dist"
 
 [build.environment]
