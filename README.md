@@ -28,6 +28,8 @@ Useful routes:
 - `/projects/:slug`, `/profile/:slug` — shell-less public surfaces for anonymous visitors (create-account / sign-in preserve return-to intent)
 - `/home`, `/explore`, `/my-work`, `/inbox`, `/profile` — shell destinations (require completed onboarding)
 
+Home, My Work, Inbox, and Profile can show one inline first-run tip. Dismiss hides that tip until **Replay tips** on Own Profile Settings. Explore, organization administration, billing, and public pages do not show tips. Tip requests are not sent to Mixpanel.
+
 Explore is Projects (default) and People. People search never includes minors or other restricted identities; that filtering is server-side. Invite on a person or authenticated profile reuses the existing project invitation API. There is no message action from Explore. Mixpanel `explore_viewed` includes only `workspace_type` and `tab`.
 
 Team project detail includes a membership-gated message thread with a staff-visibility notice, unread indicator, and report. Solo projects hide the thread until conversion to team. Public project pages never show messages.

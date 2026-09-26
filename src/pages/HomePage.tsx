@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Alert } from '@/components/Alert'
 import { Button } from '@/components/Button'
+import { FirstRunTip } from '@/components/FirstRunTip'
 import { apiFetch, ApiError } from '@/lib/api'
 import type { InboxItem } from '@/lib/inbox'
 import { trackProjectGraceObserved } from '@/lib/mixpanel'
@@ -143,6 +144,8 @@ export function HomePage() {
           links to create and My Work.
         </p>
       </header>
+
+      <FirstRunTip destination="home" />
 
       {error ? (
         <Alert tone="danger" title="Something went wrong">
