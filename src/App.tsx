@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react'
 import { Navigate, Outlet, Route, Routes } from 'react-router-dom'
 import { TooltipProvider } from '@/components/Tooltip'
 import { AuthProvider } from '@/auth/AuthContext'
@@ -24,7 +25,7 @@ import { ProfilePage } from '@/pages/ProfilePage'
 import { ProfileSlugGate, ProjectParamGate } from '@/pages/PublicSurfaceGates'
 import { SignInPage } from '@/pages/SignInPage'
 import { StatusPage } from '@/pages/StatusPage'
-import { isDesignSystemPreviewEnabled } from '@/config'
+import { isAdminSurface, isDesignSystemPreviewEnabled } from '@/config'
 
 function ShellLayout() {
   return (
@@ -46,7 +47,9 @@ function PreviewShellLayout() {
   )
 }
 
-export default function App() {
+const AdminApp = lazy(() => import('@/admin/AdminApp').then((mod) => ({ default: mod.AdminApp })))
+
+function ParticipantApp() {
   return (
     <TooltipProvider>
       <AuthProvider>
@@ -95,5 +98,15 @@ export default function App() {
         </Routes>
       </AuthProvider>
     </TooltipProvider>
+  )
+}
+
+export default function App() {
+  if (!isAdminSurface()) return <ParticipantApp />
+
+  return (
+    <Suspense fallback={<p className="p-6 text-sm text-muted-foreground">Loading staff tools</p>}>
+      <AdminApp />
+    </Suspense>
   )
 }

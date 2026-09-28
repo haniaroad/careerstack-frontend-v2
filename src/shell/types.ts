@@ -48,5 +48,6 @@ export type ShellProviderProps = {
     onSwitchWorkspace?: (id: string) => void | Promise<void>
     onSetProgramFilter?: (mode: 'all' | 'program', programId?: string | null) => void | Promise<void>
     onSignOut?: () => void | Promise<void>
+    onExitImpersonation?: () => void | Promise<void>
   }>
 }

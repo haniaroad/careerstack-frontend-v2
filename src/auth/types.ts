@@ -64,6 +64,12 @@ export type SessionPayload = {
     purchased_remaining: number
     owner_type: string
   } | null
+  impersonation?: {
+    active: boolean
+    session_id: string
+    expires_at: string
+    display_name: string
+  } | null
 }
 
 export type AuthStatus = 'loading' | 'anonymous' | 'authenticated'

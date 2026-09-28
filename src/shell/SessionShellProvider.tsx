@@ -48,7 +48,7 @@ export function SessionShellProvider({ children }: { children: ReactNode }) {
         session.active_workspace_id ?? session.workspaces[0]?.id ?? 'personal',
       notificationCount: 0,
       canAccessOrgAdmin: session.can_access_org_admin,
-      isImpersonating: false,
+      isImpersonating: Boolean(session.impersonation?.active),
       creditRemaining: session.credits?.remaining ?? null,
       programFilter: session.program_filter
         ? {
@@ -61,8 +61,21 @@ export function SessionShellProvider({ children }: { children: ReactNode }) {
       onSwitchWorkspace: switchWorkspace,
       onSetProgramFilter,
       onSignOut: signOut,
+      onExitImpersonation: async () => {
+        const sessionId =
+          session.impersonation?.session_id ??
+          window.sessionStorage.getItem('careerstack.impersonation')
+        if (sessionId) {
+          await apiFetch(`/api/v1/platform_admin/impersonation/${sessionId}/exit`, {
+            method: 'POST',
+            body: JSON.stringify({}),
+          })
+        }
+        window.sessionStorage.removeItem('careerstack.impersonation')
+        await refreshSession()
+      },
     }
-  }, [session, signOut, switchWorkspace, onSetProgramFilter])
+  }, [session, signOut, switchWorkspace, onSetProgramFilter, refreshSession])
 
   const timezoneSynced = useRef(false)
   useEffect(() => {

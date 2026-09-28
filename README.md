@@ -81,8 +81,9 @@ Serves the production build on http://localhost:5173. Point `VITE_API_BASE_URL` 
 | `VITE_FIREBASE_*` | Staging Firebase web config (`API_KEY`, `AUTH_DOMAIN`, `PROJECT_ID`, `APP_ID`) |
 | `VITE_AUTH_STUB` | Local stub auth (`true`) when Firebase is not configured |
 | `VITE_MIXPANEL_TOKEN` | Optional Mixpanel token for non-PII activation events |
+| `VITE_SURFACE` | Set to `admin` only on the staff Netlify site. Leave unset for the participant site. |
 
-Firebase authorized domains for staging should include `localhost` and the Netlify staging host.
+Firebase authorized domains for staging should include `localhost`, the Netlify staging host, and `admin.careerstack.co` once the staff site exists.
 
 ## Magic-link troubleshooting (staging)
 
@@ -115,6 +116,16 @@ npm test
 npm run build
 ```
 
+## Platform admin site
+
+Staff tools render only when `VITE_SURFACE=admin`, or when the host is `admin.careerstack.co` or `admin.localhost`. The participant build does not register staff routes and does not add a platform-admin item to primary navigation.
+
+Deploy `admin.careerstack.co` as a **second Netlify site** from this same repo, with `VITE_SURFACE=admin`. Point a DNS CNAME `admin` at that site's `*.netlify.app` name. Do not attach `admin.careerstack.co` to the current staging site `careerstack-frontend-v2.netlify.app`.
+
+The API `CORS_ORIGINS` must include `https://admin.careerstack.co`. Firebase authorized domains must include `admin.careerstack.co`. New platform admins are created with the backend task `bin/rails platform_admin:provision[email]` plus a Firebase Admin SDK custom claim. There is no in-console signup.
+
+Staff actions are not Mixpanel events. Mixpanel stays free of names, emails, date of birth, file bytes, and message bodies.
+
 ## Staging deploy
 
 Staging deploys to Netlify via GitHub Actions after merge to `main`. The workflow builds in Actions (Vite bakes `VITE_*` at build time), then uploads `dist` — Netlify site env vars alone will not configure Firebase.
@@ -134,6 +145,6 @@ GitHub Environment **`staging`** needs:
 - `STAGING_SITE_URL` — optional smoke-check override
 - `VITE_MIXPANEL_TOKEN` / `VITE_SENTRY_DSN` / `VITE_ENABLE_DESIGN_SYSTEM_PREVIEW` — optional
 
-Firebase Authentication authorized domains must include `localhost` and the Netlify staging host (`*.netlify.app`).
+Firebase Authentication authorized domains must include `localhost` and the Netlify staging host (`*.netlify.app`). `admin.careerstack.co` belongs on the separate admin site, not on this staging site.
 
 See `netlify.toml` for publish directory (`dist`). After changing staging variables, re-run **Deploy staging** (or merge to `main`) so a new build picks them up.

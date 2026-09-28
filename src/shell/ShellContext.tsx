@@ -31,9 +31,14 @@ export function ShellProvider({ children, initial }: ShellProviderProps) {
     }
   }, [initial?.activeWorkspaceId])
 
+  useEffect(() => {
+    setIsImpersonating(initial?.isImpersonating ?? false)
+  }, [initial?.isImpersonating])
+
   const exitImpersonation = useCallback(() => {
     setIsImpersonating(false)
-  }, [])
+    void initial?.onExitImpersonation?.()
+  }, [initial])
 
   const setActiveWorkspaceId = useCallback(
     (id: string) => {

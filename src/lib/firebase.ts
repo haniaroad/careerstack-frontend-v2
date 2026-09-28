@@ -139,9 +139,9 @@ export async function firebaseSignOut(): Promise<void> {
   if (firebaseAuth) await signOut(firebaseAuth)
 }
 
-export async function getIdToken(): Promise<string | null> {
+export async function getIdToken(forceRefresh = false): Promise<string | null> {
   const firebaseAuth = getFirebaseAuth()
   const user = firebaseAuth?.currentUser
   if (!user) return null
-  return user.getIdToken()
+  return user.getIdToken(forceRefresh)
 }
