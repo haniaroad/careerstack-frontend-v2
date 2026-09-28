@@ -2,11 +2,22 @@ import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { ApiError } from '@/lib/api'
 import { ProfilePage } from './ProfilePage'
 import { PublicProfilePage } from './PublicProfilePage'
 
 const apiFetch = vi.fn()
 const refreshSession = vi.fn().mockResolvedValue(null)
+const authState = vi.hoisted(() => ({
+  session: {
+    user: { email: 'alex@example.com', id: 'u1' },
+    profile: { display_name: 'Alex Morgan' },
+    credits: { remaining: 2 },
+    workspaces: [{ id: 'ws-1', kind: 'personal' as const }],
+    active_workspace_id: 'ws-1',
+    impersonation: null as { active: boolean; session_id: string; expires_at: string; display_name: string } | null,
+  },
+}))
 
 vi.mock('@/lib/api', () => {
   class ApiError extends Error {
@@ -23,13 +34,7 @@ vi.mock('@/lib/api', () => {
 
 vi.mock('@/auth/AuthContext', () => ({
   useAuth: () => ({
-    session: {
-      user: { email: 'alex@example.com', id: 'u1' },
-      profile: { display_name: 'Alex Morgan' },
-      credits: { remaining: 2 },
-      workspaces: [{ id: 'ws-1', kind: 'personal' }],
-      active_workspace_id: 'ws-1',
-    },
+    session: authState.session,
     refreshSession,
   }),
 }))
@@ -113,6 +118,7 @@ const samplePreferences = [
 
 describe('ProfilePage', () => {
   beforeEach(() => {
+    authState.session.impersonation = null
     apiFetch.mockReset()
     refreshSession.mockClear()
     apiFetch.mockImplementation(async (path: unknown) => {
@@ -267,6 +273,38 @@ describe('ProfilePage', () => {
 
     expect(await screen.findByRole('button', { name: /Confirm public visibility/i })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Copy link' })).not.toBeInTheDocument()
+  })
+
+  it('shows a rejected profile save during impersonation', async () => {
+    const user = userEvent.setup()
+    authState.session.impersonation = {
+      active: true,
+      session_id: 'imp-1',
+      expires_at: '2026-09-27T12:30:00Z',
+      display_name: 'Alex Morgan',
+    }
+    apiFetch.mockImplementation(async (path: unknown, init?: { method?: string }) => {
+      const url = String(path)
+      if (url.includes('/api/v1/notification_preferences')) {
+        return { preferences: samplePreferences }
+      }
+      if (init?.method === 'PATCH') {
+        throw new ApiError(403, 'forbidden', 'This action is not available while viewing as someone else')
+      }
+      return { profile: ownProfile }
+    })
+
+    render(
+      <MemoryRouter>
+        <ProfilePage />
+      </MemoryRouter>,
+    )
+
+    await screen.findByLabelText('Display name')
+    await user.click(screen.getByRole('button', { name: 'Save details' }))
+    expect(
+      await screen.findByText('This action is not available while viewing as someone else'),
+    ).toBeInTheDocument()
   })
 })
 

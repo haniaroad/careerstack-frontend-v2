@@ -1,3 +1,15 @@
+/**
+ * Staff tools ship only on the admin surface.
+ * The admin Netlify site sets VITE_SURFACE=admin. The participant site must not.
+ * Hostname is a second signal for admin.careerstack.co and local admin.localhost.
+ */
+export function isAdminSurface(
+  hostname = typeof window === 'undefined' ? '' : window.location.hostname,
+): boolean {
+  if (import.meta.env.VITE_SURFACE === 'admin') return true
+  return hostname === 'admin.careerstack.co' || hostname === 'admin.localhost'
+}
+
 export function apiBaseUrl(): string {
   return (
     (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '') ??

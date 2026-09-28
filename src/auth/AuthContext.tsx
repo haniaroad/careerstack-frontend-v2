@@ -40,6 +40,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const refreshSession = useCallback(async () => {
     try {
       const next = await apiFetch<SessionPayload>('/api/v1/session')
+      if (next.impersonation?.active && next.impersonation.session_id) {
+        window.sessionStorage.setItem('careerstack.impersonation', next.impersonation.session_id)
+      } else {
+        window.sessionStorage.removeItem('careerstack.impersonation')
+      }
       setSession(next)
       return next
     } catch {

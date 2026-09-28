@@ -58,6 +58,11 @@ export async function apiFetch<T>(
     headers.set('Content-Type', 'application/json')
   }
   if (token) headers.set('Authorization', `Bearer ${token}`)
+  const impersonation =
+    typeof window !== 'undefined'
+      ? window.sessionStorage.getItem('careerstack.impersonation')
+      : null
+  if (impersonation) headers.set('X-Impersonation-Session', impersonation)
 
   const response = await fetch(`${apiBaseUrl()}${path}`, {
     ...init,
