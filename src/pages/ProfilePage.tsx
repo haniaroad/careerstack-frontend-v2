@@ -493,7 +493,7 @@ export function ProfilePage() {
                         href={artifact.url}
                         target="_blank"
                         rel="noopener noreferrer nofollow"
-                        className="text-accent underline-offset-2 hover:underline"
+                        className="text-brand underline-offset-2 hover:underline"
                       >
                         {artifact.label}
                       </a>

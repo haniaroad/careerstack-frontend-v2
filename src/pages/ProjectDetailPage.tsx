@@ -493,7 +493,7 @@ export function ProjectDetailPage() {
     <div className="mx-auto max-w-2xl space-y-8">
       <header className="space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <Link to={backHref} className="text-sm font-medium text-accent hover:underline">
+          <Link to={backHref} className="text-sm font-medium text-brand hover:underline">
             {backLabel}
           </Link>
           {canSharePublic ? (

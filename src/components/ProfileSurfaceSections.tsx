@@ -96,7 +96,7 @@ export function ProfileSurfaceSections({
                 {(profile.evidence.artifacts ?? []).map((artifact) => (
                   <li key={`${artifact.kind}-${artifact.label}`} className="text-sm text-ink">
                     {artifact.url ? (
-                      <a href={artifact.url} className="text-accent underline-offset-2 hover:underline" target="_blank" rel="noopener noreferrer nofollow">
+                      <a href={artifact.url} className="text-brand underline-offset-2 hover:underline" target="_blank" rel="noopener noreferrer nofollow">
                         {artifact.label}
                       </a>
                     ) : (

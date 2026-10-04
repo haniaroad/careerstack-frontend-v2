@@ -130,7 +130,15 @@ describe('public surfaces', () => {
           activity: [],
         },
         evidence: { skills: [], artifacts: [] },
-        projects: [],
+        projects: [
+          {
+            project_id: 'p-public',
+            title: 'Community garden map',
+            status: 'active',
+            visibility: 'public',
+            kind: 'project',
+          },
+        ],
         peer_reviews: [
           {
             id: 'rev-1',
@@ -156,6 +164,9 @@ describe('public surfaces', () => {
     )
 
     expect(await screen.findByRole('heading', { name: 'Alex Morgan' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Projects' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Community garden map' })).toBeInTheDocument()
+    expect(screen.getByText('Active')).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Peer reviews' }))
     expect(await screen.findByText('Public teammate note')).toBeInTheDocument()
     expect(screen.getAllByText('Verified project teammate').length).toBeGreaterThan(0)
