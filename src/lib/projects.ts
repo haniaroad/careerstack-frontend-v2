@@ -48,6 +48,7 @@ export type ProjectApplication = {
 export type ProjectInvitation = {
   id: string
   invitee_id: string
+  invitee_email?: string | null
   requested_role: string
   status: string
   created_at: string

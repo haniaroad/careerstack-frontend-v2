@@ -99,19 +99,32 @@ function StatsRow({ stats }: { stats: ProfilePayload['stats'] }) {
 }
 
 function ActivitySparkline({ activity }: { activity: ProfilePayload['stats']['activity'] }) {
+  const total = activity.reduce((sum, point) => sum + point.count, 0)
   const max = Math.max(1, ...activity.map((point) => point.count))
+  if (total === 0) {
+    return (
+      <p className="text-sm text-ink-muted">
+        Qualifying actions have not been recorded yet. Submitting a task, getting one approved,
+        uploading an artifact, leaving a peer review, or completing a project will show up here.
+      </p>
+    )
+  }
   return (
     <div className="space-y-2" aria-label="Contribution activity">
-      <p className="text-sm text-ink-muted">Equal-weight contribution heartbeat (last 26 weeks)</p>
-      <div className="flex h-16 items-end gap-0.5">
-        {activity.map((point) => (
-          <div
-            key={point.week_start}
-            title={`${point.week_start}: ${point.count}`}
-            className="flex-1 rounded-sm bg-accent/80"
-            style={{ height: `${Math.max(8, (point.count / max) * 100)}%` }}
-          />
-        ))}
+      <p className="text-sm text-ink-muted">
+        {total} contribution{total === 1 ? '' : 's'} in the last 26 weeks
+      </p>
+      <div className="flex h-16 items-end gap-1" aria-hidden>
+        {activity
+          .filter((point) => point.count > 0)
+          .map((point) => (
+            <div
+              key={point.week_start}
+              title={`${point.week_start}: ${point.count}`}
+              className="w-3 rounded-sm bg-accent"
+              style={{ height: `${Math.max(12, (point.count / max) * 100)}%` }}
+            />
+          ))}
       </div>
     </div>
   )
@@ -174,6 +187,7 @@ export function ProfilePage() {
   const [profile, setProfile] = useState<ProfilePayload | null>(null)
   const [preferences, setPreferences] = useState<NotificationPreference[]>([])
   const [error, setError] = useState<string | null>(null)
+  const [visibilityNotice, setVisibilityNotice] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [form, setForm] = useState({
     display_name: '',
@@ -269,9 +283,15 @@ export function ProfilePage() {
 
   async function onVisibility(decision: 'confirm' | 'reverse') {
     setError(null)
+    setVisibilityNotice(null)
     try {
       const result = await updateProfileVisibility(decision)
       setProfile(result.profile)
+      setVisibilityNotice(
+        result.profile.public_identity_visible
+          ? 'Your profile is now public.'
+          : 'Your profile is now private.',
+      )
       if (decision === 'confirm') trackProfileVisibilityConfirmed()
       else trackProfileVisibilityReversed()
       await refreshSession?.()
@@ -328,12 +348,27 @@ export function ProfilePage() {
         </Alert>
       ) : null}
 
-      {profile &&
-      !profile.age_visibility?.visibility_review_required &&
-      profile.public_identity_visible ? (
-        <div className="flex justify-end">
-          <Button type="button" variant="secondary" onClick={() => void onVisibility('reverse')}>
-            Make profile private
+      {session?.user.age_status === 'adult' && profile ? (
+        <div className="flex flex-col gap-3 rounded-lg border border-border bg-surface p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-sm font-medium text-ink">
+              {profile.public_identity_visible ? 'Your profile is public' : 'Your profile is private'}
+            </p>
+            <p className="text-sm text-ink-muted">
+              {profile.public_identity_visible
+                ? 'Other people can open your profile.'
+                : 'Other people cannot open your profile.'}
+            </p>
+            <p aria-live="polite" className="mt-1 text-sm text-ink">
+              {visibilityNotice}
+            </p>
+          </div>
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={() => void onVisibility(profile.public_identity_visible ? 'reverse' : 'confirm')}
+          >
+            {profile.public_identity_visible ? 'Make profile private' : 'Make profile public'}
           </Button>
         </div>
       ) : null}

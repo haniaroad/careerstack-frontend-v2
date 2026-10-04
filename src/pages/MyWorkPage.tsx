@@ -126,10 +126,10 @@ export function MyWorkPage() {
             {tab === 'tasks'
               ? 'Submit evidence and track AI review for your solo tasks.'
               : tab === 'peer_reviews'
-                ? 'Optional teammate confirmation after a team project completes.'
+                ? 'Leave reviews for teammates after a team project completes. This step is optional.'
                 : tab === 'projects'
                   ? 'Projects you created or joined, including personal team projects.'
-                  : 'Review join applications from Inbox.'}
+                  : 'People who asked to join your team projects. Accept or decline those requests in Inbox.'}
           </p>
         </div>
         {tab === 'projects' ? (
@@ -298,7 +298,7 @@ export function MyWorkPage() {
             <DialogDescription>
               {writing
                 ? `Optional confirmation for ${writing.to_user_name || 'your teammate'} on ${writing.project_title}.`
-                : 'Optional teammate confirmation after project completion.'}
+                : 'Leave reviews for teammates after a team project completes. This step is optional.'}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3">

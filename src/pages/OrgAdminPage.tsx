@@ -191,8 +191,8 @@ export function OrgAdminPage() {
             Organization administration
           </h1>
           <p className="mt-2 max-w-xl text-sm leading-relaxed text-ink-muted">
-            Run programs, membership, reports, and pooled credits for {admin.organization.name}.
-            Programs are filters inside this workspace—not nested workspaces.
+            Manage programs, members, reports, and shared credits for {admin.organization.name}. A
+            program groups the projects for a skill or outcome in this organization.
           </p>
         </div>
       </header>

@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -168,5 +168,50 @@ describe('HomePage', () => {
     await user.click(screen.getByRole('button', { name: 'Dismiss tip' }))
     expect(screen.queryByRole('region', { name: 'Start here' })).not.toBeInTheDocument()
     expect(screen.getByRole('link', { name: /Create project/i })).toBeInTheDocument()
+  })
+
+  it('dismisses one project warning and leaves the other visible', async () => {
+    const user = userEvent.setup()
+    apiFetch.mockImplementation(async (path: string, init?: RequestInit) => {
+      if (path === '/api/v1/home/warning_dismissals' && init?.method === 'POST') {
+        return { dismissal: { project_id: 'p-ending', phase: 'ending_soon' } }
+      }
+      if (path === '/api/v1/projects') {
+        return {
+          projects: [
+            project(),
+            project({
+              id: 'p-grace',
+              title: 'Grace work',
+              phase: 'grace_period',
+              ends_on: '2026-08-01',
+            }),
+          ],
+        }
+      }
+      if (path.startsWith('/api/v1/inbox/items')) return { items: [] }
+      if (path.startsWith('/api/v1/first_run_tips')) return { tip: null }
+      if (path === '/api/v1/home/warning_dismissals') return { dismissals: [] }
+      throw new Error(`Unexpected ${path}`)
+    })
+
+    renderHome()
+    expect(
+      await screen.findByText(/Projects that are ending, in a grace period, or expired show up here/i),
+    ).toBeInTheDocument()
+    expect(screen.getByText(/Shipping checklist — Ending soon/i)).toBeInTheDocument()
+    expect(screen.getByText(/Grace work — Grace period/i)).toBeInTheDocument()
+
+    const ending = screen.getByText(/Shipping checklist — Ending soon/i).closest('[role="status"], [role="alert"]')
+    expect(ending).toBeTruthy()
+    await user.click(within(ending as HTMLElement).getByRole('button', { name: 'Dismiss' }))
+
+    expect(screen.queryByText(/Shipping checklist — Ending soon/i)).not.toBeInTheDocument()
+    expect(screen.getByText(/Grace work — Grace period/i)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Create project/i })).toBeInTheDocument()
+    expect(apiFetch).toHaveBeenCalledWith(
+      '/api/v1/home/warning_dismissals',
+      expect.objectContaining({ method: 'POST' }),
+    )
   })
 })

@@ -222,8 +222,8 @@ export function ReportsPanel({
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <p className="max-w-xl text-sm leading-relaxed text-ink-muted">
-          Stakeholder-ready exports with optional aggregate-only mode. Branded PDFs may include the
-          organization logo; CareerStack actions and focus states stay unchanged.
+          Download a PDF or CSV for a time period and program. Choose whether the file includes names
+          or totals only.
         </p>
         {exportAllowed ? (
           <Button type="button" onClick={() => setFormOpen((open) => !open)}>

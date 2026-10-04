@@ -78,6 +78,12 @@ export type OrganizationAdminPayload = {
   upgrade_request: UpgradeRequest | null
 }
 
+export type ProgramProject = {
+  id: string
+  title: string
+  status: string
+}
+
 export type Program = {
   id: string
   organization_id: string
@@ -88,6 +94,7 @@ export type Program = {
   active_project_count: number
   completed_project_count: number
   pending_invitation_count: number
+  projects?: ProgramProject[]
   can_delete: boolean
   can_archive: boolean
   read_only: boolean
@@ -123,6 +130,7 @@ export type OrgInvitation = {
   status: 'pending' | 'accepted' | 'expired'
   invited_by_name: string | null
   expires_at: string
+  last_sent_at: string | null
   accepted_at: string | null
   created_at: string
 }

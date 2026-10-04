@@ -143,7 +143,16 @@ describe('MyWorkPage', () => {
     renderMyWork()
     await user.click(screen.getByRole('button', { name: 'Peer reviews' }))
     expect(await screen.findByText(/No peer reviews yet/i)).toBeInTheDocument()
+    expect(
+      screen.getByText(/Leave reviews for teammates after a team project completes. This step is optional./i),
+    ).toBeInTheDocument()
     expect(screen.queryByText(/Coming soon/i)).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Applications' }))
+    expect(
+      screen.getByText(
+        'People who asked to join your team projects. Accept or decline those requests in Inbox.',
+      ),
+    ).toBeInTheDocument()
   })
 
   it('validates comment then submits a review', async () => {
