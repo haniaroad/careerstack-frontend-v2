@@ -26,11 +26,14 @@ export type ProjectMembership = {
   status: string
   join_source: string | null
   display_name: string
+  profile_slug?: string | null
 }
 
 export type ProjectApplication = {
   id: string
   applicant_id: string
+  applicant_display_name?: string | null
+  profile_slug?: string | null
   requested_role: string
   motivation: string
   availability_confirmed: boolean
@@ -94,6 +97,7 @@ export type Project = {
   created_at: string
   updated_at: string
   memberships?: ProjectMembership[]
+  applications?: ProjectApplication[]
   pending_applications?: ProjectApplication[]
   pending_invitations?: ProjectInvitation[]
   viewer_can_join?: boolean
@@ -149,6 +153,21 @@ export type ReasonCategory = (typeof REASON_CATEGORIES)[number]
 
 export function formatReasonCategory(category: string): string {
   return category.replaceAll('_', ' ')
+}
+
+export function formatApplicationStatus(status: string): string {
+  switch (status) {
+    case 'pending':
+      return 'Pending'
+    case 'approved':
+      return 'Approved'
+    case 'rejected':
+      return 'Rejected'
+    case 'expired':
+      return 'Expired'
+    default:
+      return status.replaceAll('_', ' ')
+  }
 }
 
 export function formatProjectPhase(phase: ProjectPhase | string): string {

@@ -127,7 +127,9 @@ export function MyWorkPage() {
               ? 'Submit evidence and track AI review for your solo tasks.'
               : tab === 'peer_reviews'
                 ? 'Optional teammate confirmation after a team project completes.'
-                : 'Drafts and active solo projects in your current workspace.'}
+                : tab === 'projects'
+                  ? 'Projects you created or joined, including personal team projects.'
+                  : 'Review join applications from Inbox.'}
           </p>
         </div>
         {tab === 'projects' ? (
@@ -214,7 +216,7 @@ export function MyWorkPage() {
           <div className="rounded-lg border border-border bg-surface p-6">
             <p className="text-ink">No projects yet.</p>
             <p className="mt-1 text-sm text-ink-muted">
-              Start with AI generate or Advanced Setup—confirming uses one credit.
+              Create a project, or join a team project from Explore. Projects you create or join show up here.
             </p>
             <Button asChild className="mt-4" size="sm">
               <Link to="/projects/new">Create project</Link>

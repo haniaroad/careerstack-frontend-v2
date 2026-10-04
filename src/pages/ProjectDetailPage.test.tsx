@@ -94,6 +94,7 @@ function baseProject(overrides: Partial<Project> = {}): Project {
         status: 'active',
         join_source: null,
         display_name: 'Creator',
+        profile_slug: 'casey-creator',
       },
     ],
     pending_applications: [],
@@ -232,10 +233,12 @@ describe('ProjectDetailPage', () => {
     const user = userEvent.setup()
     authUserId = 'creator-1'
     let project = baseProject({
-      pending_applications: [
+      applications: [
         {
           id: 'app1',
           applicant_id: 'applicant-1',
+          applicant_display_name: 'Taylor Brooks',
+          profile_slug: 'taylor-brooks',
           requested_role: 'Designer',
           motivation: 'I love design systems',
           availability_confirmed: true,
@@ -244,7 +247,22 @@ describe('ProjectDetailPage', () => {
           github_url: null,
           resume_url: null,
           status: 'pending',
-          created_at: '2026-01-02',
+          created_at: '2026-01-02T15:00:00Z',
+        },
+        {
+          id: 'app2',
+          applicant_id: 'applicant-2',
+          applicant_display_name: 'Private Applicant',
+          profile_slug: null,
+          requested_role: 'Researcher',
+          motivation: 'Already reviewed',
+          availability_confirmed: true,
+          skills: [],
+          portfolio_url: null,
+          github_url: null,
+          resume_url: null,
+          status: 'approved',
+          created_at: '2026-01-01T15:00:00Z',
         },
       ],
     })
@@ -258,6 +276,23 @@ describe('ProjectDetailPage', () => {
           ...project,
           participant_count: 2,
           seats_remaining: 1,
+          applications: [
+            {
+              id: 'app2',
+              applicant_id: 'applicant-2',
+              applicant_display_name: 'Private Applicant',
+              profile_slug: null,
+              requested_role: 'Researcher',
+              motivation: 'Already reviewed',
+              availability_confirmed: true,
+              skills: [],
+              portfolio_url: null,
+              github_url: null,
+              resume_url: null,
+              status: 'approved',
+              created_at: '2026-01-01T15:00:00Z',
+            },
+          ],
           pending_applications: [],
           memberships: [
             ...project.memberships!,
@@ -284,7 +319,19 @@ describe('ProjectDetailPage', () => {
     })
 
     renderPage()
-    expect(await screen.findByRole('heading', { name: /^Pending applications$/i })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: /^Applications$/i })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Taylor Brooks' })).toHaveAttribute(
+      'href',
+      '/profile/taylor-brooks',
+    )
+    expect(screen.getByText('Designer')).toBeInTheDocument()
+    expect(screen.getByText('I love design systems')).toBeInTheDocument()
+    expect(screen.getByText('Pending')).toBeInTheDocument()
+    expect(screen.getAllByText(/Submitted/i).length).toBeGreaterThan(0)
+    expect(screen.getByText('Private Applicant')).toBeInTheDocument()
+    expect(screen.getByText('Approved')).toBeInTheDocument()
+    expect(screen.getAllByRole('button', { name: /^Approve$/i })).toHaveLength(1)
+    expect(screen.getByRole('link', { name: 'Creator' })).toHaveAttribute('href', '/profile/casey-creator')
     await user.click(screen.getByRole('button', { name: /^Approve$/i }))
     expect(await screen.findByText(/Application approved/i)).toBeInTheDocument()
     expect(trackProjectJoined).toHaveBeenCalledWith({
@@ -559,7 +606,8 @@ describe('ProjectDetailPage', () => {
 
     renderPage()
     expect(await screen.findByRole('heading', { name: /Project messages/i })).toBeInTheDocument()
-    expect(screen.getByText(/visible to program staff/i)).toBeInTheDocument()
+    expect(screen.getByText(/only visible to team members/i)).toBeInTheDocument()
+    expect(screen.queryByText(/program staff/i)).not.toBeInTheDocument()
 
     await user.type(screen.getByLabelText(/Write a message/i), 'Hello teammates')
     await user.click(screen.getByRole('button', { name: /Send message/i }))
@@ -569,6 +617,26 @@ describe('ProjectDetailPage', () => {
       '/api/v1/projects/p1/messages',
       expect.objectContaining({ method: 'POST' }),
     )
+  })
+
+  it('shows the program staff notice for organization program projects', async () => {
+    authUserId = 'creator-1'
+    apiFetch.mockImplementation(async (path: string, init?: RequestInit) => {
+      if (path === '/api/v1/projects/p1' && !init?.method) {
+        return { project: baseProject({ program_id: 'prog-1' }) }
+      }
+      if (path === '/api/v1/projects/p1/messages' && !init?.method) {
+        return { messages: [], unread: false, messages_last_read_at: null }
+      }
+      if (path === '/api/v1/projects/p1/messages/read' && init?.method === 'POST') {
+        return { unread: false, messages_last_read_at: '2026-01-02T12:05:00Z' }
+      }
+      throw new Error(`Unexpected ${init?.method ?? 'GET'} ${path}`)
+    })
+
+    renderPage()
+    expect(await screen.findByText(/visible to program staff/i)).toBeInTheDocument()
+    expect(screen.queryByText(/only visible to team members/i)).not.toBeInTheDocument()
   })
 
   it('hides the message thread on solo projects', async () => {
