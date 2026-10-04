@@ -28,6 +28,7 @@ type Props = {
   projectId: string
   currentUserId: string
   workspaceType?: 'personal' | 'organization'
+  programId?: string | null
   onUnreadChange?: (unread: boolean) => void
 }
 
@@ -35,6 +36,7 @@ export function ProjectMessageThread({
   projectId,
   currentUserId,
   workspaceType = 'personal',
+  programId = null,
   onUnreadChange,
 }: Props) {
   const [messages, setMessages] = useState<ProjectMessage[]>([])
@@ -138,8 +140,9 @@ export function ProjectMessageThread({
           ) : null}
         </div>
         <p className="text-sm text-ink-muted">
-          Project messages are visible to program staff. Do not share private information you would not
-          want staff to see.
+          {programId
+            ? 'Project messages are visible to program staff. Do not share private information you would not want staff to see.'
+            : 'Project messages are only visible to team members. Do not share private information you would not want teammates to see.'}
         </p>
       </div>
 

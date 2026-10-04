@@ -93,7 +93,13 @@ describe('InboxPage', () => {
       title: 'Older application',
       is_overdue: true,
       urgency: 'high',
-      payload: { application_id: 'app-old', project_id: 'proj-1' },
+      payload: {
+        application_id: 'app-old',
+        project_id: 'proj-1',
+        applicant_display_name: 'Taylor Brooks',
+        profile_slug: 'taylor-brooks',
+        requested_role: 'Designer',
+      },
     })
     const fresh = item({
       id: 'application:app-new',
@@ -115,9 +121,14 @@ describe('InboxPage', () => {
 
     renderInbox('/inbox?tab=applications')
 
-    expect(await screen.findByText('Older application')).toBeInTheDocument()
+    expect(await screen.findByRole('link', { name: 'Taylor Brooks' })).toHaveAttribute(
+      'href',
+      '/profile/taylor-brooks',
+    )
+    expect(screen.getByText('Designer')).toBeInTheDocument()
     const titles = screen.getAllByRole('heading', { level: 3 }).map((node) => node.textContent)
-    expect(titles[0]).toBe('Older application')
+    expect(titles[0]).toBe('Taylor Brooks')
+    expect(titles[1]).toBe('Newer application')
 
     const approveButtons = screen.getAllByRole('button', { name: /^Approve$/i })
     await user.click(approveButtons[0])

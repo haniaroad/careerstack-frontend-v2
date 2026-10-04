@@ -345,7 +345,29 @@ export function InboxPage() {
                         {item.is_overdue ? <StatusBadge tone="warning">Overdue</StatusBadge> : null}
                         <span className="text-xs text-ink-muted">{formatCreatedAt(item.created_at)}</span>
                       </div>
-                      <h3 className="mt-2 text-[15px] font-semibold tracking-tight text-ink">{item.title}</h3>
+                      <h3 className="mt-2 text-[15px] font-semibold tracking-tight text-ink">
+                        {item.category === 'application' &&
+                        typeof item.payload.applicant_display_name === 'string' &&
+                        item.payload.applicant_display_name ? (
+                          typeof item.payload.profile_slug === 'string' && item.payload.profile_slug ? (
+                            <Link
+                              to={`/profile/${item.payload.profile_slug}`}
+                              className="underline-offset-2 hover:underline"
+                            >
+                              {item.payload.applicant_display_name}
+                            </Link>
+                          ) : (
+                            item.payload.applicant_display_name
+                          )
+                        ) : (
+                          item.title
+                        )}
+                      </h3>
+                      {item.category === 'application' &&
+                      typeof item.payload.requested_role === 'string' &&
+                      item.payload.requested_role ? (
+                        <p className="mt-0.5 text-sm text-ink">{item.payload.requested_role}</p>
+                      ) : null}
                       <p className="mt-0.5 text-sm font-medium text-ink">{item.project_title}</p>
                       <p className="mt-1 line-clamp-2 text-sm leading-relaxed text-ink-muted">
                         {item.description}

@@ -28,6 +28,7 @@ import {
 import {
   JOINING_MODES,
   REASON_CATEGORIES,
+  formatApplicationStatus,
   formatReasonCategory,
   projectAllowsEndDateEdit,
   projectAllowsJoin,
@@ -37,6 +38,23 @@ import {
   type ReasonCategory,
 } from '@/lib/projects'
 import type { SessionPayload } from '@/auth/types'
+
+function applicationTone(status: string): 'info' | 'success' | 'warning' | 'danger' {
+  if (status === 'approved') return 'success'
+  if (status === 'rejected') return 'danger'
+  if (status === 'expired') return 'warning'
+  return 'info'
+}
+
+function formatSubmittedAt(value: string): string {
+  const parsed = new Date(value)
+  if (Number.isNaN(parsed.getTime())) return value
+  return parsed.toLocaleString(undefined, {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  })
+}
 
 function statusTone(status: string): 'info' | 'success' | 'warning' {
   if (status === 'active' || status === 'approved' || status === 'open') return 'success'
@@ -559,6 +577,7 @@ export function ProjectDetailPage() {
         <ProjectMessageThread
           projectId={project.id}
           currentUserId={userId}
+          programId={project.program_id}
           workspaceType={session?.active_workspace?.kind === 'organization' ? 'organization' : 'personal'}
         />
       ) : null}
@@ -640,7 +659,16 @@ export function ProjectDetailPage() {
                 className="flex flex-col gap-2 rounded-lg border border-border bg-surface px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
               >
                 <div>
-                  <p className="font-medium text-ink">{member.display_name}</p>
+                  {member.profile_slug ? (
+                    <Link
+                      to={`/profile/${member.profile_slug}`}
+                      className="font-medium text-ink underline-offset-2 hover:underline"
+                    >
+                      {member.display_name}
+                    </Link>
+                  ) : (
+                    <p className="font-medium text-ink">{member.display_name}</p>
+                  )}
                   <p className="text-sm text-ink-muted">
                     {member.role}
                     {member.participant_role ? ` · ${member.participant_role}` : ''}
@@ -714,37 +742,57 @@ export function ProjectDetailPage() {
 
       {isCreator && canMutate && project.mode === 'team' && project.status === 'active' ? (
         <div className="space-y-4">
-          {(project.pending_applications?.length ?? 0) > 0 ? (
+          {(project.applications ?? project.pending_applications ?? []).length > 0 ? (
             <div className="space-y-3">
-              <h2 className="font-display text-xl text-ink">Pending applications</h2>
+              <h2 className="font-display text-xl text-ink">Applications</h2>
               <ul className="space-y-3">
-                {project.pending_applications!.map((app) => (
+                {(project.applications ?? project.pending_applications ?? []).map((app) => (
                   <li
                     key={app.id}
                     className="space-y-3 rounded-lg border border-border bg-surface p-4"
                   >
-                    <p className="font-medium text-ink">{app.requested_role}</p>
-                    <p className="text-sm text-ink-muted">{app.motivation}</p>
-                    <div className="flex flex-col gap-2 sm:flex-row">
-                      <Button
-                        size="sm"
-                        disabled={busy}
-                        onClick={() => void handleApproveApplication(app.id)}
-                      >
-                        Approve
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        disabled={busy}
-                        onClick={() => {
-                          setRejectAppId(app.id)
-                          setRejectReason('')
-                        }}
-                      >
-                        Reject
-                      </Button>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <StatusBadge tone={applicationTone(app.status)}>
+                        {formatApplicationStatus(app.status)}
+                      </StatusBadge>
+                      <span className="text-xs text-ink-muted">
+                        Submitted {formatSubmittedAt(app.created_at)}
+                      </span>
                     </div>
+                    {app.profile_slug ? (
+                      <Link
+                        to={`/profile/${app.profile_slug}`}
+                        className="font-medium text-ink underline-offset-2 hover:underline"
+                      >
+                        {app.applicant_display_name || 'Applicant'}
+                      </Link>
+                    ) : (
+                      <p className="font-medium text-ink">{app.applicant_display_name || 'Applicant'}</p>
+                    )}
+                    <p className="text-sm text-ink">{app.requested_role}</p>
+                    <p className="text-sm text-ink-muted">{app.motivation}</p>
+                    {app.status === 'pending' ? (
+                      <div className="flex flex-col gap-2 sm:flex-row">
+                        <Button
+                          size="sm"
+                          disabled={busy}
+                          onClick={() => void handleApproveApplication(app.id)}
+                        >
+                          Approve
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          disabled={busy}
+                          onClick={() => {
+                            setRejectAppId(app.id)
+                            setRejectReason('')
+                          }}
+                        >
+                          Reject
+                        </Button>
+                      </div>
+                    ) : null}
                   </li>
                 ))}
               </ul>
