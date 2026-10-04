@@ -159,7 +159,18 @@ export function IndependentOnboardingPage() {
 
         <label className="flex items-start gap-2 text-sm">
           <input type="checkbox" {...form.register('terms_accepted')} />
-          <span>I accept the CareerStack terms.</span>
+          <span>
+            I accept the{' '}
+            <a
+              href="https://careerstack.co/tos"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-brand underline underline-offset-2"
+            >
+              CareerStack terms
+            </a>
+            .
+          </span>
         </label>
         {form.formState.errors.terms_accepted ? (
           <p className="text-sm text-destructive">{form.formState.errors.terms_accepted.message}</p>

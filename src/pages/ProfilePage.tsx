@@ -6,6 +6,8 @@ import { Button } from '@/components/Button'
 import { FirstRunTip, notifyFirstRunTipsReplayed, replayFirstRunTips } from '@/components/FirstRunTip'
 import { Input } from '@/components/Input'
 import { Label } from '@/components/Label'
+import { ProfileLinks } from '@/components/ProfileLinks'
+import { ProfileProjects } from '@/components/ProfileProjects'
 import { ApiError } from '@/lib/api'
 import {
   trackProfileLinkCopied,
@@ -116,24 +118,7 @@ function ActivitySparkline({ activity }: { activity: ProfilePayload['stats']['ac
 }
 
 function SocialLinks({ links }: { links: ProfilePayload['links'] }) {
-  if (links.length === 0) return null
-  return (
-    <ul className="space-y-2">
-      {links.map((link) => (
-        <li key={link.provider}>
-          <a
-            href={link.url}
-            target="_blank"
-            rel="noopener noreferrer nofollow"
-            className="text-sm text-accent underline-offset-2 hover:underline"
-          >
-            <span className="font-medium capitalize">{link.provider}</span>
-            <span className="ml-2 break-all text-ink">{link.url}</span>
-          </a>
-        </li>
-      ))}
-    </ul>
-  )
+  return <ProfileLinks links={links} />
 }
 
 function CopyLinkControl({
@@ -476,6 +461,10 @@ export function ProfilePage() {
 
       {tab === 'skills' && profile ? (
         <div className="space-y-6">
+          <section className="space-y-3">
+            <h2 className="text-lg font-semibold text-ink">Projects</h2>
+            <ProfileProjects projects={profile.projects} />
+          </section>
           <section className="space-y-3">
             <h2 className="text-lg font-semibold text-ink">Skills</h2>
             {profile.evidence.skills.length === 0 ? (

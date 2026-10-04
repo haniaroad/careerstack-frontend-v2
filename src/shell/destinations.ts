@@ -35,7 +35,9 @@ export const MOBILE_BOTTOM_DESTINATIONS: Destination[] = [
   { id: 'more', label: 'More', path: '/more' },
 ]
 
-export function destinationFromPath(pathname: string): DestinationId | null {
+export function destinationFromPath(pathname: string, search = ''): DestinationId | null {
+  const from = new URLSearchParams(search).get('from') ?? ''
+  if (from.startsWith('/explore')) return 'explore'
   if (pathname === '/' || pathname.startsWith('/home')) return 'home'
   if (pathname.startsWith('/explore')) return 'explore'
   if (pathname.startsWith('/my-work')) return 'my-work'

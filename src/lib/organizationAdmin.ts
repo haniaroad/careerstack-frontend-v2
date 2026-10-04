@@ -209,6 +209,13 @@ export function fetchInvitations(organizationId: string) {
   )
 }
 
+export function resendInvitation(organizationId: string, invitationId: string) {
+  return apiFetch<{ invitation: OrgInvitation }>(
+    `/api/v1/organizations/${organizationId}/invitations/${invitationId}/resend`,
+    { method: 'POST' },
+  )
+}
+
 export function createInvitation(params: {
   organization_id: string
   email: string

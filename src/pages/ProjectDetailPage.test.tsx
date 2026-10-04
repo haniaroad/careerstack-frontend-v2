@@ -658,4 +658,35 @@ describe('ProjectDetailPage', () => {
     await user.click(screen.getByRole('button', { name: /Submit report/i }))
     expect(await screen.findByText(/Report received/i)).toBeInTheDocument()
   })
+
+  it('returns to Explore and replaces Apply to join after a pending application', async () => {
+    authUserId = 'applicant-1'
+    apiFetch.mockImplementation(async (path: string, init?: RequestInit) => {
+      if (path === '/api/v1/projects/p1' && !init?.method) {
+        return {
+          project: baseProject({
+            viewer_can_join: false,
+            viewer_application_status: 'pending',
+          }),
+        }
+      }
+      const handled = messagesApi(path, init)
+      if (handled) return handled
+      throw new Error(`Unexpected ${init?.method ?? 'GET'} ${path}`)
+    })
+
+    render(
+      <MemoryRouter initialEntries={['/projects/p1?from=%2Fexplore%3Ftab%3Dprojects']}>
+        <Routes>
+          <Route path="/projects/:id" element={<ProjectDetailPage />} />
+        </Routes>
+      </MemoryRouter>,
+    )
+
+    const backs = await screen.findAllByRole('link', { name: 'Back to Explore' })
+    expect(backs[0]).toHaveAttribute('href', '/explore?tab=projects')
+    expect(screen.getByText('Application submitted')).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: /Apply to join/i })).not.toBeInTheDocument()
+    expect(screen.queryByText(/^closed$/i)).not.toBeInTheDocument()
+  })
 })
