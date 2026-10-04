@@ -77,6 +77,9 @@ function ParticipantApp() {
             </Route>
           ) : null}
 
+          {/* Staff tools stay on the admin surface. A participant URL must not open the shell. */}
+          <Route path="/admin/*" element={<Navigate to="/sign-in" replace />} />
+
           <Route element={<RequireOnboarded />}>
             <Route element={<ShellLayout />}>
               <Route index element={<Navigate to="/home" replace />} />
