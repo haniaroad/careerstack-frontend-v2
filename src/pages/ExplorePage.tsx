@@ -7,6 +7,7 @@ import { EmptyState } from '@/components/EmptyState'
 import { Input } from '@/components/Input'
 import { InviteControl } from '@/components/InviteControl'
 import { Label } from '@/components/Label'
+import { ProjectLifecycleBadge } from '@/components/ProjectLifecycleBadge'
 import { StatusBadge } from '@/components/StatusBadge'
 import { ApiError } from '@/lib/api'
 import {
@@ -252,6 +253,7 @@ export function ExplorePage() {
                 >
                   <div className="flex flex-wrap items-center gap-2">
                     <p className="font-medium text-ink">{project.title}</p>
+                    <ProjectLifecycleBadge status={project.status} phase={project.phase} showPhase={false} />
                     <StatusBadge tone="info">{project.mode === 'team' ? 'Team' : 'Solo'}</StatusBadge>
                     {joinLabel ? <StatusBadge tone="info">{joinLabel}</StatusBadge> : null}
                   </div>

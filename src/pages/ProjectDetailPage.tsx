@@ -104,6 +104,14 @@ export function ProjectDetailPage() {
   const [rejectAppId, setRejectAppId] = useState<string | null>(null)
   const [rejectReason, setRejectReason] = useState('')
   const [endsOnDraft, setEndsOnDraft] = useState('')
+  const [titleDraft, setTitleDraft] = useState('')
+  const [summaryDraft, setSummaryDraft] = useState('')
+  const [objectiveDraft, setObjectiveDraft] = useState('')
+  const [definitionDraft, setDefinitionDraft] = useState('')
+  const [visibilityDraft, setVisibilityDraft] = useState<'public' | 'private'>('private')
+  const [joiningModeDraft, setJoiningModeDraft] = useState<JoiningMode>('application')
+  const [capacityDraft, setCapacityDraft] = useState('1')
+  const [rolesEditDraft, setRolesEditDraft] = useState('')
 
   const workspace = session?.active_workspace
   const isPersonal = workspace?.kind === 'personal'
@@ -116,7 +124,15 @@ export function ProjectDetailPage() {
     try {
       const data = await apiFetch<{ project: Project }>(`/api/v1/projects/${id}`)
       setProject(data.project)
+      setTitleDraft(data.project.title)
+      setSummaryDraft(data.project.summary ?? '')
+      setObjectiveDraft(data.project.objective ?? '')
+      setDefinitionDraft(data.project.definition_of_done ?? '')
       setEndsOnDraft(data.project.ends_on ?? '')
+      setVisibilityDraft(data.project.visibility)
+      setJoiningModeDraft(data.project.joining_mode ?? 'application')
+      setCapacityDraft(String(data.project.capacity ?? 1))
+      setRolesEditDraft((data.project.roles_needed ?? []).join(', '))
       trackProjectLifecycleObserved({
         project_id: data.project.id,
         status: data.project.status,
@@ -414,24 +430,51 @@ export function ProjectDetailPage() {
     }
   }
 
-  async function handleUpdateEndsOn() {
-    if (!project || !endsOnDraft.trim()) return
-    if (!projectAllowsEndDateEdit(project)) return
+  async function handleSaveProject() {
+    if (!project || !titleDraft.trim() || !endsOnDraft.trim()) return
+    if (project.status !== 'active' || !projectAllowsEndDateEdit(project)) return
     setBusy(true)
     setError(null)
     setErrorCode(null)
     setNotice(null)
+    const previousEndsOn = project.ends_on
+    const body: Record<string, unknown> = {
+      title: titleDraft.trim(),
+      summary: summaryDraft.trim() || null,
+      objective: objectiveDraft.trim() || null,
+      definition_of_done: definitionDraft.trim() || null,
+      ends_on: endsOnDraft.trim(),
+      visibility: visibilityDraft,
+    }
+    if (project.mode === 'team') {
+      body.joining_mode = joiningModeDraft
+      body.capacity = Number(capacityDraft)
+      body.roles_needed = rolesEditDraft
+        .split(',')
+        .map((role) => role.trim())
+        .filter(Boolean)
+    }
     try {
       const data = await apiFetch<{ project: Project }>(`/api/v1/projects/${project.id}`, {
         method: 'PATCH',
-        body: JSON.stringify({ ends_on: endsOnDraft.trim() }),
+        body: JSON.stringify(body),
       })
       setProject(data.project)
+      setTitleDraft(data.project.title)
+      setSummaryDraft(data.project.summary ?? '')
+      setObjectiveDraft(data.project.objective ?? '')
+      setDefinitionDraft(data.project.definition_of_done ?? '')
       setEndsOnDraft(data.project.ends_on ?? '')
-      trackProjectEndDateUpdated({ project_id: data.project.id })
-      setNotice('Project end date updated.')
+      setVisibilityDraft(data.project.visibility)
+      setJoiningModeDraft(data.project.joining_mode ?? 'application')
+      setCapacityDraft(String(data.project.capacity ?? 1))
+      setRolesEditDraft((data.project.roles_needed ?? []).join(', '))
+      if (data.project.ends_on && data.project.ends_on !== previousEndsOn) {
+        trackProjectEndDateUpdated({ project_id: data.project.id })
+      }
+      setNotice('Project updated.')
     } catch (err) {
-      handleApiError(err, 'Unable to update end date')
+      handleApiError(err, 'Unable to update project')
     } finally {
       setBusy(false)
     }
@@ -480,7 +523,15 @@ export function ProjectDetailPage() {
     !myMembership &&
     projectAllowsJoin(project) &&
     !publicPreview
-  const canEditEndsOn = isCreator && projectAllowsEndDateEdit(project)
+  const orgStaff =
+    Boolean(session?.can_access_org_admin) &&
+    session?.active_workspace?.kind === 'organization' &&
+    session.active_workspace_id === project.workspace_id
+  const canEditProject =
+    project.status === 'active' &&
+    projectAllowsEndDateEdit(project) &&
+    !publicPreview &&
+    (isCreator || orgStaff)
   const roles = project.roles_needed ?? []
   const finalExpiresLabel = project.final_expires_at
     ? new Date(project.final_expires_at).toLocaleString(undefined, {
@@ -595,31 +646,128 @@ export function ProjectDetailPage() {
         </Alert>
       ) : null}
 
-      {canEditEndsOn ? (
-        <div className="space-y-3 rounded-lg border border-border bg-surface p-5">
-          <h2 className="font-display text-xl text-ink">Project end date</h2>
-          <p className="text-sm text-ink-muted">
-            Update the end date before final expiration. Participants are notified of changes.
-          </p>
+      {canEditProject ? (
+        <form
+          className="space-y-4 rounded-lg border border-border bg-surface p-5"
+          onSubmit={(event) => {
+            event.preventDefault()
+            void handleSaveProject()
+          }}
+        >
+          <div>
+            <h2 className="font-display text-xl text-ink">Edit project</h2>
+            <p className="mt-1 text-sm text-ink-muted">
+              Update the details people see. Mode, workspace, program, and creator stay as they are.
+              Participants are notified when the end date changes.
+            </p>
+          </div>
           <label className="block space-y-1">
-            <span className="text-sm font-medium text-ink">Ends on</span>
+            <span className="text-sm font-medium text-ink">Title</span>
             <input
-              type="date"
               className="w-full rounded-md border border-border bg-canvas px-3 py-2 text-ink"
-              value={endsOnDraft}
-              onChange={(e) => setEndsOnDraft(e.target.value)}
+              value={titleDraft}
+              onChange={(event) => setTitleDraft(event.target.value)}
+              disabled={busy}
+              required
+            />
+          </label>
+          <label className="block space-y-1">
+            <span className="text-sm font-medium text-ink">Summary</span>
+            <textarea
+              className="min-h-20 w-full rounded-md border border-border bg-canvas px-3 py-2 text-ink"
+              value={summaryDraft}
+              onChange={(event) => setSummaryDraft(event.target.value)}
               disabled={busy}
             />
           </label>
-          <Button
-            type="button"
-            size="sm"
-            disabled={busy || !endsOnDraft.trim() || endsOnDraft === (project.ends_on ?? '')}
-            onClick={() => void handleUpdateEndsOn()}
-          >
-            Save end date
+          <label className="block space-y-1">
+            <span className="text-sm font-medium text-ink">Objective</span>
+            <textarea
+              className="min-h-20 w-full rounded-md border border-border bg-canvas px-3 py-2 text-ink"
+              value={objectiveDraft}
+              onChange={(event) => setObjectiveDraft(event.target.value)}
+              disabled={busy}
+            />
+          </label>
+          <label className="block space-y-1">
+            <span className="text-sm font-medium text-ink">Definition of done</span>
+            <textarea
+              className="min-h-20 w-full rounded-md border border-border bg-canvas px-3 py-2 text-ink"
+              value={definitionDraft}
+              onChange={(event) => setDefinitionDraft(event.target.value)}
+              disabled={busy}
+            />
+          </label>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <label className="block space-y-1">
+              <span className="text-sm font-medium text-ink">Ends on</span>
+              <input
+                type="date"
+                className="w-full rounded-md border border-border bg-canvas px-3 py-2 text-ink"
+                value={endsOnDraft}
+                onChange={(event) => setEndsOnDraft(event.target.value)}
+                disabled={busy}
+                required
+              />
+            </label>
+            <label className="block space-y-1">
+              <span className="text-sm font-medium text-ink">Visibility</span>
+              <select
+                className="w-full rounded-md border border-border bg-canvas px-3 py-2 text-ink"
+                value={visibilityDraft}
+                onChange={(event) => setVisibilityDraft(event.target.value as 'public' | 'private')}
+                disabled={busy}
+              >
+                <option value="private">Private</option>
+                <option value="public">Public</option>
+              </select>
+            </label>
+          </div>
+          {project.mode === 'team' ? (
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className="block space-y-1">
+                <span className="text-sm font-medium text-ink">Joining</span>
+                <select
+                  className="w-full rounded-md border border-border bg-canvas px-3 py-2 text-ink"
+                  value={joiningModeDraft}
+                  onChange={(event) => setJoiningModeDraft(event.target.value as JoiningMode)}
+                  disabled={busy}
+                >
+                  {JOINING_MODES.map((mode) => (
+                    <option key={mode} value={mode}>
+                      {mode.replaceAll('_', ' ')}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="block space-y-1">
+                <span className="text-sm font-medium text-ink">Capacity</span>
+                <input
+                  type="number"
+                  min={1}
+                  max={5}
+                  className="w-full rounded-md border border-border bg-canvas px-3 py-2 text-ink"
+                  value={capacityDraft}
+                  onChange={(event) => setCapacityDraft(event.target.value)}
+                  disabled={busy}
+                />
+              </label>
+              <label className="block space-y-1 sm:col-span-2">
+                <span className="text-sm font-medium text-ink">Roles needed</span>
+                <input
+                  className="w-full rounded-md border border-border bg-canvas px-3 py-2 text-ink"
+                  value={rolesEditDraft}
+                  onChange={(event) => setRolesEditDraft(event.target.value)}
+                  disabled={busy}
+                  placeholder="Designer, Engineer"
+                />
+              </label>
+            </div>
+          ) : null}
+          <Button type="submit" size="sm" disabled={busy || !titleDraft.trim() || !endsOnDraft.trim()}>
+            Save project
           </Button>
-        </div>
+        </form>
       ) : null}
 
       {errorCode === 'insufficient_credits' ? (

@@ -426,11 +426,7 @@ export function TaskDetailPage() {
             {isTeam ? (
               <p className="mt-2 text-sm text-ink-muted">Team task — submissions go to the project creator for review.</p>
             ) : null}
-            {isTeam &&
-            task.status === 'pending' &&
-            !task.assignee_id &&
-            session?.user.id &&
-            session.user.id !== task.project_creator_id ? (
+            {task.viewer_can_claim && session?.user.id ? (
               <Button type="button" variant="secondary" className="mt-3" onClick={() => void updateAssignment(session.user.id)}>
                 Assign to me
               </Button>
