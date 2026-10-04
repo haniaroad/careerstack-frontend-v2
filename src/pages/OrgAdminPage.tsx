@@ -15,6 +15,7 @@ import {
   fetchPrograms,
   fetchReports,
   removeMembership,
+  resendInvitation,
   updateMembership,
   updateProgram,
   upsertUpgradeRequest,
@@ -278,6 +279,10 @@ export function OrgAdminPage() {
           }}
           onRemoveMember={async (membershipId, reason) => {
             await removeMembership(membershipId, reason)
+            await load()
+          }}
+          onResendInvite={async (invitationId) => {
+            await resendInvitation(organizationId, invitationId)
             await load()
           }}
           onInvite={async (params) => {

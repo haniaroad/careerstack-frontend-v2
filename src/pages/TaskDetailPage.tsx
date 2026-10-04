@@ -106,6 +106,21 @@ export function TaskDetailPage() {
     void load()
   }, [load])
 
+  async function updateAssignment(assigneeId: string | null) {
+    if (!task) return
+    setError(null)
+    try {
+      const data = await apiFetch<{ task: TaskDetail }>(`/api/v1/tasks/${task.id}/assignment`, {
+        method: 'PATCH',
+        body: JSON.stringify({ assignee_id: assigneeId }),
+      })
+      setTask((current) => (current ? { ...current, ...data.task } : data.task))
+      setInfo(assigneeId ? 'You assigned this task to yourself.' : 'You released this task.')
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Unable to update assignment')
+    }
+  }
+
   useEffect(() => {
     if (!task?.latest_review) return
     if (task.latest_review.status === 'pending' || task.latest_review.status === 'running') {
@@ -286,6 +301,20 @@ export function TaskDetailPage() {
             {task.due_on ? <p className="mt-2 text-sm text-ink-muted">Due {task.due_on}</p> : null}
             {isTeam ? (
               <p className="mt-2 text-sm text-ink-muted">Team task — submissions go to the project creator for review.</p>
+            ) : null}
+            {isTeam &&
+            task.status === 'pending' &&
+            !task.assignee_id &&
+            session?.user.id &&
+            session.user.id !== task.project_creator_id ? (
+              <Button type="button" variant="secondary" className="mt-3" onClick={() => void updateAssignment(session.user.id)}>
+                Assign to me
+              </Button>
+            ) : null}
+            {isTeam && task.status === 'pending' && task.assignee_id === session?.user.id ? (
+              <Button type="button" variant="secondary" className="mt-3" onClick={() => void updateAssignment(null)}>
+                Unassign
+              </Button>
             ) : null}
           </div>
           <StatusBadge tone={taskTone(task.status)}>{task.status.replaceAll('_', ' ')}</StatusBadge>

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useId, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useAuth } from '@/auth/AuthContext'
 import { Alert } from '@/components/Alert'
 import { Button } from '@/components/Button'
@@ -16,6 +16,7 @@ import { ProjectLifecycleBadge } from '@/components/ProjectLifecycleBadge'
 import { ProjectMessageThread } from '@/components/ProjectMessageThread'
 import { StatusBadge } from '@/components/StatusBadge'
 import { apiFetch, ApiError } from '@/lib/api'
+import { joinStatusLabel } from '@/lib/explore'
 import {
   trackMemberRemoved,
   trackProjectConvertedToTeam,
@@ -53,6 +54,7 @@ function statusTone(status: string): 'info' | 'success' | 'warning' {
 
 export function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>()
+  const [searchParams, setSearchParams] = useSearchParams()
   const formId = useId()
   const navigate = useNavigate()
   const { session, setSession, refreshSession } = useAuth()
@@ -424,7 +426,9 @@ export function ProjectDetailPage() {
           {error}
         </Alert>
         <Button asChild variant="secondary">
-          <Link to="/my-work">Back to My Work</Link>
+          <Link to={searchParams.get('from')?.startsWith('/explore') ? searchParams.get('from')! : '/my-work'}>
+            {searchParams.get('from')?.startsWith('/explore') ? 'Back to Explore' : 'Back to my work'}
+          </Link>
         </Button>
       </div>
     )
@@ -439,13 +443,25 @@ export function ProjectDetailPage() {
   const memberships = project.memberships ?? []
   const myMembership = memberships.find((m) => m.user_id === userId)
   const isParticipant = Boolean(myMembership && myMembership.role !== 'creator')
+  const publicPreview = searchParams.get('view') === 'public'
+  const from = searchParams.get('from')
+  const backHref = from?.startsWith('/explore') ? from : '/my-work'
+  const backLabel = from?.startsWith('/explore') ? 'Back to Explore' : 'Back to my work'
+  const canSharePublic =
+    project.visibility === 'public' &&
+    !['draft', 'cancelled', 'archived'].includes(project.status)
+  const extraPill =
+    project.phase === 'ending_soon' || project.phase === 'grace_period'
+      ? null
+      : joinStatusLabel(project)
   const readOnly = projectIsReadOnly(project)
-  const canMutate = !readOnly
+  const canMutate = !readOnly && !publicPreview
   const canJoin =
     Boolean(project.viewer_can_join) &&
     !isCreator &&
     !myMembership &&
-    projectAllowsJoin(project)
+    projectAllowsJoin(project) &&
+    !publicPreview
   const canEditEndsOn = isCreator && projectAllowsEndDateEdit(project)
   const roles = project.roles_needed ?? []
   const finalExpiresLabel = project.final_expires_at
@@ -458,16 +474,60 @@ export function ProjectDetailPage() {
   return (
     <div className="mx-auto max-w-2xl space-y-8">
       <header className="space-y-3">
-        <p className="text-sm font-medium text-ink-muted">Project</p>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <Link to={backHref} className="text-sm font-medium text-accent hover:underline">
+            {backLabel}
+          </Link>
+          {canSharePublic ? (
+            <div className="flex flex-wrap gap-2">
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                onClick={() => {
+                  const url = `${window.location.origin}/projects/${project.slug}`
+                  void navigator.clipboard.writeText(url).then(() => setNotice('Public link copied.'))
+                }}
+              >
+                Copy public link
+              </Button>
+              {publicPreview ? (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => {
+                    const next = new URLSearchParams(searchParams)
+                    next.delete('view')
+                    setSearchParams(next)
+                  }}
+                >
+                  Exit preview
+                </Button>
+              ) : (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => {
+                    const next = new URLSearchParams(searchParams)
+                    next.set('view', 'public')
+                    setSearchParams(next)
+                  }}
+                >
+                  View public page
+                </Button>
+              )}
+            </div>
+          ) : null}
+        </div>
+        <p className="text-sm font-medium text-ink-muted">
+          {publicPreview ? 'Public preview' : 'Project'} · {project.mode === 'team' ? 'Team' : 'Solo'}
+        </p>
         <div className="flex flex-wrap items-center gap-3">
           <h1 className="font-display text-3xl text-ink">{project.title}</h1>
           <ProjectLifecycleBadge status={project.status} phase={project.phase} />
-          <StatusBadge tone="info">{project.mode}</StatusBadge>
-          {project.recruitment_state ? (
-            <StatusBadge tone={statusTone(project.recruitment_state)}>
-              {project.recruitment_state}
-            </StatusBadge>
-          ) : null}
+          {extraPill ? <StatusBadge tone="info">{extraPill}</StatusBadge> : null}
         </div>
         {project.summary ? <p className="text-ink-muted">{project.summary}</p> : null}
         <div className="space-y-1 text-sm text-ink-muted">
@@ -788,6 +848,12 @@ export function ProjectDetailPage() {
         </div>
       ) : null}
 
+      {project.viewer_application_status === 'pending' && !publicPreview ? (
+        <Alert tone="info" title="Application submitted">
+          Your application is pending review. You cannot submit another one.
+        </Alert>
+      ) : null}
+
       {canJoin && project.joining_mode === 'application' ? (
         <div className="space-y-3 rounded-lg border border-border bg-surface p-5">
           <h2 className="font-display text-xl text-ink">Apply to join</h2>
@@ -890,13 +956,45 @@ export function ProjectDetailPage() {
                         }
                       >
                         <option value="">Unassigned</option>
-                        {memberships.map((member) => (
+                        {memberships
+                          .filter((member) => member.user_id !== project.creator_id)
+                          .map((member) => (
                           <option key={member.user_id} value={member.user_id}>
                             {member.display_name}
                           </option>
                         ))}
                       </select>
                     </label>
+                  ) : null}
+                  {isParticipant &&
+                  canMutate &&
+                  project.mode === 'team' &&
+                  task.status === 'pending' &&
+                  !task.assignee_id ? (
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      disabled={busy}
+                      onClick={() => {
+                        if (userId) void handleAssignTask(task.id, userId)
+                      }}
+                    >
+                      Assign to me
+                    </Button>
+                  ) : null}
+                  {isParticipant &&
+                  canMutate &&
+                  project.mode === 'team' &&
+                  task.status === 'pending' &&
+                  task.assignee_id === userId ? (
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      disabled={busy}
+                      onClick={() => void handleAssignTask(task.id, null)}
+                    >
+                      Unassign
+                    </Button>
                   ) : null}
                 </li>
               )
@@ -927,7 +1025,7 @@ export function ProjectDetailPage() {
           </Button>
         ) : null}
         <Button asChild variant="ghost">
-          <Link to="/my-work">Back to My Work</Link>
+          <Link to={backHref}>{backLabel}</Link>
         </Button>
       </div>
 

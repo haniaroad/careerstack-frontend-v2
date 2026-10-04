@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { Alert } from '@/components/Alert'
 import { Button } from '@/components/Button'
 import { InviteControl } from '@/components/InviteControl'
+import { ProfileLinks } from '@/components/ProfileLinks'
+import { ProfileProjects } from '@/components/ProfileProjects'
 import { ProfileSurfaceSections } from '@/components/ProfileSurfaceSections'
 import { ApiError } from '@/lib/api'
 import { trackProfileViewed } from '@/lib/mixpanel'
@@ -35,6 +37,9 @@ function Stats({ stats }: { stats: ProfilePayload['stats'] }) {
 
 export function PublicProfilePage() {
   const { slug } = useParams<{ slug: string }>()
+  const [searchParams] = useSearchParams()
+  const from = searchParams.get('from')
+  const backHref = from?.startsWith('/explore') ? from : null
   const [profile, setProfile] = useState<ProfilePayload | null>(null)
   const [notFound, setNotFound] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -88,6 +93,11 @@ export function PublicProfilePage() {
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <header className="space-y-2">
+        {backHref ? (
+          <Link to={backHref} className="text-sm font-medium text-accent hover:underline">
+            Back to Explore
+          </Link>
+        ) : null}
         <p className="text-sm font-medium text-ink-muted">Profile</p>
         <h1 className="font-display text-3xl text-ink">{profile.details.display_name}</h1>
         <p className="text-ink-muted">
@@ -105,45 +115,11 @@ export function PublicProfilePage() {
         canReport
         overview={
           <>
-            {profile.links.length > 0 ? (
-              <ul className="space-y-2">
-                {profile.links.map((link) => (
-                  <li key={link.provider}>
-                    <a
-                      href={link.url}
-                      target="_blank"
-                      rel="noopener noreferrer nofollow"
-                      className="text-sm text-accent underline-offset-2 hover:underline"
-                    >
-                      <span className="font-medium capitalize">{link.provider}</span>
-                      <span className="ml-2 break-all text-ink">{link.url}</span>
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            ) : null}
+            <ProfileLinks links={profile.links} />
 
             <section className="space-y-3">
               <h2 className="text-lg font-semibold text-ink">Projects</h2>
-              {profile.projects.length === 0 ? (
-                <p className="text-sm text-ink-muted">No projects to show yet.</p>
-              ) : (
-                <ul className="space-y-2">
-                  {profile.projects.map((project) => (
-                    <li
-                      key={String(project.project_id)}
-                      className="rounded-md border border-border px-3 py-2 text-sm"
-                    >
-                      <p className="font-medium text-ink">{String(project.title)}</p>
-                      <p className="text-ink-muted">
-                        {String(project.status)}
-                        {project.organization_name ? ` · ${String(project.organization_name)}` : ''}
-                        {project.kind === 'accomplishment_summary' ? ' · summary' : ''}
-                      </p>
-                    </li>
-                  ))}
-                </ul>
-              )}
+              <ProfileProjects projects={profile.projects} />
             </section>
 
             <section className="space-y-3">

@@ -34,6 +34,7 @@ export function MembersPanel({
   onSaveMembership,
   onRemoveMember,
   onInvite,
+  onResendInvite,
 }: {
   memberships: OrgMembership[]
   invitations: OrgInvitation[]
@@ -45,6 +46,7 @@ export function MembersPanel({
   onSaveMembership: (membershipId: string, params: { role: OrgRole; program_ids: string[] }) => Promise<void>
   onRemoveMember: (membershipId: string, reason: string) => Promise<void>
   onInvite: (params: { email: string; role: OrgRole; program_id: string | null }) => Promise<string | null>
+  onResendInvite: (invitationId: string) => Promise<void>
 }) {
   const [query, setQuery] = useState('')
   const [roleFilter, setRoleFilter] = useState<OrgRole | ''>('')
@@ -136,6 +138,15 @@ export function MembersPanel({
                   {ROLE_LABEL[invite.role]} · {invite.program_name || 'No program'} · invited by{' '}
                   {invite.invited_by_name || 'staff'}
                 </p>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  className="mt-2"
+                  disabled={readOnlyOrg}
+                  onClick={() => void onResendInvite(invite.id)}
+                >
+                  Resend
+                </Button>
               </li>
             ))}
           </ul>

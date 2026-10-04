@@ -103,9 +103,18 @@ export function SignInPage() {
     }
   }, [navigate, refreshSession, resumePath])
 
+  useEffect(() => {
+    function onFocus() {
+      setPendingGoogle(false)
+    }
+    window.addEventListener('focus', onFocus)
+    return () => window.removeEventListener('focus', onFocus)
+  }, [])
+
   async function onGoogle() {
     setError(null)
     setPendingGoogle(true)
+    let redirecting = false
     try {
       if (authStubEnabled() && !isFirebaseConfigured()) {
         await stubSignIn('alex.morgan@example.com')
@@ -114,14 +123,20 @@ export function SignInPage() {
       }
       const result = await signInWithGoogle()
       if (result.method === 'redirect') {
-        // Full-page redirect in progress — leave pending until the browser navigates away.
+        redirecting = true
         return
       }
       await refreshSession()
       navigate(consumeReturnTo(resumePath))
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Google sign-in failed')
-      setPendingGoogle(false)
+      const code = err && typeof err === 'object' && 'code' in err ? String(err.code) : ''
+      if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') {
+        setError(null)
+      } else {
+        setError(err instanceof Error ? err.message : 'Google sign-in failed')
+      }
+    } finally {
+      if (!redirecting) setPendingGoogle(false)
     }
   }
 
@@ -246,7 +261,15 @@ export function SignInPage() {
           </p>
 
           <p className="text-center text-xs leading-relaxed text-muted-foreground">
-            Independent signup requires you to confirm you are at least 18 and accept the terms
+            Independent signup requires you to confirm you are at least 18 and accept the{' '}
+            <a
+              href="https://careerstack.co/tos"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-brand underline underline-offset-2 hover:underline"
+            >
+              CareerStack terms
+            </a>{' '}
             on the next step. Organization participants join by invitation.{' '}
             <Link className="text-brand underline-offset-2 hover:underline" to="/invite">
               Enter invite token

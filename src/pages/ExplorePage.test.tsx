@@ -113,9 +113,14 @@ describe('ExplorePage', () => {
     )
 
     expect(await screen.findByRole('tab', { name: 'Projects', selected: true })).toBeInTheDocument()
-    expect(await screen.findByRole('link', { name: /Public studio/i })).toHaveAttribute('href', '/projects/proj-public')
+    expect(await screen.findByRole('link', { name: /Public studio/i })).toHaveAttribute(
+      'href',
+      '/projects/proj-public?from=%2Fexplore',
+    )
     expect(screen.queryByText(/Coming soon/i)).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Dismiss tip' })).not.toBeInTheDocument()
+    expect(screen.getByLabelText('Skill').tagName).toBe('SELECT')
+    expect(screen.getByLabelText('Role').tagName).toBe('SELECT')
   })
 
   it('lists organization projects when that workspace payload is returned', async () => {
@@ -143,7 +148,7 @@ describe('ExplorePage', () => {
     await user.click(await screen.findByRole('tab', { name: 'People' }))
     expect(await screen.findByRole('link', { name: /Searchable Adult/i })).toHaveAttribute(
       'href',
-      '/profile/searchable-adult',
+      '/profile/searchable-adult?from=%2Fexplore%3Ftab%3Dpeople',
     )
     expect(screen.queryByText('Hidden Minor')).not.toBeInTheDocument()
   })

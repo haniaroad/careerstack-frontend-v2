@@ -832,12 +832,63 @@ export function CreateProjectPage() {
                     <ul className="space-y-2">
                       {proposedTasks.map((task, index) => (
                         <li
-                          key={`${task.title}-${index}`}
-                          className="rounded-md border border-border bg-canvas p-3 text-sm text-ink"
+                          key={`proposed-${index}`}
+                          className="space-y-2 rounded-md border border-border bg-canvas p-3 text-sm text-ink"
                         >
-                          <p className="font-medium">{task.title}</p>
-                          <p className="text-ink-muted">{task.summary}</p>
-                          <p className="mt-1 text-ink-muted">Due {task.recommended_due_date}</p>
+                          <label className="block space-y-1">
+                            <span className="font-medium">Title</span>
+                            <input
+                              className="w-full rounded-md border border-border bg-surface px-3 py-2"
+                              value={task.title}
+                              onChange={(event) =>
+                                setProposedTasks((current) =>
+                                  current.map((item, itemIndex) =>
+                                    itemIndex === index ? { ...item, title: event.target.value } : item,
+                                  ),
+                                )
+                              }
+                            />
+                          </label>
+                          <label className="block space-y-1">
+                            <span className="font-medium">Summary</span>
+                            <textarea
+                              className="min-h-16 w-full rounded-md border border-border bg-surface px-3 py-2"
+                              value={task.summary}
+                              onChange={(event) =>
+                                setProposedTasks((current) =>
+                                  current.map((item, itemIndex) =>
+                                    itemIndex === index ? { ...item, summary: event.target.value } : item,
+                                  ),
+                                )
+                              }
+                            />
+                          </label>
+                          <label className="block space-y-1">
+                            <span className="font-medium">Due</span>
+                            <input
+                              type="date"
+                              className="w-full rounded-md border border-border bg-surface px-3 py-2"
+                              value={task.recommended_due_date}
+                              onChange={(event) =>
+                                setProposedTasks((current) =>
+                                  current.map((item, itemIndex) =>
+                                    itemIndex === index
+                                      ? { ...item, recommended_due_date: event.target.value }
+                                      : item,
+                                  ),
+                                )
+                              }
+                            />
+                          </label>
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            onClick={() =>
+                              setProposedTasks((current) => current.filter((_, itemIndex) => itemIndex !== index))
+                            }
+                          >
+                            Delete task
+                          </Button>
                         </li>
                       ))}
                     </ul>

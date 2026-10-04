@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { ChevronDown, Menu, Search } from 'lucide-react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { Avatar, AvatarFallback } from '@/components/Avatar'
@@ -166,7 +166,9 @@ function ProfileMenu() {
         <DropdownMenuItem onSelect={() => navigate('/organizations/new')}>
           Create organization
         </DropdownMenuItem>
-        <DropdownMenuItem disabled>Settings (soon)</DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => navigate('/profile?tab=settings')}>
+          Settings
+        </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem
           onSelect={() => {
@@ -186,7 +188,7 @@ function ProfileMenu() {
 function DesktopSidebar() {
   const { canAccessOrgAdmin, activeWorkspaceId, workspaces } = useShell()
   const location = useLocation()
-  const activeId = destinationFromPath(location.pathname)
+  const activeId = destinationFromPath(location.pathname, location.search)
   const activeWorkspace = workspaces.find((w) => w.id === activeWorkspaceId)
   const showOrgAdmin =
     canAccessOrgAdmin && activeWorkspace?.type === 'organization'
@@ -246,7 +248,7 @@ function DesktopSidebar() {
 
 function MobileBottomNav() {
   const location = useLocation()
-  const activeId = destinationFromPath(location.pathname)
+  const activeId = destinationFromPath(location.pathname, location.search)
 
   return (
     <nav
@@ -288,6 +290,7 @@ function MobileBottomNav() {
 export function AppShell({ children }: { children: ReactNode }) {
   const { creditRemaining } = useShell()
   const navigate = useNavigate()
+  const [query, setQuery] = useState('')
 
   return (
     <div className="flex min-h-screen bg-background text-foreground">
@@ -307,19 +310,30 @@ export function AppShell({ children }: { children: ReactNode }) {
             </div>
             <WorkspaceSwitcher />
             <ProgramFilterControl />
-            <label className="relative hidden min-w-0 flex-1 md:block lg:max-w-md">
-              <span className="sr-only">Search</span>
-              <Search
-                className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
-                aria-hidden
-              />
-              <Input
-                type="search"
-                placeholder="Search projects, people, tasks…"
-                className="h-9 bg-muted pl-9"
-                aria-label="Search"
-              />
-            </label>
+            <form
+              className="relative hidden min-w-0 flex-1 md:block lg:max-w-md"
+              onSubmit={(event) => {
+                event.preventDefault()
+                const term = query.trim()
+                navigate(term ? `/explore?q=${encodeURIComponent(term)}` : '/explore')
+              }}
+            >
+              <label className="relative block">
+                <span className="sr-only">Search</span>
+                <Search
+                  className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
+                  aria-hidden
+                />
+                <Input
+                  type="search"
+                  placeholder="Search projects and people"
+                  className="h-9 bg-muted pl-9"
+                  aria-label="Search"
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                />
+              </label>
+            </form>
           </div>
           <div className="flex items-center gap-1.5">
             {typeof creditRemaining === 'number' ? (

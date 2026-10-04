@@ -44,6 +44,38 @@ export type InviteOptions = {
   unavailable: boolean
 }
 
+export type ExploreFilterOptions = {
+  skills: string[]
+  roles: string[]
+  experience_levels: string[]
+  locations: string[]
+  organizations: string[]
+}
+
+export function joinStatusLabel(project: {
+  mode: string
+  status: string
+  phase: string
+  joining_mode: string | null
+  recruitment_state: string | null
+}): string | null {
+  if (project.phase === 'ending_soon') return 'Ending soon'
+  if (project.phase === 'grace_period') return 'Grace period'
+  if (project.mode !== 'team' || project.status !== 'active') return null
+  if (project.joining_mode === 'invite_only') return 'Invite only'
+  if (project.recruitment_state === 'full') return 'Team full'
+  if (project.recruitment_state === 'closed') return 'Joining closed'
+  if (project.joining_mode === 'application' && project.recruitment_state === 'open') {
+    return 'Accepting applications'
+  }
+  if (project.joining_mode === 'instant' && project.recruitment_state === 'open') return 'Instant join'
+  return null
+}
+
+export function fetchExploreFilterOptions() {
+  return apiFetch<ExploreFilterOptions>('/api/v1/explore/filter_options')
+}
+
 export function fetchExploreProjects(params: { q?: string; skill?: string; role?: string }) {
   const search = new URLSearchParams()
   if (params.q) search.set('q', params.q)
