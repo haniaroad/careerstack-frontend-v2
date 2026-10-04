@@ -309,6 +309,7 @@ describe('TaskDetailPage', () => {
       project_mode: 'team',
       project_creator_id: 'u1',
       assignee_id: 'u2',
+      status: 'submitted',
       project_status: 'active',
       project_phase: 'normal',
       submissions: [
@@ -320,7 +321,16 @@ describe('TaskDetailPage', () => {
           content_fingerprint: 'a',
           submitted_at: '2026-01-02',
           links: [],
-          files: [],
+          files: [
+            {
+              id: 'f1',
+              filename: 'evidence.pdf',
+              content_type: 'application/pdf',
+              byte_size: 2048,
+              signed_id: 'signed',
+              url: 'https://api.example.com/rails/active_storage/blobs/redirect/signed/evidence.pdf',
+            },
+          ],
         },
       ],
     }
@@ -341,6 +351,14 @@ describe('TaskDetailPage', () => {
 
     expect(await screen.findByRole('heading', { name: 'Submission history' })).toBeInTheDocument()
     expect(screen.getByText('Earlier evidence')).toBeInTheDocument()
+    expect(screen.queryByText(/awaiting creator review/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/your submission is with the project creator/i)).not.toBeInTheDocument()
+    const fileLink = screen.getByRole('link', { name: 'evidence.pdf' })
+    expect(fileLink).toHaveAttribute(
+      'href',
+      'https://api.example.com/rails/active_storage/blobs/redirect/signed/evidence.pdf',
+    )
+    expect(fileLink).toHaveAttribute('target', '_blank')
     expect(screen.queryByRole('heading', { name: 'Submit evidence' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /^submit for review$/i })).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Edit task' })).toBeInTheDocument()
