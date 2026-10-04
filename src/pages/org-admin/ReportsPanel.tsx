@@ -38,8 +38,16 @@ function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
+function reportFailureCopy(code: string | null) {
+  if (code === 'generate_timeout') {
+    return 'This export stopped before it finished. Generate it again.'
+  }
+  return "This export didn't finish. Generate it again."
+}
+
 async function pollReport(id: string, onUpdate: (report: OrganizationReport) => void) {
-  for (let attempt = 0; attempt < 40; attempt += 1) {
+  const attempts = import.meta.env.MODE === 'test' ? 5 : 150
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
     const data = await fetchReport(id)
     onUpdate(data.report)
     if (data.report.status === 'ready' || data.report.status === 'failed') return data.report
@@ -88,6 +96,36 @@ export function ReportsPanel({
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [organizationId])
+
+  const generatingIds = reports
+    .filter((report) => report.status === 'generating')
+    .map((report) => report.id)
+    .join(',')
+
+  useEffect(() => {
+    if (!generatingIds || !exportAllowed) return
+    let cancelled = false
+    void (async () => {
+      await Promise.all(
+        generatingIds.split(',').map(async (id) => {
+          try {
+            const finished = await pollReport(id, (next) => {
+              if (!cancelled) upsert(next)
+            })
+            if (!cancelled) upsert(finished)
+          } catch (err) {
+            if (cancelled) return
+            setError(err instanceof ApiError ? err.message : 'Could not generate report')
+          }
+        }),
+      )
+    })()
+    return () => {
+      cancelled = true
+    }
+    // upsert is recreated each render; generatingIds already tracks the rows to watch.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [generatingIds, exportAllowed])
 
   function upsert(report: OrganizationReport) {
     setReports((prev) => {
@@ -326,6 +364,11 @@ export function ReportsPanel({
                   <p className="mt-2 inline-flex items-center gap-1.5 text-[12px] font-medium text-amber-800">
                     <ShieldAlert className="size-3.5" aria-hidden />
                     Includes minor names — confirm before download
+                  </p>
+                ) : null}
+                {report.status === 'failed' ? (
+                  <p className="mt-2 text-[12px] font-medium text-amber-800">
+                    {reportFailureCopy(report.error_code)}
                   </p>
                 ) : null}
               </div>

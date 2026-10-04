@@ -4,6 +4,7 @@ import { TooltipProvider } from '@/components/Tooltip'
 import { AuthProvider } from '@/auth/AuthContext'
 import { RequireAuth, RequireOnboarded } from '@/auth/RequireAuth'
 import { AppShell } from '@/shell/AppShell'
+import { PageLoadError } from '@/components/PageLoadError'
 import { ShellProvider } from '@/shell/ShellContext'
 import { SessionShellProvider } from '@/shell/SessionShellProvider'
 import { AuthCompletePage } from '@/pages/AuthCompletePage'
@@ -76,6 +77,9 @@ function ParticipantApp() {
             </Route>
           ) : null}
 
+          {/* Staff tools stay on the admin surface. A participant URL must not open the shell. */}
+          <Route path="/admin/*" element={<Navigate to="/sign-in" replace />} />
+
           <Route element={<RequireOnboarded />}>
             <Route element={<ShellLayout />}>
               <Route index element={<Navigate to="/home" replace />} />
@@ -91,6 +95,7 @@ function ParticipantApp() {
               <Route path="billing/return" element={<BillingReturnPage />} />
               <Route path="organization" element={<OrgAdminPage />} />
               <Route path="more" element={<MorePage />} />
+              <Route path="*" element={<PageLoadError code="not_found" message="Resource not found" />} />
             </Route>
           </Route>
 

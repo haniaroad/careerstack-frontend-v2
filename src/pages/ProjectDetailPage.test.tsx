@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Project } from '@/lib/projects'
+import { ApiError } from '@/lib/api'
 import { ProjectDetailPage } from './ProjectDetailPage'
 
 const apiFetch = vi.fn()
@@ -756,5 +757,51 @@ describe('ProjectDetailPage', () => {
     expect(screen.getByText('Application submitted')).toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: /Apply to join/i })).not.toBeInTheDocument()
     expect(screen.queryByText(/^closed$/i)).not.toBeInTheDocument()
+  })
+
+  it('replaces Accepting applications after the joining mode is saved', async () => {
+    const user = userEvent.setup()
+    let project = baseProject({
+      ends_on: '2026-12-01',
+      final_expires_at: '2026-12-08T23:59:59Z',
+    })
+    apiFetch.mockImplementation(async (path: string, init?: RequestInit) => {
+      if (path === '/api/v1/projects/p1' && init?.method === 'PATCH') {
+        const body = JSON.parse(String(init.body ?? '{}')) as { joining_mode?: Project['joining_mode'] }
+        project = { ...project, joining_mode: body.joining_mode ?? project.joining_mode }
+        return { project }
+      }
+      if (path === '/api/v1/projects/p1' && !init?.method) return { project }
+      const handled = messagesApi(path, init)
+      if (handled) return handled
+      throw new Error(`Unexpected ${init?.method ?? 'GET'} ${path}`)
+    })
+
+    renderPage()
+    expect(await screen.findByText('Accepting applications')).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: /Apply to join/i })).not.toBeInTheDocument()
+
+    await user.selectOptions(screen.getByLabelText('Joining'), 'instant')
+    await user.click(screen.getByRole('button', { name: 'Save project' }))
+    expect(await screen.findByText('Instant join')).toBeInTheDocument()
+    expect(screen.queryByText('Accepting applications')).not.toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: /Apply to join/i })).not.toBeInTheDocument()
+    expect(screen.queryByText('Application mode')).not.toBeInTheDocument()
+
+    await user.selectOptions(screen.getByLabelText('Joining'), 'invite_only')
+    await user.click(screen.getByRole('button', { name: 'Save project' }))
+    expect(await screen.findByText('Invite only')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Invite teammate' })).toBeInTheDocument()
+    expect(screen.queryByText('Accepting applications')).not.toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: /Apply to join/i })).not.toBeInTheDocument()
+  })
+
+  it('explains a not-found project without calling it a resource error', async () => {
+    apiFetch.mockRejectedValue(new ApiError(404, 'not_found', 'Resource not found'))
+    renderPage()
+    expect(await screen.findByText("This page isn't available to you.")).toBeInTheDocument()
+    expect(screen.getByText(/It may be private, removed, or outside this account/i)).toBeInTheDocument()
+    expect(screen.getByText('Error code: not_found')).toBeInTheDocument()
+    expect(screen.queryByText('Resource not found')).not.toBeInTheDocument()
   })
 })

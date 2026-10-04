@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useAuth } from '@/auth/AuthContext'
 import { Alert } from '@/components/Alert'
 import { Button } from '@/components/Button'
+import { PageLoadError } from '@/components/PageLoadError'
 import {
   Dialog,
   DialogContent,
@@ -483,9 +484,7 @@ export function ProjectDetailPage() {
   if (error && !project) {
     return (
       <div className="mx-auto max-w-2xl space-y-4">
-        <Alert tone="danger" title="Something went wrong">
-          {error}
-        </Alert>
+        <PageLoadError message={error} code={errorCode} fallback="Unable to load project" />
         <Button asChild variant="secondary">
           <Link to={searchParams.get('from')?.startsWith('/explore') ? searchParams.get('from')! : '/my-work'}>
             {searchParams.get('from')?.startsWith('/explore') ? 'Back to Explore' : 'Back to my work'}

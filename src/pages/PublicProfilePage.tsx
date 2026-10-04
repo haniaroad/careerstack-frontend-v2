@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
-import { Alert } from '@/components/Alert'
 import { Button } from '@/components/Button'
+import { PageLoadError } from '@/components/PageLoadError'
 import { InviteControl } from '@/components/InviteControl'
 import { ProfileLinks } from '@/components/ProfileLinks'
 import { ProfileProjects } from '@/components/ProfileProjects'
@@ -43,6 +43,7 @@ export function PublicProfilePage() {
   const [profile, setProfile] = useState<ProfilePayload | null>(null)
   const [notFound, setNotFound] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [errorCode, setErrorCode] = useState<string | null>(null)
 
   useEffect(() => {
     if (!slug) return
@@ -50,6 +51,7 @@ export function PublicProfilePage() {
     ;(async () => {
       setNotFound(false)
       setError(null)
+      setErrorCode(null)
       try {
         const data = await fetchProfileBySlug(slug)
         if (cancelled) return
@@ -59,9 +61,11 @@ export function PublicProfilePage() {
         if (cancelled) return
         if (err instanceof ApiError && err.status === 404) {
           setNotFound(true)
+          setErrorCode('not_found')
           setProfile(null)
         } else {
           setError(err instanceof ApiError ? err.message : 'Could not load profile')
+          setErrorCode(err instanceof ApiError ? err.code : null)
         }
       }
     })()
@@ -73,17 +77,16 @@ export function PublicProfilePage() {
   if (notFound) {
     return (
       <div className="mx-auto max-w-2xl space-y-4">
-        <h1 className="font-display text-3xl text-ink">Profile not found</h1>
-        <p className="text-ink-muted">This profile is unavailable.</p>
+        <PageLoadError code="not_found" message="Resource not found" />
         <Button asChild variant="outline">
-          <Link to="/home">Back to Home</Link>
+          <Link to={backHref ?? '/home'}>{backHref ? 'Back to Explore' : 'Back to Home'}</Link>
         </Button>
       </div>
     )
   }
 
   if (error) {
-    return <Alert tone="danger" title="Something went wrong">{error}</Alert>
+    return <PageLoadError message={error} code={errorCode} fallback="Could not load profile" />
   }
 
   if (!profile) {

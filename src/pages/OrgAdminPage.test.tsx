@@ -514,6 +514,61 @@ describe('OrgAdminPage', () => {
     expect(apiFetch).toHaveBeenCalledWith(expect.stringMatching(/\/organization_reports\/rep-new$/))
   })
 
+  it('shows a failed export with a retry and polls a generating export after load', async () => {
+    const user = userEvent.setup()
+    const failed = {
+      id: 'rep-failed',
+      organization_id: 'org-1',
+      title: 'Spring cohort export',
+      program_id: null,
+      program_name: null,
+      period_starts_on: '2026-01-01',
+      period_ends_on: '2026-03-31',
+      period_label: 'Jan 1, 2026 – Mar 31, 2026',
+      format: 'csv' as const,
+      aggregate_only: true,
+      includes_minor_names: false,
+      status: 'failed' as const,
+      generated_at: null,
+      methodology_note: null,
+      error_code: 'generate_timeout',
+    }
+    const generating = {
+      ...failed,
+      id: 'rep-stuck',
+      title: 'Summer export',
+      status: 'generating' as const,
+      error_code: null,
+    }
+    mockStaffApis()
+    const fallback = apiFetch.getMockImplementation()!
+    apiFetch.mockImplementation(async (path: string, init?: RequestInit) => {
+      if (String(path).endsWith('/organization_reports/rep-stuck')) {
+        return {
+          report: {
+            ...generating,
+            status: 'ready',
+            generated_at: '2026-10-04T15:00:00Z',
+          },
+        }
+      }
+      if (String(path).includes('/reports') && init?.method !== 'POST') {
+        return { reports: [failed, generating] }
+      }
+      return fallback(path, init)
+    })
+
+    renderPage()
+    await screen.findByRole('heading', { name: 'Organization administration' })
+    await user.click(screen.getByRole('button', { name: /Reports/i }))
+    expect(
+      await screen.findByText('This export stopped before it finished. Generate it again.'),
+    ).toBeInTheDocument()
+    expect(screen.getAllByRole('button', { name: 'Generate' }).length).toBeGreaterThan(0)
+    expect(await screen.findByRole('button', { name: /Download/i })).toBeInTheDocument()
+    expect(screen.queryByText('Preparing export…')).not.toBeInTheDocument()
+  })
+
   it('lets staff create an aggregate-only CSV', async () => {
     mockStaffApis()
     const user = userEvent.setup()
