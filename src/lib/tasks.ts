@@ -10,12 +10,15 @@ export type TaskSummary = {
   project_id: string
   project_title: string
   project_mode: 'solo' | 'team'
+  project_status?: string
+  project_phase?: string | null
   project_creator_id: string
   assignee_id: string | null
   title: string
   acceptance_criteria: string | null
   submission_expectations: string | null
   due_on: string | null
+  reference_video_url?: string | null
   status: TaskStatus
   position: number
   first_submitted_at: string | null

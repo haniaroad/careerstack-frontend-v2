@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '@/auth/AuthContext'
 import { Alert } from '@/components/Alert'
 import { Button } from '@/components/Button'
@@ -35,6 +35,69 @@ function reviewOutcomeBadge(review: AiReview): { tone: 'info' | 'success' | 'war
     return { tone: 'warning', label: 'corrections requested' }
   }
   return { tone: 'info', label: 'completed' }
+}
+
+function projectAllowsTaskEdits(task: TaskDetail) {
+  const phase = task.project_phase ?? 'normal'
+  const status = task.project_status ?? 'active'
+  return status === 'active' && (phase === 'normal' || phase === 'ending_soon')
+}
+
+function toYouTubeEmbed(url: string): string | null {
+  try {
+    const parsed = new URL(url)
+    const host = parsed.hostname.replace(/^www\./, '')
+    if (host === 'youtu.be') {
+      const id = parsed.pathname.slice(1).split('/')[0]
+      return id ? `https://www.youtube-nocookie.com/embed/${id}` : null
+    }
+    if (host === 'youtube.com' || host === 'm.youtube.com') {
+      if (parsed.pathname === '/watch') {
+        const id = parsed.searchParams.get('v')
+        return id ? `https://www.youtube-nocookie.com/embed/${id}` : null
+      }
+      if (parsed.pathname.startsWith('/shorts/')) {
+        const id = parsed.pathname.split('/')[2]
+        return id ? `https://www.youtube-nocookie.com/embed/${id}` : null
+      }
+    }
+    return null
+  } catch {
+    return null
+  }
+}
+
+function ReferenceVideo({ url }: { url: string }) {
+  const embedUrl = toYouTubeEmbed(url)
+  return (
+    <section className="space-y-2" aria-labelledby="reference-video-heading">
+      <h2 id="reference-video-heading" className="font-display text-xl text-ink">
+        Reference video
+      </h2>
+      <p className="text-sm text-ink-muted">Context from the creator. Not part of the required evidence.</p>
+      {embedUrl ? (
+        <div className="aspect-video overflow-hidden rounded-lg border border-border bg-ink">
+          <iframe
+            src={embedUrl}
+            title="Task reference video"
+            loading="lazy"
+            allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            referrerPolicy="strict-origin-when-cross-origin"
+            allowFullScreen
+            className="size-full"
+          />
+        </div>
+      ) : null}
+      <a
+        href={url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-sm font-medium text-brand underline underline-offset-2 hover:underline"
+      >
+        Watch on YouTube
+      </a>
+    </section>
+  )
 }
 
 function reviewErrorMessage(code: string | undefined, fallback: string) {
@@ -74,6 +137,7 @@ async function checksumBase64(file: File): Promise<string> {
 
 export function TaskDetailPage() {
   const { id } = useParams<{ id: string }>()
+  const navigate = useNavigate()
   const { session } = useAuth()
   const [task, setTask] = useState<TaskDetail | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -84,6 +148,13 @@ export function TaskDetailPage() {
   const [submitting, setSubmitting] = useState(false)
   const [reporting, setReporting] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [editing, setEditing] = useState(false)
+  const [savingTask, setSavingTask] = useState(false)
+  const [editTitle, setEditTitle] = useState('')
+  const [editCriteria, setEditCriteria] = useState('')
+  const [editExpectations, setEditExpectations] = useState('')
+  const [editDueOn, setEditDueOn] = useState('')
+  const [editVideo, setEditVideo] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const workspaceType = session?.active_workspace?.kind === 'organization' ? 'organization' : 'personal'
@@ -183,12 +254,11 @@ export function TaskDetailPage() {
           checksum,
         }),
       })
-      const put = await fetch(created.direct_upload.upload_url, {
+      await apiFetch(created.direct_upload.upload_url, {
         method: 'PUT',
         headers: created.direct_upload.headers,
         body: file,
       })
-      if (!put.ok) throw new Error('File upload failed')
       signedIds.push(created.direct_upload.signed_id)
     }
     return signedIds
@@ -274,6 +344,56 @@ export function TaskDetailPage() {
     }
   }
 
+  const beginEdit = () => {
+    if (!task) return
+    setEditTitle(task.title)
+    setEditCriteria(task.acceptance_criteria ?? '')
+    setEditExpectations(task.submission_expectations ?? '')
+    setEditDueOn(task.due_on ?? '')
+    setEditVideo(task.reference_video_url ?? '')
+    setEditing(true)
+    setError(null)
+  }
+
+  const saveTask = async () => {
+    if (!task) return
+    setSavingTask(true)
+    setError(null)
+    try {
+      const data = await apiFetch<{ task: TaskDetail }>(`/api/v1/tasks/${task.id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          title: editTitle.trim(),
+          acceptance_criteria: editCriteria,
+          submission_expectations: editExpectations,
+          due_on: editDueOn.trim() || null,
+          reference_video_url: editVideo.trim() || null,
+        }),
+      })
+      setTask(data.task)
+      setEditing(false)
+      setInfo('Task updated.')
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Unable to update task')
+    } finally {
+      setSavingTask(false)
+    }
+  }
+
+  const deleteTask = async () => {
+    if (!task) return
+    if (!window.confirm('Delete this task and its submission history?')) return
+    setSavingTask(true)
+    setError(null)
+    try {
+      await apiFetch(`/api/v1/tasks/${task.id}`, { method: 'DELETE' })
+      navigate(`/projects/${task.project_id}`)
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Unable to delete task')
+      setSavingTask(false)
+    }
+  }
+
   if (loading) return <p className="text-ink-muted">Loading task…</p>
   if (!task) {
     return (
@@ -284,7 +404,11 @@ export function TaskDetailPage() {
   }
 
   const isTeam = task.project_mode === 'team'
-  const canSubmit = task.status === 'pending' || task.status === 'corrections_requested'
+  const isAssignee = Boolean(session?.user.id && session.user.id === task.assignee_id)
+  const isCreator = Boolean(session?.user.id && session.user.id === task.project_creator_id)
+  const canSubmit =
+    isAssignee && (task.status === 'pending' || task.status === 'corrections_requested')
+  const canManageTask = isCreator && task.status !== 'approved' && projectAllowsTaskEdits(task)
   const review = !isTeam ? task.latest_review : null
   const reviewBadge = review ? reviewOutcomeBadge(review) : null
 
@@ -316,6 +440,16 @@ export function TaskDetailPage() {
                 Unassign
               </Button>
             ) : null}
+            {canManageTask ? (
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Button type="button" variant="secondary" onClick={beginEdit} disabled={savingTask}>
+                  Edit task
+                </Button>
+                <Button type="button" variant="secondary" onClick={() => void deleteTask()} disabled={savingTask}>
+                  Delete task
+                </Button>
+              </div>
+            ) : null}
           </div>
           <StatusBadge tone={taskTone(task.status)}>{task.status.replaceAll('_', ' ')}</StatusBadge>
         </div>
@@ -332,14 +466,71 @@ export function TaskDetailPage() {
         </Alert>
       ) : null}
 
-      <section className="space-y-2">
-        <h2 className="font-display text-xl text-ink">Acceptance criteria</h2>
-        <p className="text-ink-muted whitespace-pre-wrap">{task.acceptance_criteria || 'None provided.'}</p>
-        <h2 className="font-display text-xl text-ink">Evidence expected</h2>
-        <p className="text-ink-muted whitespace-pre-wrap">
-          {task.submission_expectations || 'Text and/or https links / allowed files.'}
-        </p>
-      </section>
+      {editing ? (
+        <section className="space-y-3">
+          <h2 className="font-display text-xl text-ink">Edit task</h2>
+          <label className="block space-y-1">
+            <span className="text-sm font-medium text-ink">Title</span>
+            <input
+              className="w-full rounded-md border border-border bg-surface px-3 py-2 text-ink"
+              value={editTitle}
+              onChange={(e) => setEditTitle(e.target.value)}
+            />
+          </label>
+          <label className="block space-y-1">
+            <span className="text-sm font-medium text-ink">Description</span>
+            <textarea
+              className="min-h-24 w-full rounded-md border border-border bg-surface px-3 py-2 text-ink"
+              value={editCriteria}
+              onChange={(e) => setEditCriteria(e.target.value)}
+            />
+          </label>
+          <label className="block space-y-1">
+            <span className="text-sm font-medium text-ink">Evidence expected</span>
+            <textarea
+              className="min-h-20 w-full rounded-md border border-border bg-surface px-3 py-2 text-ink"
+              value={editExpectations}
+              onChange={(e) => setEditExpectations(e.target.value)}
+            />
+          </label>
+          <label className="block space-y-1">
+            <span className="text-sm font-medium text-ink">Due date</span>
+            <input
+              type="date"
+              className="w-full rounded-md border border-border bg-surface px-3 py-2 text-ink"
+              value={editDueOn}
+              onChange={(e) => setEditDueOn(e.target.value)}
+            />
+          </label>
+          <label className="block space-y-1">
+            <span className="text-sm font-medium text-ink">YouTube URL</span>
+            <input
+              className="w-full rounded-md border border-border bg-surface px-3 py-2 text-ink"
+              value={editVideo}
+              onChange={(e) => setEditVideo(e.target.value)}
+              placeholder="https://www.youtube.com/watch?v="
+            />
+          </label>
+          <div className="flex flex-wrap gap-2">
+            <Button type="button" onClick={() => void saveTask()} disabled={savingTask}>
+              {savingTask ? 'Saving…' : 'Save task'}
+            </Button>
+            <Button type="button" variant="secondary" onClick={() => setEditing(false)} disabled={savingTask}>
+              Cancel
+            </Button>
+          </div>
+        </section>
+      ) : (
+        <section className="space-y-2">
+          <h2 className="font-display text-xl text-ink">Acceptance criteria</h2>
+          <p className="text-ink-muted whitespace-pre-wrap">{task.acceptance_criteria || 'None provided.'}</p>
+          <h2 className="font-display text-xl text-ink">Evidence expected</h2>
+          <p className="text-ink-muted whitespace-pre-wrap">
+            {task.submission_expectations || 'Text and/or https links / allowed files.'}
+          </p>
+          {task.reference_video_url ? <ReferenceVideo url={task.reference_video_url} /> : null}
+        </section>
+      )}
 
       {review && reviewBadge ? (
         <section

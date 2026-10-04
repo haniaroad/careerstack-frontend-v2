@@ -300,4 +300,73 @@ describe('TaskDetailPage', () => {
     expect(screen.queryByRole('button', { name: /request ai review/i })).not.toBeInTheDocument()
     expect(trackAiReviewCompleted).not.toHaveBeenCalled()
   })
+
+  it('hides submit controls from a team creator and lets them edit or delete', async () => {
+    const user = userEvent.setup()
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false)
+    const task: TaskDetail = {
+      ...pendingTask(),
+      project_mode: 'team',
+      project_creator_id: 'u1',
+      assignee_id: 'u2',
+      project_status: 'active',
+      project_phase: 'normal',
+      submissions: [
+        {
+          id: 's1',
+          task_id: 't1',
+          attempt_number: 1,
+          body: 'Earlier evidence',
+          content_fingerprint: 'a',
+          submitted_at: '2026-01-02',
+          links: [],
+          files: [],
+        },
+      ],
+    }
+    apiFetch.mockImplementation(async (path: string, init?: RequestInit) => {
+      if (path === '/api/v1/tasks/t1' && (!init?.method || init.method === 'GET')) {
+        return { task }
+      }
+      throw new Error(`unexpected ${path}`)
+    })
+
+    render(
+      <MemoryRouter initialEntries={['/tasks/t1']}>
+        <Routes>
+          <Route path="/tasks/:id" element={<TaskDetailPage />} />
+        </Routes>
+      </MemoryRouter>,
+    )
+
+    expect(await screen.findByRole('heading', { name: 'Submission history' })).toBeInTheDocument()
+    expect(screen.getByText('Earlier evidence')).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Submit evidence' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /^submit for review$/i })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Edit task' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Delete task' })).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Delete task' }))
+    expect(confirmSpy).toHaveBeenCalled()
+    confirmSpy.mockRestore()
+  })
+
+  it('hides edit and delete after a task is approved', async () => {
+    apiFetch.mockResolvedValue({
+      task: { ...pendingTask(), status: 'approved' },
+    })
+
+    render(
+      <MemoryRouter initialEntries={['/tasks/t1']}>
+        <Routes>
+          <Route path="/tasks/:id" element={<TaskDetailPage />} />
+        </Routes>
+      </MemoryRouter>,
+    )
+
+    expect(await screen.findByRole('heading', { name: 'Build landing page' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Edit task' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Delete task' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Submit evidence' })).not.toBeInTheDocument()
+  })
 })

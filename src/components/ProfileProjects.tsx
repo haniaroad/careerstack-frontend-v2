@@ -1,4 +1,5 @@
 import { Link, useLocation } from 'react-router-dom'
+import { ProjectLifecycleBadge } from '@/components/ProjectLifecycleBadge'
 
 type ProfileTask = {
   id?: string
@@ -35,17 +36,17 @@ export function ProfileProjects({ projects }: { projects: ProfileProject[] }) {
             {canOpen ? (
               <Link
                 to={`/projects/${project.project_id}?from=${encodeURIComponent(from)}`}
-                className="font-medium text-accent underline-offset-2 hover:underline"
+                className="font-medium text-brand underline-offset-2 hover:underline"
               >
                 {String(project.title)}
               </Link>
             ) : (
               <p className="font-medium text-ink">{String(project.title)}</p>
             )}
-            <p className="text-ink-muted">
-              {String(project.status)}
-              {project.organization_name ? ` · ${String(project.organization_name)}` : ''}
-              {summaryOnly ? ' · summary' : ''}
+            <p className="mt-1 flex flex-wrap items-center gap-2 text-ink-muted">
+              <ProjectLifecycleBadge status={String(project.status)} showPhase={false} />
+              {project.organization_name ? <span>{String(project.organization_name)}</span> : null}
+              {summaryOnly ? <span>summary</span> : null}
             </p>
             {tasks.length > 0 ? (
               <ul className="mt-2 space-y-1 border-l border-border pl-3">

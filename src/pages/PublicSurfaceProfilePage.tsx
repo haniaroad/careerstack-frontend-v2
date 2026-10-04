@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { Alert } from '@/components/Alert'
+import { ProfileProjects } from '@/components/ProfileProjects'
 import { ProfileSurfaceSections } from '@/components/ProfileSurfaceSections'
 import { PublicPageFrame } from '@/components/public/PublicPageFrame'
 import {
@@ -128,6 +129,11 @@ export function PublicSurfaceProfilePage() {
                     {profile.stats.peer_review_total}
                   </p>
                 ) : null}
+              </section>
+
+              <section className="space-y-2">
+                <h2 className="text-sm font-semibold text-ink">Projects</h2>
+                <ProfileProjects projects={profile.projects} />
               </section>
 
               {profile.evidence.skills.length ? (
