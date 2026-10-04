@@ -86,11 +86,8 @@ export function AuthLayout({
               credible professional record.
             </p>
           </div>
-          <div className="relative mt-16 flex items-end justify-between gap-8">
+          <div className="relative mt-16">
             <EvidenceStackMark className="h-36 w-32 text-brand" />
-            <p className="max-w-[12rem] text-right text-xs leading-relaxed text-sidebar-muted">
-              Project → Submission → Review → Skill. Evidence first. Momentum second.
-            </p>
           </div>
         </aside>
 

@@ -41,7 +41,7 @@ export function PeerReviewCard({
       <Link
         to={`/projects/${peerReview.project_id}`}
         className={cn(
-          'mt-0.5 inline-block rounded-sm text-left text-sm font-medium text-accent hover:underline',
+          'mt-0.5 inline-block rounded-sm text-left text-sm font-medium text-brand hover:underline',
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2',
         )}
       >

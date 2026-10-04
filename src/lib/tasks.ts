@@ -25,6 +25,7 @@ export type TaskSummary = {
   on_time: boolean | null
   created_at: string
   updated_at: string
+  viewer_can_claim?: boolean
 }
 
 export type TaskSubmissionLink = {

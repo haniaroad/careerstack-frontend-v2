@@ -465,10 +465,10 @@ function InviteDialog({
 
   return (
     <Dialog open onOpenChange={(next) => !next && onClose()}>
-      <DialogContent>
-        <DialogHeader>
+      <DialogContent className="min-w-0 overflow-hidden">
+        <DialogHeader className="min-w-0">
           <DialogTitle>Invite member</DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="break-words pr-6">
             Inviting is always free. Age status appears after signup — staff never see date of birth.
           </DialogDescription>
         </DialogHeader>
@@ -478,8 +478,8 @@ function InviteDialog({
           </Alert>
         ) : null}
         {inviteUrl ? (
-          <Alert tone="success" title="Invite created">
-            Share this one-time link: {inviteUrl}
+          <Alert tone="success" title="Invite created" className="min-w-0">
+            <span className="break-all">Share this one-time link: {inviteUrl}</span>
           </Alert>
         ) : (
           <div className="space-y-3">

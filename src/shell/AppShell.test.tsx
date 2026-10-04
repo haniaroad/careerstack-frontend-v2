@@ -96,9 +96,7 @@ describe('AppShell', () => {
     expect(screen.getByTestId('org-admin-nav')).toBeInTheDocument()
   })
 
-  it('shows a program filter in organization workspaces', async () => {
-    const user = userEvent.setup()
-    const onSetProgramFilter = vi.fn()
+  it('omits the program filter in organization workspaces', () => {
     renderShell('/home', {
       canAccessOrgAdmin: true,
       activeWorkspaceId: 'org-demo',
@@ -107,13 +105,27 @@ describe('AppShell', () => {
         programId: null,
         availablePrograms: [{ id: 'prog-1', name: 'Fall Cohort', status: 'active' }],
       },
-      onSetProgramFilter,
     })
 
-    const filter = screen.getByTestId('program-filter')
-    expect(filter).toBeInTheDocument()
-    await user.selectOptions(filter, 'prog-1')
-    expect(onSetProgramFilter).toHaveBeenCalledWith('program', 'prog-1')
+    expect(screen.queryByTestId('program-filter')).not.toBeInTheDocument()
+    expect(screen.getByPlaceholderText('Search projects')).toBeInTheDocument()
+  })
+
+  it('hides organization credits from participants and shows them to staff', () => {
+    const { unmount } = renderShell('/home', {
+      canAccessOrgAdmin: false,
+      activeWorkspaceId: 'org-demo',
+      creditRemaining: 3,
+    })
+    expect(screen.queryByTestId('credit-cue')).not.toBeInTheDocument()
+    unmount()
+
+    renderShell('/home', {
+      canAccessOrgAdmin: true,
+      activeWorkspaceId: 'org-demo',
+      creditRemaining: 3,
+    })
+    expect(screen.getByTestId('credit-cue')).toHaveTextContent('3 credits')
   })
 
   it('hides the program filter in a personal workspace', () => {
