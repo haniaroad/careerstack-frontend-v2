@@ -39,6 +39,7 @@ export type TaskSubmissionFile = {
   content_type: string
   byte_size: number
   signed_id: string
+  url: string
 }
 
 export type TaskSubmission = {

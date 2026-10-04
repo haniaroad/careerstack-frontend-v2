@@ -688,7 +688,7 @@ export function TaskDetailPage() {
         </section>
       ) : null}
 
-      {isTeam && task.status === 'submitted' ? (
+      {isTeam && isAssignee && task.status === 'submitted' ? (
         <Alert tone="info" title="Awaiting creator review">
           Your submission is with the project creator. AI review is only used on solo projects.
         </Alert>
@@ -727,7 +727,15 @@ export function TaskDetailPage() {
                   <ul className="mt-2 text-sm text-ink-muted">
                     {submission.files.map((file) => (
                       <li key={file.id}>
-                        {file.filename} ({Math.round(file.byte_size / 1024)} KB)
+                        <a
+                          className="text-ink underline"
+                          href={file.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          {file.filename}
+                        </a>{' '}
+                        ({Math.round(file.byte_size / 1024)} KB)
                       </li>
                     ))}
                   </ul>
