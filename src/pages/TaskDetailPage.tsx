@@ -5,12 +5,14 @@ import { Alert } from '@/components/Alert'
 import { Button } from '@/components/Button'
 import { PageLoadError } from '@/components/PageLoadError'
 import { StatusBadge } from '@/components/StatusBadge'
+import { apiBaseUrl } from '@/config'
 import { apiFetch, ApiError } from '@/lib/api'
 import { trackAiReviewCompleted, trackTaskSubmitted } from '@/lib/mixpanel'
 import {
   MAX_COMBINED_BYTES,
   MAX_FILE_BYTES,
   MAX_FILES,
+  submissionFileHref,
   type AiReview,
   type TaskDetail,
 } from '@/lib/tasks'
@@ -725,19 +727,26 @@ export function TaskDetailPage() {
                 ) : null}
                 {submission.files.length ? (
                   <ul className="mt-2 text-sm text-ink-muted">
-                    {submission.files.map((file) => (
-                      <li key={file.id}>
-                        <a
-                          className="text-ink underline"
-                          href={file.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          {file.filename}
-                        </a>{' '}
-                        ({Math.round(file.byte_size / 1024)} KB)
-                      </li>
-                    ))}
+                    {submission.files.map((file) => {
+                      const href = submissionFileHref(file, apiBaseUrl())
+                      return (
+                        <li key={file.id}>
+                          {href ? (
+                            <a
+                              className="text-ink underline"
+                              href={href}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              {file.filename}
+                            </a>
+                          ) : (
+                            <span className="text-ink">{file.filename}</span>
+                          )}{' '}
+                          ({Math.round(file.byte_size / 1024)} KB)
+                        </li>
+                      )
+                    })}
                   </ul>
                 ) : null}
               </li>

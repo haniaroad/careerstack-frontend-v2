@@ -321,7 +321,7 @@ describe('TaskDetailPage', () => {
           content_fingerprint: 'a',
           submitted_at: '2026-01-02',
           links: [],
-          files: [
+              files: [
             {
               id: 'f1',
               filename: 'evidence.pdf',
@@ -329,6 +329,13 @@ describe('TaskDetailPage', () => {
               byte_size: 2048,
               signed_id: 'signed',
               url: 'https://api.example.com/rails/active_storage/blobs/redirect/signed/evidence.pdf',
+            },
+            {
+              id: 'f2',
+              filename: 'Screenshot 2026-10-03 at 8.25.14 PM.png',
+              content_type: 'image/png',
+              byte_size: 407 * 1024,
+              signed_id: 'blob signed/id',
             },
           ],
         },
@@ -359,6 +366,12 @@ describe('TaskDetailPage', () => {
       'https://api.example.com/rails/active_storage/blobs/redirect/signed/evidence.pdf',
     )
     expect(fileLink).toHaveAttribute('target', '_blank')
+    const screenshot = screen.getByRole('link', { name: 'Screenshot 2026-10-03 at 8.25.14 PM.png' })
+    expect(screenshot).toHaveAttribute(
+      'href',
+      `http://127.0.0.1:3000/rails/active_storage/blobs/redirect/${encodeURIComponent('blob signed/id')}/${encodeURIComponent('Screenshot 2026-10-03 at 8.25.14 PM.png')}?disposition=inline`,
+    )
+    expect(screenshot).toHaveAttribute('target', '_blank')
     expect(screen.queryByRole('heading', { name: 'Submit evidence' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /^submit for review$/i })).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Edit task' })).toBeInTheDocument()

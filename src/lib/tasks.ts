@@ -39,7 +39,18 @@ export type TaskSubmissionFile = {
   content_type: string
   byte_size: number
   signed_id: string
-  url: string
+  url?: string | null
+}
+
+/** Absolute URL that opens the uploaded file. Uses the API file URL when present, otherwise the signed blob id. */
+export function submissionFileHref(file: TaskSubmissionFile, apiBase: string): string | null {
+  const provided = file.url?.trim()
+  if (provided && /^https?:\/\//i.test(provided)) return provided
+  if (!file.signed_id || !file.filename) return null
+  const base = apiBase.replace(/\/$/, '')
+  const id = encodeURIComponent(file.signed_id)
+  const name = encodeURIComponent(file.filename)
+  return `${base}/rails/active_storage/blobs/redirect/${id}/${name}?disposition=inline`
 }
 
 export type TaskSubmission = {
