@@ -329,8 +329,11 @@ describe('PublicProfilePage', () => {
       </MemoryRouter>,
     )
 
-    expect(await screen.findByRole('heading', { name: /Profile not found/i })).toBeInTheDocument()
-    expect(screen.getByText(/This profile is unavailable/i)).toBeInTheDocument()
+    expect(await screen.findByText("This page isn't available to you.")).toBeInTheDocument()
+    expect(screen.getByText(/It may be private, removed, or outside this account/i)).toBeInTheDocument()
+    expect(screen.getByText('Error code: not_found')).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: /Profile not found/i })).not.toBeInTheDocument()
+    expect(screen.queryByText('Resource not found')).not.toBeInTheDocument()
   })
 
   it('opens the peer reviews tab with an anonymized public list', async () => {

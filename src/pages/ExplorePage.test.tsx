@@ -188,4 +188,24 @@ describe('ExplorePage', () => {
     expect(await screen.findByText('Unavailable')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Invite' })).not.toBeInTheDocument()
   })
+
+  it('shows team join status from the current joining mode', async () => {
+    mockDirectory({
+      projects: [
+        { ...personalProject, id: 'proj-app', title: 'Application team', joining_mode: 'application' },
+        { ...personalProject, id: 'proj-instant', title: 'Instant team', joining_mode: 'instant' },
+        { ...personalProject, id: 'proj-invite', title: 'Invite team', joining_mode: 'invite_only' },
+      ],
+    })
+    render(
+      <MemoryRouter initialEntries={['/explore']}>
+        <ExplorePage />
+      </MemoryRouter>,
+    )
+
+    expect(await screen.findByText('Accepting applications')).toBeInTheDocument()
+    expect(screen.getByText('Instant join')).toBeInTheDocument()
+    expect(screen.getByText('Invite only')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Application team/i })).toBeInTheDocument()
+  })
 })

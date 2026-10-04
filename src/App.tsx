@@ -4,6 +4,7 @@ import { TooltipProvider } from '@/components/Tooltip'
 import { AuthProvider } from '@/auth/AuthContext'
 import { RequireAuth, RequireOnboarded } from '@/auth/RequireAuth'
 import { AppShell } from '@/shell/AppShell'
+import { PageLoadError } from '@/components/PageLoadError'
 import { ShellProvider } from '@/shell/ShellContext'
 import { SessionShellProvider } from '@/shell/SessionShellProvider'
 import { AuthCompletePage } from '@/pages/AuthCompletePage'
@@ -91,6 +92,7 @@ function ParticipantApp() {
               <Route path="billing/return" element={<BillingReturnPage />} />
               <Route path="organization" element={<OrgAdminPage />} />
               <Route path="more" element={<MorePage />} />
+              <Route path="*" element={<PageLoadError code="not_found" message="Resource not found" />} />
             </Route>
           </Route>
 

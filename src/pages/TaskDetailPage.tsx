@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '@/auth/AuthContext'
 import { Alert } from '@/components/Alert'
 import { Button } from '@/components/Button'
+import { PageLoadError } from '@/components/PageLoadError'
 import { StatusBadge } from '@/components/StatusBadge'
 import { apiFetch, ApiError } from '@/lib/api'
 import { trackAiReviewCompleted, trackTaskSubmitted } from '@/lib/mixpanel'
@@ -141,6 +142,7 @@ export function TaskDetailPage() {
   const { session } = useAuth()
   const [task, setTask] = useState<TaskDetail | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [errorCode, setErrorCode] = useState<string | null>(null)
   const [info, setInfo] = useState<string | null>(null)
   const [body, setBody] = useState('')
   const [link, setLink] = useState('')
@@ -166,8 +168,10 @@ export function TaskDetailPage() {
     try {
       const data = await apiFetch<{ task: TaskDetail }>(`/api/v1/tasks/${id}`)
       setTask(data.task)
+      setErrorCode(null)
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Unable to load task')
+      setErrorCode(err instanceof ApiError ? err.code : null)
     } finally {
       setLoading(false)
     }
@@ -397,9 +401,11 @@ export function TaskDetailPage() {
   if (loading) return <p className="text-ink-muted">Loading task…</p>
   if (!task) {
     return (
-      <Alert tone="danger" title="Task not found">
-        {error || 'This task is unavailable in the current workspace.'}
-      </Alert>
+      <PageLoadError
+        message={error}
+        code={errorCode}
+        fallback="This task is unavailable in the current workspace."
+      />
     )
   }
 

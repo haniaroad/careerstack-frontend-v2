@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useAuth } from '@/auth/AuthContext'
 import { Alert } from '@/components/Alert'
+import { PageLoadError } from '@/components/PageLoadError'
+import { ApiError } from '@/lib/api'
 import { cn } from '@/lib/utils'
 import {
   archiveProgram,
@@ -55,6 +57,7 @@ export function OrgAdminPage() {
   const [historyForbidden, setHistoryForbidden] = useState(false)
   const [reportCount, setReportCount] = useState(0)
   const [error, setError] = useState<string | null>(null)
+  const [errorCode, setErrorCode] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
   const load = useCallback(async () => {
@@ -92,6 +95,7 @@ export function OrgAdminPage() {
       await refreshSession()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unable to load organization administration')
+      setErrorCode(err instanceof ApiError ? err.code : null)
     } finally {
       setLoading(false)
     }
@@ -147,9 +151,11 @@ export function OrgAdminPage() {
 
   if (error && !admin) {
     return (
-      <Alert tone="danger" title="Unable to load">
-        {error}
-      </Alert>
+      <PageLoadError
+        message={error}
+        code={errorCode}
+        fallback="Unable to load organization administration"
+      />
     )
   }
 
