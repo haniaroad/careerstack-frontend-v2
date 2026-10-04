@@ -260,8 +260,7 @@ export function InboxPage() {
         <p className="text-sm font-medium text-ink-muted">{workspaceLabel}</p>
         <h1 className="font-display text-3xl text-ink">Inbox</h1>
         <p className="max-w-xl text-ink-muted">
-          Process approvals, invitations, and alerts that need a decision—task reviews and
-          applications stay here, not as separate global destinations.
+          Approvals, invitations, and alerts that need a decision.
         </p>
       </header>
 

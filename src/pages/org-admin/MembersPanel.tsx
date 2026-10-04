@@ -54,6 +54,8 @@ export function MembersPanel({
   const [editing, setEditing] = useState<OrgMembership | null>(null)
   const [removing, setRemoving] = useState<OrgMembership | null>(null)
   const [inviteOpen, setInviteOpen] = useState(false)
+  const [resentId, setResentId] = useState<string | null>(null)
+  const [resendError, setResendError] = useState<{ id: string; message: string } | null>(null)
   const pending = invitations.filter((invite) => invite.status === 'pending')
 
   const filtered = useMemo(() => {
@@ -63,6 +65,20 @@ export function MembersPanel({
       return true
     })
   }, [memberships, roleFilter, programFilter])
+
+  async function resend(invitationId: string) {
+    setResendError(null)
+    setResentId(null)
+    try {
+      await onResendInvite(invitationId)
+      setResentId(invitationId)
+    } catch (err) {
+      setResendError({
+        id: invitationId,
+        message: err instanceof ApiError ? err.message : 'Unable to resend this invite',
+      })
+    }
+  }
 
   return (
     <div className="space-y-5">
@@ -137,13 +153,29 @@ export function MembersPanel({
                 <p className="mt-0.5 text-xs text-ink-muted">
                   {ROLE_LABEL[invite.role]} · {invite.program_name || 'No program'} · invited by{' '}
                   {invite.invited_by_name || 'staff'}
+                  {invite.last_sent_at
+                    ? ` · Last sent ${new Date(invite.last_sent_at).toLocaleString(undefined, {
+                        dateStyle: 'medium',
+                        timeStyle: 'short',
+                      })}`
+                    : ''}
                 </p>
+                {resentId === invite.id ? (
+                  <p className="mt-1 text-sm text-ink" aria-live="polite">
+                    Invite sent.
+                  </p>
+                ) : null}
+                {resendError?.id === invite.id ? (
+                  <p className="mt-1 text-sm text-ink" aria-live="polite">
+                    {resendError.message}
+                  </p>
+                ) : null}
                 <Button
                   type="button"
                   variant="secondary"
                   className="mt-2"
                   disabled={readOnlyOrg}
-                  onClick={() => void onResendInvite(invite.id)}
+                  onClick={() => void resend(invite.id)}
                 >
                   Resend
                 </Button>

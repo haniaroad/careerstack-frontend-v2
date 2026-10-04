@@ -10,7 +10,7 @@ const apiFetch = vi.fn()
 const refreshSession = vi.fn().mockResolvedValue(null)
 const authState = vi.hoisted(() => ({
   session: {
-    user: { email: 'alex@example.com', id: 'u1' },
+    user: { email: 'alex@example.com', id: 'u1', age_status: 'adult' as const },
     profile: { display_name: 'Alex Morgan' },
     credits: { remaining: 2 },
     workspaces: [{ id: 'ws-1', kind: 'personal' as const }],
@@ -371,5 +371,32 @@ describe('PublicProfilePage', () => {
     expect(screen.getAllByText('Verified project teammate').length).toBeGreaterThan(0)
     expect(screen.queryByText(/5 \/ 5/)).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Report review' })).toBeInTheDocument()
+  })
+
+  it('shows public or private status and announces the change', async () => {
+    const user = userEvent.setup()
+    apiFetch.mockImplementation(async (path: unknown, init?: { method?: string }) => {
+      const url = String(path)
+      if (url.includes('/api/v1/notification_preferences')) return { preferences: samplePreferences }
+      if (url.includes('/api/v1/first_run_tips')) return { tip: null }
+      if (url.includes('/api/v1/profiles/me/visibility') && init?.method === 'POST') {
+        return { profile: { ...ownProfile, public_identity_visible: false } }
+      }
+      return { profile: ownProfile }
+    })
+
+    render(
+      <MemoryRouter>
+        <ProfilePage />
+      </MemoryRouter>,
+    )
+
+    expect(await screen.findByText('Your profile is public')).toBeInTheDocument()
+    await user.click(screen.getByRole('tab', { name: 'Activity' }))
+    expect(screen.getByText(/Qualifying actions have not been recorded yet/i)).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Make profile private' }))
+    expect(await screen.findByText('Your profile is now private.')).toBeInTheDocument()
+    expect(screen.getByText('Your profile is private')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Make profile public' })).toBeInTheDocument()
   })
 })

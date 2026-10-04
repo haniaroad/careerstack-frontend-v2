@@ -82,6 +82,7 @@ describe('InboxPage', () => {
       screen.getByText(/Solo AI review does not create a creator review queue/i),
     ).toBeInTheDocument()
     expect(trackInboxOpened).toHaveBeenCalled()
+    expect(screen.getByText('Approvals, invitations, and alerts that need a decision.')).toBeInTheDocument()
   })
 
   it('sorts overdue applications first and approves from Inbox', async () => {

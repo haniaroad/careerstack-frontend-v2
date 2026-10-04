@@ -61,6 +61,7 @@ const program = {
   can_delete: false,
   can_archive: true,
   read_only: false,
+  projects: [{ id: 'proj-1', title: 'Climate notes', status: 'active' }],
   created_at: '2026-08-01T00:00:00Z',
   updated_at: '2026-08-01T00:00:00Z',
 }
@@ -74,6 +75,7 @@ const draftProgram = {
   active_project_count: 0,
   pending_invitation_count: 0,
   can_delete: true,
+  projects: [],
 }
 
 const lastAdmin = {
@@ -307,6 +309,7 @@ function mockStaffApis(capabilities = adminCapabilities) {
             program_name: 'Fall Cohort',
             status: 'pending',
             invited_by_name: 'Ada Admin',
+            last_sent_at: '2026-08-01T15:00:00Z',
             expires_at: '2026-09-01T00:00:00Z',
             accepted_at: null,
             created_at: '2026-08-01T00:00:00Z',
@@ -450,6 +453,9 @@ describe('OrgAdminPage', () => {
     expect(await screen.findByRole('heading', { name: 'Organization administration' })).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: /Reports/i }))
     expect(await screen.findByRole('button', { name: /New report/i })).toBeInTheDocument()
+    expect(
+      screen.getByText(/Download a PDF or CSV for a time period and program/i),
+    ).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: /Self-reported outcomes/i })).toBeInTheDocument()
     expect(screen.queryByText(/Reports are coming later/i)).not.toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: /Download/i }))
@@ -585,5 +591,49 @@ describe('OrgAdminPage', () => {
         expect.objectContaining({ method: 'POST' }),
       )
     })
+  })
+
+  it('shows when an invite was last sent and confirms a resend', async () => {
+    mockStaffApis()
+    const user = userEvent.setup()
+    const fallback = apiFetch.getMockImplementation()!
+    let resent = false
+    apiFetch.mockImplementation(async (path: string, init?: RequestInit) => {
+      if (String(path).includes('/resend')) {
+        if (resent) {
+          const { ApiError } = await import('@/lib/api')
+          throw new ApiError(
+            422,
+            'resend_cooldown',
+            'You can resend this invite after 2026-10-04 18:06 UTC.',
+          )
+        }
+        resent = true
+        return { invitation: { id: 'inv-1' } }
+      }
+      return fallback(path, init)
+    })
+    renderPage('/organization?tab=members')
+
+    expect(await screen.findByText(/Last sent/i)).toBeInTheDocument()
+    expect(screen.getByText(/Manage programs, members, reports, and shared credits for/i)).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Resend' }))
+    expect(await screen.findByText('Invite sent.')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Resend' }))
+    expect(
+      await screen.findByText(/You can resend this invite after 2026-10-04 18:06 UTC/i),
+    ).toBeInTheDocument()
+  })
+
+  it('lists projects on the opened program', async () => {
+    mockStaffApis()
+    const user = userEvent.setup()
+    renderPage()
+
+    await user.click(await screen.findByRole('button', { name: /Fall Cohort/i }))
+    expect(await screen.findByRole('link', { name: 'Climate notes' })).toHaveAttribute('href', '/projects/proj-1')
+    await user.click(screen.getByRole('button', { name: /Back to programs/i }))
+    await user.click(screen.getByRole('button', { name: /Empty draft/i }))
+    expect(await screen.findByText('No projects in this program yet.')).toBeInTheDocument()
   })
 })

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { Archive, ArrowLeft, Plus, Trash2 } from 'lucide-react'
 import { Alert } from '@/components/Alert'
 import { Button } from '@/components/Button'
@@ -273,6 +274,25 @@ function ProgramDetail({
           ))}
         </dl>
       </header>
+      <section aria-labelledby="program-projects">
+        <h3 id="program-projects" className="text-sm font-semibold text-ink">
+          Projects
+        </h3>
+        {(program.projects ?? []).length === 0 ? (
+          <p className="mt-2 text-sm text-ink-muted">No projects in this program yet.</p>
+        ) : (
+          <ul className="mt-2 divide-y divide-border rounded-lg border border-border bg-surface">
+            {program.projects!.map((item) => (
+              <li key={item.id} className="flex flex-col gap-1 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                <Link to={`/projects/${item.id}`} className="text-sm font-medium text-ink underline-offset-2 hover:underline">
+                  {item.title}
+                </Link>
+                <span className="text-xs font-medium text-ink-muted capitalize">{item.status.replaceAll('_', ' ')}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
       {error ? (
         <Alert tone="danger" title="Could not save">
           {error}

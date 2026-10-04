@@ -22,6 +22,11 @@ type LifecycleWarning = {
   priority: number
 }
 
+type WarningDismissal = {
+  project_id: string
+  phase: LifecycleWarning['phase']
+}
+
 function buildWarnings(projects: Project[], alerts: InboxItem[]): LifecycleWarning[] {
   const byId = new Map<string, LifecycleWarning>()
 
@@ -96,6 +101,7 @@ export function HomePage() {
   const { activeWorkspaceId } = useShell()
   const [projects, setProjects] = useState<Project[]>([])
   const [alerts, setAlerts] = useState<InboxItem[]>([])
+  const [dismissals, setDismissals] = useState<WarningDismissal[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -103,14 +109,18 @@ export function HomePage() {
     setLoading(true)
     setError(null)
     try {
-      const [projectsData, alertsData] = await Promise.all([
+      const [projectsData, alertsData, dismissalData] = await Promise.all([
         apiFetch<{ projects: Project[] }>('/api/v1/projects'),
         apiFetch<{ items: InboxItem[] }>('/api/v1/inbox/items?category=alert').catch(() => ({
           items: [] as InboxItem[],
         })),
+        apiFetch<{ dismissals: WarningDismissal[] }>('/api/v1/home/warning_dismissals').catch(() => ({
+          dismissals: [] as WarningDismissal[],
+        })),
       ])
       setProjects(projectsData.projects)
       setAlerts(alertsData.items)
+      setDismissals(dismissalData.dismissals)
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Unable to load Home')
     } finally {
@@ -122,7 +132,31 @@ export function HomePage() {
     void load()
   }, [load, activeWorkspaceId])
 
-  const warnings = useMemo(() => buildWarnings(projects, alerts), [projects, alerts])
+  const warnings = useMemo(() => {
+    const built = buildWarnings(projects, alerts)
+    return built.filter(
+      (warning) =>
+        !dismissals.some(
+          (dismissal) => dismissal.project_id === warning.projectId && dismissal.phase === warning.phase,
+        ),
+    )
+  }, [projects, alerts, dismissals])
+
+  async function dismissWarning(warning: LifecycleWarning) {
+    setError(null)
+    try {
+      await apiFetch('/api/v1/home/warning_dismissals', {
+        method: 'POST',
+        body: JSON.stringify({ project_id: warning.projectId, phase: warning.phase }),
+      })
+      setDismissals((current) => [
+        ...current,
+        { project_id: warning.projectId, phase: warning.phase },
+      ])
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Unable to dismiss this warning')
+    }
+  }
 
   useEffect(() => {
     for (const warning of warnings) {
@@ -140,8 +174,8 @@ export function HomePage() {
         <p className="text-sm font-medium text-ink-muted">Home</p>
         <h1 className="font-display text-3xl text-ink">Your next actions</h1>
         <p className="max-w-xl text-ink-muted">
-          Ending and expiration warnings for projects you create or participate in, plus quick
-          links to create and My Work.
+          Projects that are ending, in a grace period, or expired show up here. Open one to finish
+          the work, or start something new.
         </p>
       </header>
 
@@ -166,9 +200,12 @@ export function HomePage() {
             }
           >
             <p>{primary.message}</p>
-            <div className="mt-3">
+            <div className="mt-3 flex flex-wrap gap-2">
               <Button asChild size="sm">
                 <Link to={`/projects/${primary.projectId}`}>Open project</Link>
+              </Button>
+              <Button type="button" size="sm" variant="outline" onClick={() => void dismissWarning(primary)}>
+                Dismiss
               </Button>
             </div>
           </Alert>
@@ -183,9 +220,12 @@ export function HomePage() {
               }
             >
               <p>{warning.message}</p>
-              <div className="mt-3">
+              <div className="mt-3 flex flex-wrap gap-2">
                 <Button asChild size="sm" variant="outline">
                   <Link to={`/projects/${warning.projectId}`}>Open project</Link>
+                </Button>
+                <Button type="button" size="sm" variant="ghost" onClick={() => void dismissWarning(warning)}>
+                  Dismiss
                 </Button>
               </div>
             </Alert>

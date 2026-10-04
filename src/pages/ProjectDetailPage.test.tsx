@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -363,7 +363,7 @@ describe('ProjectDetailPage', () => {
     })
     renderPage()
     expect(await screen.findByRole('heading', { name: /Invite teammate/i })).toBeInTheDocument()
-    expect(screen.getByPlaceholderText(/Paste user ID/i)).toBeInTheDocument()
+    expect(screen.getByPlaceholderText(/name@example.com/i)).toBeInTheDocument()
     expect(screen.queryByPlaceholderText(/00000000-0000-0000-0000-000000000000/)).not.toBeInTheDocument()
   })
 
@@ -803,5 +803,48 @@ describe('ProjectDetailPage', () => {
     expect(screen.getByText(/It may be private, removed, or outside this account/i)).toBeInTheDocument()
     expect(screen.getByText('Error code: not_found')).toBeInTheDocument()
     expect(screen.queryByText('Resource not found')).not.toBeInTheDocument()
+  })
+
+  it('sends an invite to an existing account by email', async () => {
+    const user = userEvent.setup()
+    authUserId = 'creator-1'
+    apiFetch.mockImplementation(async (path: string, init?: RequestInit) => {
+      if (String(path).includes('/invitations') && init?.method === 'POST') {
+        return { invitation: { id: 'inv-1' } }
+      }
+      return {
+        project: baseProject({
+          joining_mode: 'invite_only',
+          pending_applications: [],
+          pending_invitations: [
+            {
+              id: 'inv-0',
+              invitee_id: 'u-2',
+              invitee_email: 'teammate@example.com',
+              requested_role: 'Designer',
+              status: 'pending',
+              created_at: '2026-08-01T00:00:00Z',
+            },
+          ],
+        }),
+      }
+    })
+
+    renderPage()
+    expect(await screen.findByText('Pending invite · Designer · teammate@example.com')).toBeInTheDocument()
+    await user.type(screen.getByPlaceholderText('name@example.com'), 'other@example.com')
+    await user.click(screen.getByRole('button', { name: 'Send invitation' }))
+    await waitFor(() => {
+      expect(apiFetch).toHaveBeenCalledWith(
+        expect.stringContaining('/invitations'),
+        expect.objectContaining({
+          method: 'POST',
+          body: JSON.stringify({
+            invitee_email: 'other@example.com',
+            requested_role: 'Designer',
+          }),
+        }),
+      )
+    })
   })
 })

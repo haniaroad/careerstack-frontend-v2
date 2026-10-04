@@ -92,7 +92,7 @@ export function ProjectDetailPage() {
   const [applyMotivation, setApplyMotivation] = useState('')
   const [applyAvailable, setApplyAvailable] = useState(false)
 
-  const [inviteeId, setInviteeId] = useState('')
+  const [inviteeEmail, setInviteeEmail] = useState('')
   const [inviteRole, setInviteRole] = useState('')
 
   const [leaveOpen, setLeaveOpen] = useState(false)
@@ -335,7 +335,7 @@ export function ProjectDetailPage() {
   }
 
   async function handleInvite() {
-    if (!project || !inviteeId.trim() || !inviteRole.trim()) return
+    if (!project || !inviteeEmail.trim() || !inviteRole.trim()) return
     setBusy(true)
     setError(null)
     setErrorCode(null)
@@ -344,11 +344,11 @@ export function ProjectDetailPage() {
       await apiFetch(`/api/v1/projects/${project.id}/invitations`, {
         method: 'POST',
         body: JSON.stringify({
-          invitee_id: inviteeId.trim(),
+          invitee_email: inviteeEmail.trim(),
           requested_role: inviteRole.trim(),
         }),
       })
-      setInviteeId('')
+      setInviteeEmail('')
       setNotice('Invitation sent.')
       await load()
     } catch (err) {
@@ -950,16 +950,17 @@ export function ProjectDetailPage() {
             <div className="space-y-3 rounded-lg border border-border bg-surface p-5">
               <h2 className="font-display text-xl text-ink">Invite teammate</h2>
               <p className="text-sm text-ink-muted">
-                Paste the teammate&apos;s CareerStack user ID. Directory-based invites come later.
+                Enter the email address for someone who already has a CareerStack account.
               </p>
               <label className="block space-y-1">
-                <span className="text-sm font-medium text-ink">Invitee user ID</span>
+                <span className="text-sm font-medium text-ink">Email</span>
                 <input
+                  type="email"
                   className="w-full rounded-md border border-border bg-canvas px-3 py-2 text-ink"
-                  value={inviteeId}
-                  onChange={(e) => setInviteeId(e.target.value)}
-                  placeholder="Paste user ID"
-                  autoComplete="off"
+                  value={inviteeEmail}
+                  onChange={(e) => setInviteeEmail(e.target.value)}
+                  placeholder="name@example.com"
+                  autoComplete="email"
                 />
               </label>
               <label className="block space-y-1">
@@ -986,7 +987,7 @@ export function ProjectDetailPage() {
               </label>
               <Button
                 onClick={() => void handleInvite()}
-                disabled={busy || !inviteeId.trim() || !inviteRole.trim()}
+                disabled={busy || !inviteeEmail.trim() || !inviteRole.trim()}
               >
                 Send invitation
               </Button>
@@ -994,7 +995,7 @@ export function ProjectDetailPage() {
                 <ul className="space-y-1 text-sm text-ink-muted">
                   {project.pending_invitations!.map((invite) => (
                     <li key={invite.id}>
-                      Pending invite · {invite.requested_role} · {invite.invitee_id}
+                      Pending invite · {invite.requested_role} · {invite.invitee_email || invite.invitee_id}
                     </li>
                   ))}
                 </ul>
