@@ -43,6 +43,7 @@ function pendingTask(): TaskDetail {
     project_id: 'p1',
     project_title: 'Portfolio site',
     project_mode: 'solo',
+    project_creator_id: 'u1',
     assignee_id: 'u1',
     title: 'Build landing page',
     acceptance_criteria: 'Responsive layout',
