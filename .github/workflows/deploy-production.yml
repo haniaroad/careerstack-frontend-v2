@@ -73,3 +73,51 @@ jobs:
           fi
           echo "Checking $SITE_URL"
           curl -fsS "$SITE_URL" >/dev/null
+      - name: Attach app.careerstack.co
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ vars.PRODUCTION_NETLIFY_SITE_ID }}
+        run: |
+          set -euo pipefail
+          python3 << 'PY'
+          import json, os, urllib.request, urllib.error
+          token = os.environ["NETLIFY_AUTH_TOKEN"]
+          site_id = os.environ["NETLIFY_SITE_ID"]
+          domain = "app.careerstack.co"
+
+          def request(method, url, payload=None):
+              data = None if payload is None else json.dumps(payload).encode()
+              headers = {"Authorization": f"Bearer {token}"}
+              if payload is not None:
+                  headers["Content-Type"] = "application/json"
+              req = urllib.request.Request(url, data=data, headers=headers, method=method)
+              try:
+                  with urllib.request.urlopen(req) as resp:
+                      raw = resp.read().decode()
+                      return json.loads(raw) if raw else {}
+              except urllib.error.HTTPError as err:
+                  body = err.read().decode()
+                  raise SystemExit(f"Netlify {method} {url} failed: {err.code} {body[:400]}")
+
+          sites = request("GET", "https://api.netlify.com/api/v1/sites")
+          for site in sites:
+              if site.get("id") == site_id:
+                  continue
+              aliases = site.get("domain_aliases") or []
+              if site.get("custom_domain") == domain or domain in aliases:
+                  print(f"Detaching {domain} from {site.get('name')}")
+                  request("PATCH", f"https://api.netlify.com/api/v1/sites/{site['id']}", {"custom_domain": None})
+          updated = request("PATCH", f"https://api.netlify.com/api/v1/sites/{site_id}", {"custom_domain": domain})
+          print(f"custom_domain={updated.get('custom_domain')}")
+          PY
+          echo "Checking https://app.careerstack.co"
+          for i in 1 2 3 4 5 6 7 8 9 10; do
+            if curl -fsS "https://app.careerstack.co" | grep -q "CareerStack"; then
+              echo "app.careerstack.co is serving the production app"
+              exit 0
+            fi
+            sleep 6
+          done
+          echo "app.careerstack.co did not serve the production title yet"
+          curl -sS "https://app.careerstack.co" | head -c 400 || true
+          exit 1
