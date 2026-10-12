@@ -39,13 +39,12 @@ export function ExplorePage() {
   const { session } = useAuth()
   const [searchParams, setSearchParams] = useSearchParams()
   const tab: Tab = searchParams.get('tab') === 'people' ? 'people' : 'projects'
-  const q = searchParams.get('q') ?? ''
   const skill = searchParams.get('skill') ?? ''
   const role = searchParams.get('role') ?? ''
+  const status = searchParams.get('status') ?? ''
   const name = searchParams.get('name') ?? ''
   const experience = searchParams.get('experience') ?? ''
   const location = searchParams.get('location') ?? ''
-  const organization = searchParams.get('organization') ?? ''
   const [projects, setProjects] = useState<ExploreProject[]>([])
   const [people, setPeople] = useState<ExplorePerson[]>([])
   const [options, setOptions] = useState<ExploreFilterOptions>(EMPTY_OPTIONS)
@@ -76,16 +75,15 @@ export function ExplorePage() {
     try {
       if (tab === 'people') {
         const data = await fetchExplorePeople({
-          name: name || q,
+          name,
           skill,
           role,
           experience,
           location,
-          organization,
         })
         setPeople(data.people ?? [])
       } else {
-        const data = await fetchExploreProjects({ q, skill, role })
+        const data = await fetchExploreProjects({ skill, role, status })
         setProjects(data.projects ?? [])
       }
     } catch (err) {
@@ -93,7 +91,7 @@ export function ExplorePage() {
     } finally {
       setLoading(false)
     }
-  }, [tab, q, skill, role, name, experience, location, organization])
+  }, [tab, skill, role, status, name, experience, location])
 
   useEffect(() => {
     trackExploreViewed({
@@ -154,14 +152,6 @@ export function ExplorePage() {
             void load()
           }}
         >
-          <div className="space-y-1">
-            <Label htmlFor="explore-q">Search</Label>
-            <Input
-              id="explore-q"
-              value={q}
-              onChange={(event) => writeFilters({ q: event.target.value })}
-            />
-          </div>
           <FilterSelect
             id="explore-skill"
             label="Skill"
@@ -175,6 +165,14 @@ export function ExplorePage() {
             value={role}
             options={options.roles}
             onChange={(value) => writeFilters({ role: value })}
+          />
+          <FilterSelect
+            id="explore-status"
+            label="Project Status"
+            value={status}
+            options={['active', 'completed', 'expired']}
+            optionLabels={['Active', 'Completed', 'Expired']}
+            onChange={(value) => writeFilters({ status: value })}
           />
         </form>
       ) : (
@@ -220,13 +218,6 @@ export function ExplorePage() {
             value={location}
             options={options.locations}
             onChange={(value) => writeFilters({ location: value })}
-          />
-          <FilterSelect
-            id="people-org"
-            label="Organization"
-            value={organization}
-            options={options.organizations}
-            onChange={(value) => writeFilters({ organization: value })}
           />
         </form>
       )}
@@ -275,7 +266,7 @@ export function ExplorePage() {
                 to={`/profile/${person.slug}?from=${encodeURIComponent(explorePath)}`}
                 className="block focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
               >
-                <p className="font-medium text-ink">{person.display_name}</p>
+                <p className="font-medium text-ink hover:underline">{person.display_name}</p>
                 <p className="text-sm text-ink-muted">
                   {[person.role, person.location, person.experience_level].filter(Boolean).join(' · ')}
                 </p>
@@ -300,12 +291,14 @@ function FilterSelect({
   label,
   value,
   options,
+  optionLabels,
   onChange,
 }: {
   id: string
   label: string
   value: string
   options: string[]
+  optionLabels?: string[]
   onChange: (value: string) => void
 }) {
   const choices = value && !options.includes(value) ? [value, ...options] : options
@@ -321,7 +314,7 @@ function FilterSelect({
         <option value="">Any</option>
         {choices.map((option) => (
           <option key={option} value={option}>
-            {option}
+            {optionLabels?.[options.indexOf(option)] ?? option}
           </option>
         ))}
       </select>

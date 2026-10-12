@@ -510,8 +510,10 @@ export function ProjectDetailPage() {
   const canSharePublic =
     project.visibility === 'public' &&
     !['draft', 'cancelled', 'archived'].includes(project.status)
+  // Only show ending-soon and grace-period warnings when project is active
+  const showPhasePill = project.status === 'active' && (project.phase === 'ending_soon' || project.phase === 'grace_period')
   const extraPill =
-    project.phase === 'ending_soon' || project.phase === 'grace_period'
+    showPhasePill
       ? null
       : joinStatusLabel(project)
   const readOnly = projectIsReadOnly(project)
@@ -634,7 +636,7 @@ export function ProjectDetailPage() {
 
       {project.status === 'expired' || project.status === 'completed' ? (
         <Alert
-          tone={project.status === 'expired' ? 'warning' : 'info'}
+          tone={project.status === 'expired' ? 'warning' : 'success'}
           title={
             project.status === 'expired' ? 'Project expired — read only' : 'Project completed — read only'
           }

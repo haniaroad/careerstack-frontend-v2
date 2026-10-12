@@ -76,11 +76,11 @@ export function fetchExploreFilterOptions() {
   return apiFetch<ExploreFilterOptions>('/api/v1/explore/filter_options')
 }
 
-export function fetchExploreProjects(params: { q?: string; skill?: string; role?: string }) {
+export function fetchExploreProjects(params: { skill?: string; role?: string; status?: string }) {
   const search = new URLSearchParams()
-  if (params.q) search.set('q', params.q)
   if (params.skill) search.set('skill', params.skill)
   if (params.role) search.set('role', params.role)
+  if (params.status) search.set('status', params.status)
   const query = search.toString()
   return apiFetch<DirectoryPage<{ projects: ExploreProject[] }>>(
     `/api/v1/explore/projects${query ? `?${query}` : ''}`,
@@ -93,7 +93,6 @@ export function fetchExplorePeople(params: {
   role?: string
   experience?: string
   location?: string
-  organization?: string
 }) {
   const search = new URLSearchParams()
   for (const [key, value] of Object.entries(params)) {

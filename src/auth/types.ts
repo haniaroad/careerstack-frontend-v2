@@ -38,6 +38,7 @@ export type SessionPayload = {
     onboarding_path: 'independent' | 'organization_invited' | null
     personal_trial_granted: boolean
     organization_trial_granted: boolean
+    has_created_organization?: boolean
     timezone?: string
   }
   profile: {

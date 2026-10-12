@@ -22,6 +22,7 @@ export type ShellContextValue = {
   notificationCount: number
   canAccessOrgAdmin: boolean
   isImpersonating: boolean
+  hasCreatedOrganization: boolean
   /** Remaining credits for the active workspace owner, when known. */
   creditRemaining: number | null
   programFilter: ShellProgramFilter
@@ -42,6 +43,7 @@ export type ShellProviderProps = {
     notificationCount: number
     canAccessOrgAdmin: boolean
     isImpersonating: boolean
+    hasCreatedOrganization: boolean
     creditRemaining: number | null
     programFilter: ShellProgramFilter
     workspaceStatus: WorkspaceStatus | null
