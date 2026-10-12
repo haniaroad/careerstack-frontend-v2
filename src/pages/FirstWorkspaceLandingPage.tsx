@@ -8,6 +8,8 @@ export function FirstWorkspaceLandingPage() {
   const workspaces = session?.workspaces ?? []
   const active =
     workspaces.find((workspace) => workspace.id === session?.active_workspace_id) ?? workspaces[0]
+  const canCreateOrganization =
+    session?.user.can_create_organization ?? !session?.user.has_created_organization
 
   return (
     <AuthLayout
@@ -32,9 +34,11 @@ export function FirstWorkspaceLandingPage() {
         <Button asChild className="h-10 w-full bg-ink text-canvas hover:bg-black">
           <Link to="/home">Enter CareerStack</Link>
         </Button>
-        <Button asChild variant="outline" className="h-10 w-full border-border bg-surface text-ink hover:bg-muted">
-          <Link to="/organizations/new">Create an organization</Link>
-        </Button>
+        {canCreateOrganization ? (
+          <Button asChild variant="outline" className="h-10 w-full border-border bg-surface text-ink hover:bg-muted">
+            <Link to="/organizations/new">Create an organization</Link>
+          </Button>
+        ) : null}
       </div>
     </AuthLayout>
   )

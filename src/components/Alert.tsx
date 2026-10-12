@@ -35,12 +35,13 @@ export type AlertProps = {
   title: string
   children?: ReactNode
   className?: string
+  onDismiss?: () => void
 }
 
 /**
  * Inline alert with icon + title text so meaning is not color-only.
  */
-export function Alert({ tone = 'info', title, children, className }: AlertProps) {
+export function Alert({ tone = 'info', title, children, className, onDismiss }: AlertProps) {
   const config = TONE[tone]
   const Icon = config.icon
 
@@ -62,6 +63,15 @@ export function Alert({ tone = 'info', title, children, className }: AlertProps)
           {title}
         </p>
         {children ? <div className="text-sm opacity-90">{children}</div> : null}
+        {onDismiss ? (
+          <button
+            type="button"
+            onClick={onDismiss}
+            className="mt-2 inline-flex h-8 items-center rounded-md px-2 text-sm font-medium underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-current"
+          >
+            Dismiss
+          </button>
+        ) : null}
       </div>
     </div>
   )

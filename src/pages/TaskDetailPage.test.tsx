@@ -320,7 +320,12 @@ describe('TaskDetailPage', () => {
           body: 'Earlier evidence',
           content_fingerprint: 'a',
           submitted_at: '2026-01-02',
-          links: [],
+          links: [
+            {
+              id: 'l1',
+              url: 'https://example.com/artifacts/a-very-long-unbroken-evidence-link-that-must-stay-inside-the-card',
+            },
+          ],
               files: [
             {
               id: 'f1',
@@ -336,6 +341,7 @@ describe('TaskDetailPage', () => {
               content_type: 'image/png',
               byte_size: 407 * 1024,
               signed_id: 'blob signed/id',
+              url: 'https://careerstack-api.example/rails/active_storage/disk/expired-token/Screenshot.png',
             },
           ],
         },
@@ -366,6 +372,13 @@ describe('TaskDetailPage', () => {
       'https://api.example.com/rails/active_storage/blobs/redirect/signed/evidence.pdf',
     )
     expect(fileLink).toHaveAttribute('target', '_blank')
+    expect(fileLink).toHaveClass('break-all')
+    expect(fileLink.closest('li')).toHaveClass('overflow-hidden')
+    const artifact = screen.getByRole('link', {
+      name: /a-very-long-unbroken-evidence-link/,
+    })
+    expect(artifact).toHaveClass('break-all')
+    expect(artifact.closest('li')).toHaveClass('overflow-hidden')
     const screenshot = screen.getByRole('link', { name: 'Screenshot 2026-10-03 at 8.25.14 PM.png' })
     expect(screenshot).toHaveAttribute(
       'href',

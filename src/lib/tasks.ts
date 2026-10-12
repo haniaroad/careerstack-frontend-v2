@@ -42,10 +42,11 @@ export type TaskSubmissionFile = {
   url?: string | null
 }
 
-/** Absolute URL that opens the uploaded file. Uses the API file URL when present, otherwise the signed blob id. */
+/** Absolute URL that opens the uploaded file. Disk service URLs expire and are not used. */
 export function submissionFileHref(file: TaskSubmissionFile, apiBase: string): string | null {
   const provided = file.url?.trim()
-  if (provided && /^https?:\/\//i.test(provided)) return provided
+  const diskUrl = Boolean(provided && /\/rails\/active_storage\/disk\//i.test(provided))
+  if (provided && /^https?:\/\//i.test(provided) && !diskUrl) return provided
   if (!file.signed_id || !file.filename) return null
   const base = apiBase.replace(/\/$/, '')
   const id = encodeURIComponent(file.signed_id)

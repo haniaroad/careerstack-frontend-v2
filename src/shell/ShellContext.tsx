@@ -64,6 +64,8 @@ export function ShellProvider({ children, initial }: ShellProviderProps) {
       canAccessOrgAdmin: initial?.canAccessOrgAdmin ?? false,
       isImpersonating,
       hasCreatedOrganization: initial?.hasCreatedOrganization ?? false,
+      canCreateOrganization:
+        initial?.canCreateOrganization ?? !(initial?.hasCreatedOrganization ?? false),
       creditRemaining: initial?.creditRemaining ?? null,
       programFilter: initial?.programFilter ?? null,
       workspaceStatus: initial?.workspaceStatus ?? null,
@@ -78,6 +80,7 @@ export function ShellProvider({ children, initial }: ShellProviderProps) {
       initial?.canAccessOrgAdmin,
       initial?.creditRemaining,
       initial?.hasCreatedOrganization,
+      initial?.canCreateOrganization,
       initial?.notificationCount,
       initial?.onSignOut,
       initial?.programFilter,
