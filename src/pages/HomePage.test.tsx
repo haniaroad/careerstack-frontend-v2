@@ -214,4 +214,112 @@ describe('HomePage', () => {
       expect.objectContaining({ method: 'POST' }),
     )
   })
+
+  it('shows a completed project as a success notice instead of ending soon', async () => {
+    const user = userEvent.setup()
+    apiFetch.mockImplementation(async (path: string, init?: RequestInit) => {
+      if (path === '/api/v1/home/warning_dismissals' && init?.method === 'POST') {
+        return { dismissal: { project_id: 'p-done', phase: 'completed' } }
+      }
+      if (path === '/api/v1/projects') {
+        return {
+          projects: [
+            project({
+              id: 'p-done',
+              title: 'Security Analyst Fundamentals Learning Project',
+              status: 'completed',
+              phase: 'read_only',
+              completed_at: '2026-10-12',
+            }),
+          ],
+        }
+      }
+      if (path.startsWith('/api/v1/inbox/items')) {
+        return {
+          items: [
+            {
+              id: 'alert-1',
+              category: 'alert',
+              related_id: 'alert-1',
+              project_id: 'p-done',
+              project_title: 'Security Analyst Fundamentals Learning Project',
+              title: 'Project completed',
+              description:
+                'Security Analyst Fundamentals Learning Project is complete — all tasks were approved.',
+              status_label: 'Lifecycle',
+              urgency: 'medium',
+              is_overdue: false,
+              cta_label: 'View',
+              created_at: '2026-10-12T00:00:00Z',
+              payload: { kind: 'lifecycle', lifecycle_phase: 'completed' },
+            },
+            {
+              id: 'alert-2',
+              category: 'alert',
+              related_id: 'alert-2',
+              project_id: 'p-done',
+              project_title: 'Security Analyst Fundamentals Learning Project',
+              title: 'Project ending soon',
+              description: 'Security Analyst Fundamentals Learning Project ends on 2026-11-15.',
+              status_label: 'Lifecycle',
+              urgency: 'medium',
+              is_overdue: false,
+              cta_label: 'View',
+              created_at: '2026-10-01T00:00:00Z',
+              payload: { kind: 'lifecycle', lifecycle_phase: 'ending_soon' },
+            },
+          ],
+        }
+      }
+      if (path.startsWith('/api/v1/first_run_tips')) return { tip: null }
+      if (path === '/api/v1/home/warning_dismissals') return { dismissals: [] }
+      throw new Error(`Unexpected ${path}`)
+    })
+
+    renderHome()
+    const notice = await screen.findByText(/Security Analyst Fundamentals Learning Project is complete$/i)
+    expect(notice.closest('[data-tone]')).toHaveAttribute('data-tone', 'success')
+    expect(screen.getByText(/is complete — all tasks were approved/i)).toBeInTheDocument()
+    expect(screen.queryByText(/Ending soon/i)).not.toBeInTheDocument()
+
+    const card = notice.closest('[data-tone]')
+    await user.click(within(card as HTMLElement).getByRole('button', { name: 'Dismiss' }))
+    expect(screen.queryByText(/is complete — all tasks were approved/i)).not.toBeInTheDocument()
+    expect(apiFetch).toHaveBeenCalledWith(
+      '/api/v1/home/warning_dismissals',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ project_id: 'p-done', phase: 'completed' }),
+      }),
+    )
+  })
+
+  it('hides a stale notice and lets the dismiss error be closed', async () => {
+    const user = userEvent.setup()
+    const { ApiError } = await import('@/lib/api')
+    apiFetch.mockImplementation(async (path: string, init?: RequestInit) => {
+      if (path === '/api/v1/home/warning_dismissals' && init?.method === 'POST') {
+        throw new ApiError(422, 'validation_error', 'That warning is not current for this project')
+      }
+      if (path === '/api/v1/projects') {
+        return { projects: [project()] }
+      }
+      if (path.startsWith('/api/v1/inbox/items')) return { items: [] }
+      if (path.startsWith('/api/v1/first_run_tips')) return { tip: null }
+      if (path === '/api/v1/home/warning_dismissals') return { dismissals: [] }
+      throw new Error(`Unexpected ${path}`)
+    })
+
+    renderHome()
+    expect(await screen.findByText(/Shipping checklist — Ending soon/i)).toBeInTheDocument()
+    const ending = screen.getByText(/Shipping checklist — Ending soon/i).closest('[data-tone]')
+    await user.click(within(ending as HTMLElement).getByRole('button', { name: 'Dismiss' }))
+
+    expect(screen.queryByText(/Shipping checklist — Ending soon/i)).not.toBeInTheDocument()
+    const error = await screen.findByText(/That warning is not current for this project/i)
+    const errorCard = error.closest('[data-tone]')
+    expect(errorCard).toHaveAttribute('data-tone', 'danger')
+    await user.click(within(errorCard as HTMLElement).getByRole('button', { name: 'Dismiss' }))
+    expect(screen.queryByText(/That warning is not current for this project/i)).not.toBeInTheDocument()
+  })
 })

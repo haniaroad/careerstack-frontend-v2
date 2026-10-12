@@ -13,21 +13,35 @@ import {
 } from '@/lib/projects'
 import { useShell } from '@/shell/ShellContext'
 
+type NoticePhase = Extract<ProjectPhase, 'ending_soon' | 'grace_period'> | 'expired' | 'completed'
+
 type LifecycleWarning = {
   projectId: string
   title: string
-  phase: Extract<ProjectPhase, 'ending_soon' | 'grace_period'> | 'expired'
+  phase: Exclude<NoticePhase, 'completed'>
   endsOn: string | null
   message: string
   priority: number
 }
 
-type WarningDismissal = {
-  project_id: string
-  phase: LifecycleWarning['phase']
+type CompletionNotice = {
+  projectId: string
+  title: string
+  phase: 'completed'
+  message: string
 }
 
-function buildWarnings(projects: Project[], alerts: InboxItem[]): LifecycleWarning[] {
+type WarningDismissal = {
+  project_id: string
+  phase: NoticePhase
+}
+
+function lifecyclePhase(alert: InboxItem): string | null {
+  const phase = alert.payload.lifecycle_phase
+  return typeof phase === 'string' && phase.length > 0 ? phase : null
+}
+
+function buildWarnings(projects: Project[]): LifecycleWarning[] {
   const byId = new Map<string, LifecycleWarning>()
 
   for (const project of projects) {
@@ -68,33 +82,35 @@ function buildWarnings(projects: Project[], alerts: InboxItem[]): LifecycleWarni
     }
   }
 
+  return [...byId.values()].sort((a, b) => a.priority - b.priority || a.title.localeCompare(b.title))
+}
+
+function buildCompletions(projects: Project[], alerts: InboxItem[]): CompletionNotice[] {
+  const projectsById = new Map(projects.map((project) => [project.id, project]))
+  const notices = new Map<string, CompletionNotice>()
+
   for (const alert of alerts) {
     if (alert.category !== 'alert' || !alert.project_id) continue
-    const kind = String(alert.payload.kind ?? '')
-    if (kind !== 'lifecycle') continue
-    if (byId.has(alert.project_id)) continue
-    const label = alert.status_label.toLowerCase()
-    const titleLower = alert.title.toLowerCase()
-    let phase: LifecycleWarning['phase'] = 'ending_soon'
-    let priority = 2
-    if (label.includes('expir') || titleLower.includes('expir')) {
-      phase = 'expired'
-      priority = 0
-    } else if (label.includes('grace') || titleLower.includes('grace')) {
-      phase = 'grace_period'
-      priority = 1
-    }
-    byId.set(alert.project_id, {
-      projectId: alert.project_id,
-      title: alert.project_title,
-      phase,
-      endsOn: null,
-      message: alert.description || alert.title,
-      priority,
-    })
+    if (String(alert.payload.kind ?? '') !== 'lifecycle') continue
+
+    const project = projectsById.get(alert.project_id)
+    if (project && project.status !== 'completed') continue
+
+    const phase = lifecyclePhase(alert)
+    const projectCompleted = project?.status === 'completed'
+    if (!projectCompleted && phase !== 'completed') continue
+
+    const title = project?.title || alert.project_title
+    const fromCompletionAlert = phase === 'completed' && (alert.description ?? '').trim().length > 0
+    const message = fromCompletionAlert
+      ? alert.description
+      : `${title} is complete — all tasks were approved.`
+    const current = notices.get(alert.project_id)
+    if (current && phase !== 'completed') continue
+    notices.set(alert.project_id, { projectId: alert.project_id, title, phase: 'completed', message })
   }
 
-  return [...byId.values()].sort((a, b) => a.priority - b.priority || a.title.localeCompare(b.title))
+  return [...notices.values()].sort((a, b) => a.title.localeCompare(b.title))
 }
 
 export function HomePage() {
@@ -102,6 +118,7 @@ export function HomePage() {
   const [projects, setProjects] = useState<Project[]>([])
   const [alerts, setAlerts] = useState<InboxItem[]>([])
   const [dismissals, setDismissals] = useState<WarningDismissal[]>([])
+  const [suppressed, setSuppressed] = useState<WarningDismissal[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -132,28 +149,40 @@ export function HomePage() {
     void load()
   }, [load, activeWorkspaceId])
 
-  const warnings = useMemo(() => {
-    const built = buildWarnings(projects, alerts)
-    return built.filter(
-      (warning) =>
-        !dismissals.some(
-          (dismissal) => dismissal.project_id === warning.projectId && dismissal.phase === warning.phase,
-        ),
-    )
-  }, [projects, alerts, dismissals])
+  const hidden = useCallback(
+    (projectId: string, phase: NoticePhase) =>
+      [...dismissals, ...suppressed].some(
+        (dismissal) => dismissal.project_id === projectId && dismissal.phase === phase,
+      ),
+    [dismissals, suppressed],
+  )
 
-  async function dismissWarning(warning: LifecycleWarning) {
+  const warnings = useMemo(
+    () => buildWarnings(projects).filter((warning) => !hidden(warning.projectId, warning.phase)),
+    [projects, hidden],
+  )
+
+  const completions = useMemo(
+    () => buildCompletions(projects, alerts).filter((notice) => !hidden(notice.projectId, notice.phase)),
+    [projects, alerts, hidden],
+  )
+
+  async function dismissNotice(notice: { projectId: string; phase: NoticePhase }) {
     setError(null)
     try {
       await apiFetch('/api/v1/home/warning_dismissals', {
         method: 'POST',
-        body: JSON.stringify({ project_id: warning.projectId, phase: warning.phase }),
+        body: JSON.stringify({ project_id: notice.projectId, phase: notice.phase }),
       })
       setDismissals((current) => [
         ...current,
-        { project_id: warning.projectId, phase: warning.phase },
+        { project_id: notice.projectId, phase: notice.phase },
       ])
     } catch (err) {
+      setSuppressed((current) => [
+        ...current,
+        { project_id: notice.projectId, phase: notice.phase },
+      ])
       setError(err instanceof ApiError ? err.message : 'Unable to dismiss this warning')
     }
   }
@@ -182,7 +211,7 @@ export function HomePage() {
       <FirstRunTip destination="home" />
 
       {error ? (
-        <Alert tone="danger" title="Something went wrong">
+        <Alert tone="danger" title="Something went wrong" onDismiss={() => setError(null)}>
           {error}
         </Alert>
       ) : null}
@@ -204,7 +233,7 @@ export function HomePage() {
               <Button asChild size="sm">
                 <Link to={`/projects/${primary.projectId}`}>Open project</Link>
               </Button>
-              <Button type="button" size="sm" variant="outline" onClick={() => void dismissWarning(primary)}>
+              <Button type="button" size="sm" variant="outline" onClick={() => void dismissNotice(primary)}>
                 Dismiss
               </Button>
             </div>
@@ -224,7 +253,7 @@ export function HomePage() {
                 <Button asChild size="sm" variant="outline">
                   <Link to={`/projects/${warning.projectId}`}>Open project</Link>
                 </Button>
-                <Button type="button" size="sm" variant="ghost" onClick={() => void dismissWarning(warning)}>
+                <Button type="button" size="sm" variant="ghost" onClick={() => void dismissNotice(warning)}>
                   Dismiss
                 </Button>
               </div>
@@ -233,7 +262,25 @@ export function HomePage() {
         </section>
       ) : null}
 
-      {!loading && !primary && !error ? (
+      {!loading && completions.length > 0 ? (
+        <section className="space-y-3" aria-label="Completed projects">
+          {completions.map((notice) => (
+            <Alert key={notice.projectId} tone="success" title={`${notice.title} is complete`}>
+              <p>{notice.message}</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Button asChild size="sm">
+                  <Link to={`/projects/${notice.projectId}`}>Open project</Link>
+                </Button>
+                <Button type="button" size="sm" variant="outline" onClick={() => void dismissNotice(notice)}>
+                  Dismiss
+                </Button>
+              </div>
+            </Alert>
+          ))}
+        </section>
+      ) : null}
+
+      {!loading && !primary && completions.length === 0 && !error ? (
         <Alert tone="info" title="No lifecycle warnings">
           You have no ending-soon, grace, or expired project warnings right now.
         </Alert>

@@ -710,15 +710,15 @@ export function TaskDetailPage() {
         ) : (
           <ol className="space-y-3">
             {task.submissions.map((submission) => (
-              <li key={submission.id} className="rounded-lg border border-border bg-surface p-4">
+              <li key={submission.id} className="min-w-0 overflow-hidden rounded-lg border border-border bg-surface p-4">
                 <p className="text-sm font-medium text-ink">Attempt {submission.attempt_number}</p>
                 <p className="mt-1 text-xs text-ink-muted">{new Date(submission.submitted_at).toLocaleString()}</p>
-                {submission.body ? <p className="mt-2 whitespace-pre-wrap text-sm text-ink">{submission.body}</p> : null}
+                {submission.body ? <p className="mt-2 whitespace-pre-wrap break-all text-sm text-ink">{submission.body}</p> : null}
                 {submission.links.length ? (
-                  <ul className="mt-2 space-y-1 text-sm">
+                  <ul className="mt-2 min-w-0 space-y-1 text-sm">
                     {submission.links.map((item) => (
-                      <li key={item.id}>
-                        <a className="text-ink underline" href={item.url} target="_blank" rel="noreferrer">
+                      <li key={item.id} className="min-w-0 overflow-hidden">
+                        <a className="break-all text-ink underline" href={item.url} target="_blank" rel="noreferrer">
                           {item.url}
                         </a>
                       </li>
@@ -726,14 +726,14 @@ export function TaskDetailPage() {
                   </ul>
                 ) : null}
                 {submission.files.length ? (
-                  <ul className="mt-2 text-sm text-ink-muted">
+                  <ul className="mt-2 min-w-0 text-sm text-ink-muted">
                     {submission.files.map((file) => {
                       const href = submissionFileHref(file, apiBaseUrl())
                       return (
-                        <li key={file.id}>
+                        <li key={file.id} className="min-w-0 overflow-hidden">
                           {href ? (
                             <a
-                              className="break-words text-ink underline"
+                              className="break-all text-ink underline"
                               href={href}
                               title={file.filename}
                               target="_blank"
@@ -742,7 +742,7 @@ export function TaskDetailPage() {
                               {file.filename}
                             </a>
                           ) : (
-                            <span className="break-words text-ink" title={file.filename}>{file.filename}</span>
+                            <span className="break-all text-ink" title={file.filename}>{file.filename}</span>
                           )}{' '}
                           ({Math.round(file.byte_size / 1024)} KB)
                         </li>

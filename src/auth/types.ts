@@ -39,6 +39,7 @@ export type SessionPayload = {
     personal_trial_granted: boolean
     organization_trial_granted: boolean
     has_created_organization?: boolean
+    can_create_organization?: boolean
     timezone?: string
   }
   profile: {

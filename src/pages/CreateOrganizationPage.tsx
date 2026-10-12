@@ -26,7 +26,7 @@ type TaxonomyTerm = { id: string; key: string; label: string }
 
 export function CreateOrganizationPage() {
   const navigate = useNavigate()
-  const { setSession } = useAuth()
+  const { session, setSession } = useAuth()
   const [structures, setStructures] = useState<TaxonomyTerm[]>([])
   const [goals, setGoals] = useState<TaxonomyTerm[]>([])
   const [error, setError] = useState<string | null>(null)
@@ -42,7 +42,16 @@ export function CreateOrganizationPage() {
     },
   })
 
+  const canCreate =
+    session?.user.can_create_organization ?? !session?.user.has_created_organization
+
   useEffect(() => {
+    if (!session || canCreate) return
+    navigate(session.user.status === 'pending_onboarding' ? '/onboarding' : '/home', { replace: true })
+  }, [canCreate, navigate, session])
+
+  useEffect(() => {
+    if (session && !canCreate) return
     void apiFetch<{ taxonomies: { key: string; terms: TaxonomyTerm[] }[] }>('/api/v1/taxonomies')
       .then((data) => {
         setStructures(
@@ -51,7 +60,7 @@ export function CreateOrganizationPage() {
         setGoals(data.taxonomies.find((item) => item.key === 'organization_goals')?.terms ?? [])
       })
       .catch((err: Error) => setError(err.message))
-  }, [])
+  }, [canCreate, session])
 
   async function onSubmit(values: FormValues) {
     setError(null)

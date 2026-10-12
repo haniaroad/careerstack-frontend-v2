@@ -240,6 +240,22 @@ describe('AppShell', () => {
     expect(screen.getByRole('heading', { name: 'Create organization' })).toBeInTheDocument()
   })
 
+  it('omits Create organization after the user has already created one', async () => {
+    const user = userEvent.setup()
+    render(
+      <MemoryRouter>
+        <ShellProvider initial={{ canCreateOrganization: false }}>
+          <AppShell>
+            <h1>Home</h1>
+          </AppShell>
+        </ShellProvider>
+      </MemoryRouter>,
+    )
+
+    await user.click(screen.getByLabelText('Profile menu'))
+    expect(screen.queryByRole('menuitem', { name: 'Create organization' })).not.toBeInTheDocument()
+  })
+
   it('opens the notification center from the bell instead of Inbox', async () => {
     const user = userEvent.setup()
     render(

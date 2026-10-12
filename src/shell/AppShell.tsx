@@ -90,7 +90,7 @@ function WorkspaceSwitcher() {
 }
 
 function ProfileMenu() {
-  const { userDisplayName, hasCreatedOrganization, signOut } = useShell()
+  const { userDisplayName, canCreateOrganization, signOut } = useShell()
   const navigate = useNavigate()
   const initials = userDisplayName
     .split(/\s+/)
@@ -126,7 +126,7 @@ function ProfileMenu() {
         <DropdownMenuItem onSelect={() => navigate('/billing')}>
           Billing & Credits
         </DropdownMenuItem>
-        {!hasCreatedOrganization ? (
+        {canCreateOrganization ? (
           <DropdownMenuItem onSelect={() => navigate('/organizations/new')}>
             Create organization
           </DropdownMenuItem>
