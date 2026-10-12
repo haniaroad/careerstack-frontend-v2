@@ -1,0 +1,52 @@
+name: Bootstrap production Netlify site
+
+# One-time helper. Creates the production participant site on the existing Netlify
+# account (token stored on the staging environment). Does not attach
+# app.careerstack.co and does not deploy the app.
+on:
+  workflow_dispatch:
+
+jobs:
+  create:
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - name: Create careerstack-app if missing
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+        run: |
+          set -euo pipefail
+          python3 << 'PY'
+          import json, os, urllib.request, urllib.error
+          token = os.environ["NETLIFY_AUTH_TOKEN"]
+
+          def request(method, url, payload=None):
+              data = None if payload is None else json.dumps(payload).encode()
+              headers = {"Authorization": f"Bearer {token}"}
+              if payload is not None:
+                  headers["Content-Type"] = "application/json"
+              req = urllib.request.Request(url, data=data, headers=headers, method=method)
+              try:
+                  with urllib.request.urlopen(req) as resp:
+                      return json.load(resp)
+              except urllib.error.HTTPError as err:
+                  body = err.read().decode()
+                  raise SystemExit(f"Netlify {method} {url} failed: {err.code} {body[:300]}")
+
+          sites = request("GET", "https://api.netlify.com/api/v1/sites")
+          for site in sites:
+              domains = [site.get("custom_domain") or ""] + list(site.get("domain_aliases") or [])
+              domains = [domain for domain in domains if domain]
+              print(
+                  f"SITE id={site.get('id')} name={site.get('name')} "
+                  f"url={site.get('ssl_url')} domains={','.join(domains) or '-'}"
+              )
+          existing = next((site for site in sites if site.get("name") == "careerstack-app"), None)
+          if existing:
+              print(f"PRODUCTION_SITE_ID={existing['id']}")
+              print(f"PRODUCTION_SITE_URL={existing.get('ssl_url') or existing.get('url')}")
+              raise SystemExit(0)
+          created = request("POST", "https://api.netlify.com/api/v1/sites", {"name": "careerstack-app"})
+          print(f"PRODUCTION_SITE_ID={created['id']}")
+          print(f"PRODUCTION_SITE_URL={created.get('ssl_url') or created.get('url')}")
+          PY

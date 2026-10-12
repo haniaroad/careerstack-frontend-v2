@@ -148,3 +148,24 @@ GitHub Environment **`staging`** needs:
 Firebase Authentication authorized domains must include `localhost` and the Netlify staging host (`*.netlify.app`). `admin.careerstack.co` belongs on the separate admin site, not on this staging site.
 
 See `netlify.toml` for publish directory (`dist`). After changing staging variables, re-run **Deploy staging** (or merge to `main`) so a new build picks them up.
+
+## Production deploy
+
+Production is a **second Netlify site**, not a custom domain on `careerstack-frontend-v2.netlify.app`. Merges to `main` keep publishing staging. Production is **Actions → Deploy production**, which requires the GitHub Environment `production` reviewer.
+
+Create the site with manual deploys and no Git connection, then attach `app.careerstack.co` there. `admin.careerstack.co` is still a separate site with `VITE_SURFACE=admin`.
+
+GitHub repository variables (read by **Deploy production** after the `production` environment approves):
+
+- `PRODUCTION_NETLIFY_SITE_ID` — the production site, not the staging site
+- `PRODUCTION_VITE_API_BASE_URL` — production Cloud Run origin
+- `PRODUCTION_VITE_FIREBASE_API_KEY`
+- `PRODUCTION_VITE_FIREBASE_AUTH_DOMAIN`
+- `PRODUCTION_VITE_FIREBASE_PROJECT_ID` — production Firebase project, not `careerstack-staging`
+- `PRODUCTION_VITE_FIREBASE_APP_ID`
+- `PRODUCTION_SITE_URL` — optional smoke-check override (`https://app.careerstack.co` once that domain is on this site)
+- `PRODUCTION_VITE_MIXPANEL_TOKEN` / `PRODUCTION_VITE_SENTRY_DSN` — optional
+
+The Netlify token stays the staging environment secret `NETLIFY_AUTH_TOKEN`. GitHub cannot copy environment secrets, so the publish job uses that token only after the production environment approves. Create the empty site with **Bootstrap production Netlify site**.
+
+Do not set `VITE_ENABLE_DESIGN_SYSTEM_PREVIEW` for production. Firebase authorized domains must include `app.careerstack.co` and the production `*.netlify.app` host.
