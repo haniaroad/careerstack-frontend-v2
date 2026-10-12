@@ -733,15 +733,16 @@ export function TaskDetailPage() {
                         <li key={file.id}>
                           {href ? (
                             <a
-                              className="text-ink underline"
+                              className="break-words text-ink underline"
                               href={href}
+                              title={file.filename}
                               target="_blank"
                               rel="noopener noreferrer"
                             >
                               {file.filename}
                             </a>
                           ) : (
-                            <span className="text-ink">{file.filename}</span>
+                            <span className="break-words text-ink" title={file.filename}>{file.filename}</span>
                           )}{' '}
                           ({Math.round(file.byte_size / 1024)} KB)
                         </li>
