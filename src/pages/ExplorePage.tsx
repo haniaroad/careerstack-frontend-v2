@@ -312,7 +312,7 @@ function FilterSelect({
         onChange={(event) => onChange(event.target.value)}
       >
         <option value="">Any</option>
-        {choices.map((option, index) => (
+        {choices.map((option) => (
           <option key={option} value={option}>
             {optionLabels?.[options.indexOf(option)] ?? option}
           </option>
