@@ -1,6 +1,15 @@
 name: Deploy production
 
 # Production Netlify cutover is never auto-deployed from push or laptop scripts.
+# Trigger only via Actions UI (workflow_dispatch) after staging acceptance.
+# The production environment must approve before anything is published.
+# Uses a separate Netlify site from staging. Do not point app.careerstack.co
+# at careerstack-frontend-v2.netlify.app.
+#
+# The Netlify token already lives on the staging environment and GitHub cannot
+# copy environment secrets. Publish runs only after the production approval job,
+# and reads PRODUCTION_* repository variables so it does not pick up staging
+# Firebase or the staging site id.
 on:
   workflow_dispatch:
 
@@ -9,12 +18,58 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  deploy:
+  approve:
     runs-on: ubuntu-latest
     environment: production
     steps:
-      - name: Refuse until production site exists
+      - name: Wait for production approval
+        run: echo "Production frontend deploy approved"
+
+  deploy:
+    needs: approve
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+        env:
+          VITE_API_BASE_URL: ${{ vars.PRODUCTION_VITE_API_BASE_URL }}
+          VITE_FIREBASE_API_KEY: ${{ vars.PRODUCTION_VITE_FIREBASE_API_KEY }}
+          VITE_FIREBASE_AUTH_DOMAIN: ${{ vars.PRODUCTION_VITE_FIREBASE_AUTH_DOMAIN }}
+          VITE_FIREBASE_PROJECT_ID: ${{ vars.PRODUCTION_VITE_FIREBASE_PROJECT_ID }}
+          VITE_FIREBASE_APP_ID: ${{ vars.PRODUCTION_VITE_FIREBASE_APP_ID }}
+          VITE_MIXPANEL_TOKEN: ${{ vars.PRODUCTION_VITE_MIXPANEL_TOKEN }}
+          VITE_SENTRY_DSN: ${{ vars.PRODUCTION_VITE_SENTRY_DSN }}
+      - name: Deploy to Netlify
+        uses: nwtgck/actions-netlify@v3.0
+        with:
+          publish-dir: ./dist
+          production-deploy: true
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ vars.PRODUCTION_NETLIFY_SITE_ID }}
+      - name: Smoke check production site
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ vars.PRODUCTION_NETLIFY_SITE_ID }}
+          PRODUCTION_SITE_URL: ${{ vars.PRODUCTION_SITE_URL }}
         run: |
-          echo "Production Netlify is intentionally unused in establish-platform-foundation."
-          echo "This workflow is gated on GitHub Environment 'production' and workflow_dispatch only."
-          exit 1
+          SITE_URL="$PRODUCTION_SITE_URL"
+          if [ -z "$SITE_URL" ]; then
+            echo "PRODUCTION_SITE_URL not set; looking up Netlify site $NETLIFY_SITE_ID"
+            SITE_URL=$(curl -fsS -H "Authorization: Bearer $NETLIFY_AUTH_TOKEN" \
+              "https://api.netlify.com/api/v1/sites/$NETLIFY_SITE_ID" \
+              | python3 -c 'import json,sys; data=json.load(sys.stdin); print(data.get("ssl_url") or data.get("url") or "")')
+          fi
+          if [ -z "$SITE_URL" ]; then
+            echo "Could not resolve production site URL"
+            exit 1
+          fi
+          echo "Checking $SITE_URL"
+          curl -fsS "$SITE_URL" >/dev/null
