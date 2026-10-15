@@ -50,7 +50,7 @@ export function OperationalPulseBar({
           <button
             type="button"
             onClick={onCreditsClick}
-            className="inline-flex w-full flex-col items-start rounded-md border border-border bg-canvas px-3.5 py-2.5 text-left hover:bg-muted sm:w-auto"
+            className="inline-flex w-full flex-col items-start rounded-md border border-input bg-canvas px-3.5 py-2.5 text-left hover:bg-muted sm:w-auto"
           >
             <span className="text-[11px] font-semibold tracking-[0.08em] text-ink-muted uppercase">
               Org credits

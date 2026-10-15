@@ -665,7 +665,7 @@ export function ProjectDetailPage() {
           <label className="block space-y-1">
             <span className="text-sm font-medium text-ink">Title</span>
             <input
-              className="w-full rounded-md border border-border bg-canvas px-3 py-2 text-ink"
+              className="w-full rounded-md border border-input bg-canvas px-3 py-2 text-ink"
               value={titleDraft}
               onChange={(event) => setTitleDraft(event.target.value)}
               disabled={busy}
@@ -675,7 +675,7 @@ export function ProjectDetailPage() {
           <label className="block space-y-1">
             <span className="text-sm font-medium text-ink">Summary</span>
             <textarea
-              className="min-h-20 w-full rounded-md border border-border bg-canvas px-3 py-2 text-ink"
+              className="min-h-20 w-full rounded-md border border-input bg-canvas px-3 py-2 text-ink"
               value={summaryDraft}
               onChange={(event) => setSummaryDraft(event.target.value)}
               disabled={busy}
@@ -684,7 +684,7 @@ export function ProjectDetailPage() {
           <label className="block space-y-1">
             <span className="text-sm font-medium text-ink">Objective</span>
             <textarea
-              className="min-h-20 w-full rounded-md border border-border bg-canvas px-3 py-2 text-ink"
+              className="min-h-20 w-full rounded-md border border-input bg-canvas px-3 py-2 text-ink"
               value={objectiveDraft}
               onChange={(event) => setObjectiveDraft(event.target.value)}
               disabled={busy}
@@ -693,7 +693,7 @@ export function ProjectDetailPage() {
           <label className="block space-y-1">
             <span className="text-sm font-medium text-ink">Definition of done</span>
             <textarea
-              className="min-h-20 w-full rounded-md border border-border bg-canvas px-3 py-2 text-ink"
+              className="min-h-20 w-full rounded-md border border-input bg-canvas px-3 py-2 text-ink"
               value={definitionDraft}
               onChange={(event) => setDefinitionDraft(event.target.value)}
               disabled={busy}
@@ -704,7 +704,7 @@ export function ProjectDetailPage() {
               <span className="text-sm font-medium text-ink">Ends on</span>
               <input
                 type="date"
-                className="w-full rounded-md border border-border bg-canvas px-3 py-2 text-ink"
+                className="w-full rounded-md border border-input bg-canvas px-3 py-2 text-ink"
                 value={endsOnDraft}
                 onChange={(event) => setEndsOnDraft(event.target.value)}
                 disabled={busy}
@@ -714,7 +714,7 @@ export function ProjectDetailPage() {
             <label className="block space-y-1">
               <span className="text-sm font-medium text-ink">Visibility</span>
               <select
-                className="w-full rounded-md border border-border bg-canvas px-3 py-2 text-ink"
+                className="w-full rounded-md border border-input bg-canvas px-3 py-2 text-ink"
                 value={visibilityDraft}
                 onChange={(event) => setVisibilityDraft(event.target.value as 'public' | 'private')}
                 disabled={busy}
@@ -729,7 +729,7 @@ export function ProjectDetailPage() {
               <label className="block space-y-1">
                 <span className="text-sm font-medium text-ink">Joining</span>
                 <select
-                  className="w-full rounded-md border border-border bg-canvas px-3 py-2 text-ink"
+                  className="w-full rounded-md border border-input bg-canvas px-3 py-2 text-ink"
                   value={joiningModeDraft}
                   onChange={(event) => setJoiningModeDraft(event.target.value as JoiningMode)}
                   disabled={busy}
@@ -747,7 +747,7 @@ export function ProjectDetailPage() {
                   type="number"
                   min={1}
                   max={5}
-                  className="w-full rounded-md border border-border bg-canvas px-3 py-2 text-ink"
+                  className="w-full rounded-md border border-input bg-canvas px-3 py-2 text-ink"
                   value={capacityDraft}
                   onChange={(event) => setCapacityDraft(event.target.value)}
                   disabled={busy}
@@ -756,7 +756,7 @@ export function ProjectDetailPage() {
               <label className="block space-y-1 sm:col-span-2">
                 <span className="text-sm font-medium text-ink">Roles needed</span>
                 <input
-                  className="w-full rounded-md border border-border bg-canvas px-3 py-2 text-ink"
+                  className="w-full rounded-md border border-input bg-canvas px-3 py-2 text-ink"
                   value={rolesEditDraft}
                   onChange={(event) => setRolesEditDraft(event.target.value)}
                   disabled={busy}
@@ -852,7 +852,7 @@ export function ProjectDetailPage() {
             <label className="block space-y-1">
               <span className="text-sm font-medium text-ink">Joining mode</span>
               <select
-                className="w-full rounded-md border border-border bg-canvas px-3 py-2 text-ink"
+                className="w-full rounded-md border border-input bg-canvas px-3 py-2 text-ink"
                 value={convertJoiningMode}
                 onChange={(e) => setConvertJoiningMode(e.target.value as JoiningMode)}
               >
@@ -869,7 +869,7 @@ export function ProjectDetailPage() {
                 type="number"
                 min={1}
                 max={5}
-                className="w-full rounded-md border border-border bg-canvas px-3 py-2 text-ink"
+                className="w-full rounded-md border border-input bg-canvas px-3 py-2 text-ink"
                 value={convertCapacity}
                 onChange={(e) => setConvertCapacity(Number(e.target.value))}
               />
@@ -877,7 +877,7 @@ export function ProjectDetailPage() {
             <label className="block space-y-1 sm:col-span-2">
               <span className="text-sm font-medium text-ink">Roles needed (comma-separated)</span>
               <input
-                className="w-full rounded-md border border-border bg-canvas px-3 py-2 text-ink"
+                className="w-full rounded-md border border-input bg-canvas px-3 py-2 text-ink"
                 value={convertRoles}
                 onChange={(e) => setConvertRoles(e.target.value)}
               />
@@ -958,7 +958,7 @@ export function ProjectDetailPage() {
                 <span className="text-sm font-medium text-ink">Email</span>
                 <input
                   type="email"
-                  className="w-full rounded-md border border-border bg-canvas px-3 py-2 text-ink"
+                  className="w-full rounded-md border border-input bg-canvas px-3 py-2 text-ink"
                   value={inviteeEmail}
                   onChange={(e) => setInviteeEmail(e.target.value)}
                   placeholder="name@example.com"
@@ -969,7 +969,7 @@ export function ProjectDetailPage() {
                 <span className="text-sm font-medium text-ink">Requested role</span>
                 {roles.length > 0 ? (
                   <select
-                    className="w-full rounded-md border border-border bg-canvas px-3 py-2 text-ink"
+                    className="w-full rounded-md border border-input bg-canvas px-3 py-2 text-ink"
                     value={inviteRole}
                     onChange={(e) => setInviteRole(e.target.value)}
                   >
@@ -981,7 +981,7 @@ export function ProjectDetailPage() {
                   </select>
                 ) : (
                   <input
-                    className="w-full rounded-md border border-border bg-canvas px-3 py-2 text-ink"
+                    className="w-full rounded-md border border-input bg-canvas px-3 py-2 text-ink"
                     value={inviteRole}
                     onChange={(e) => setInviteRole(e.target.value)}
                   />
@@ -1022,7 +1022,7 @@ export function ProjectDetailPage() {
             <span className="text-sm font-medium text-ink">Your role</span>
             {roles.length > 0 ? (
               <select
-                className="w-full rounded-md border border-border bg-canvas px-3 py-2 text-ink"
+                className="w-full rounded-md border border-input bg-canvas px-3 py-2 text-ink"
                 value={joinRole}
                 onChange={(e) => setJoinRole(e.target.value)}
               >
@@ -1034,7 +1034,7 @@ export function ProjectDetailPage() {
               </select>
             ) : (
               <input
-                className="w-full rounded-md border border-border bg-canvas px-3 py-2 text-ink"
+                className="w-full rounded-md border border-input bg-canvas px-3 py-2 text-ink"
                 value={joinRole}
                 onChange={(e) => setJoinRole(e.target.value)}
               />
@@ -1062,7 +1062,7 @@ export function ProjectDetailPage() {
             <span className="text-sm font-medium text-ink">Requested role</span>
             {roles.length > 0 ? (
               <select
-                className="w-full rounded-md border border-border bg-canvas px-3 py-2 text-ink"
+                className="w-full rounded-md border border-input bg-canvas px-3 py-2 text-ink"
                 value={applyRole}
                 onChange={(e) => setApplyRole(e.target.value)}
               >
@@ -1074,7 +1074,7 @@ export function ProjectDetailPage() {
               </select>
             ) : (
               <input
-                className="w-full rounded-md border border-border bg-canvas px-3 py-2 text-ink"
+                className="w-full rounded-md border border-input bg-canvas px-3 py-2 text-ink"
                 value={applyRole}
                 onChange={(e) => setApplyRole(e.target.value)}
               />
@@ -1083,7 +1083,7 @@ export function ProjectDetailPage() {
           <label className="block space-y-1">
             <span className="text-sm font-medium text-ink">Motivation</span>
             <textarea
-              className="min-h-24 w-full rounded-md border border-border bg-canvas px-3 py-2 text-ink"
+              className="min-h-24 w-full rounded-md border border-input bg-canvas px-3 py-2 text-ink"
               value={applyMotivation}
               onChange={(e) => setApplyMotivation(e.target.value)}
             />
@@ -1146,7 +1146,7 @@ export function ProjectDetailPage() {
                     <label className="block space-y-1">
                       <span className="text-sm font-medium text-ink">Assign to</span>
                       <select
-                        className="w-full rounded-md border border-border bg-canvas px-3 py-2 text-ink"
+                        className="w-full rounded-md border border-input bg-canvas px-3 py-2 text-ink"
                         value={task.assignee_id ?? ''}
                         disabled={busy}
                         onChange={(e) =>
@@ -1239,7 +1239,7 @@ export function ProjectDetailPage() {
             <span className="text-sm font-medium text-ink">Reason</span>
             <select
               id={`${formId}-leave-reason`}
-              className="w-full rounded-md border border-border bg-canvas px-3 py-2 text-ink"
+              className="w-full rounded-md border border-input bg-canvas px-3 py-2 text-ink"
               value={leaveReason}
               onChange={(e) => setLeaveReason(e.target.value as ReasonCategory)}
             >
@@ -1253,7 +1253,7 @@ export function ProjectDetailPage() {
           <label className="block space-y-1">
             <span className="text-sm font-medium text-ink">Detail (optional)</span>
             <textarea
-              className="min-h-20 w-full rounded-md border border-border bg-canvas px-3 py-2 text-ink"
+              className="min-h-20 w-full rounded-md border border-input bg-canvas px-3 py-2 text-ink"
               value={leaveDetail}
               onChange={(e) => setLeaveDetail(e.target.value)}
             />
@@ -1280,7 +1280,7 @@ export function ProjectDetailPage() {
           <label className="block space-y-1">
             <span className="text-sm font-medium text-ink">Reason</span>
             <select
-              className="w-full rounded-md border border-border bg-canvas px-3 py-2 text-ink"
+              className="w-full rounded-md border border-input bg-canvas px-3 py-2 text-ink"
               value={removeReason}
               onChange={(e) => setRemoveReason(e.target.value as ReasonCategory)}
             >
@@ -1294,7 +1294,7 @@ export function ProjectDetailPage() {
           <label className="block space-y-1">
             <span className="text-sm font-medium text-ink">Detail (optional)</span>
             <textarea
-              className="min-h-20 w-full rounded-md border border-border bg-canvas px-3 py-2 text-ink"
+              className="min-h-20 w-full rounded-md border border-input bg-canvas px-3 py-2 text-ink"
               value={removeDetail}
               onChange={(e) => setRemoveDetail(e.target.value)}
             />
@@ -1319,7 +1319,7 @@ export function ProjectDetailPage() {
           <label className="block space-y-1">
             <span className="text-sm font-medium text-ink">Reason</span>
             <textarea
-              className="min-h-20 w-full rounded-md border border-border bg-canvas px-3 py-2 text-ink"
+              className="min-h-20 w-full rounded-md border border-input bg-canvas px-3 py-2 text-ink"
               value={rejectReason}
               onChange={(e) => setRejectReason(e.target.value)}
             />

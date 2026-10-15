@@ -220,7 +220,7 @@ function UpgradeRequestForm({
             value={notes}
             onChange={(event) => setNotes(event.target.value)}
             disabled={readOnlyOrg}
-            className="min-h-20 w-full rounded-md border border-border bg-canvas px-3 py-2 text-sm"
+            className="min-h-20 w-full rounded-md border border-input bg-canvas px-3 py-2 text-sm"
           />
         </div>
       </div>

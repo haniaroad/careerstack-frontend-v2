@@ -186,7 +186,7 @@ export function ProjectMessageThread({
         <Label htmlFor={`project-message-${projectId}`}>Write a message</Label>
         <textarea
           id={`project-message-${projectId}`}
-          className="min-h-24 w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+          className="min-h-24 w-full rounded-md border border-input bg-surface px-3 py-2 text-sm text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
           value={body}
           maxLength={2000}
           onChange={(event) => setBody(event.target.value)}
@@ -207,7 +207,7 @@ export function ProjectMessageThread({
               <Label htmlFor="message-report-type">Report type</Label>
               <select
                 id="message-report-type"
-                className="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm"
+                className="w-full rounded-md border border-input bg-surface px-3 py-2 text-sm"
                 value={reportType}
                 onChange={(event) => setReportType(event.target.value as MessageReportType)}
               >
@@ -222,7 +222,7 @@ export function ProjectMessageThread({
               <Label htmlFor="message-report-reason">Reason</Label>
               <select
                 id="message-report-reason"
-                className="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm"
+                className="w-full rounded-md border border-input bg-surface px-3 py-2 text-sm"
                 value={reasonCategory}
                 onChange={(event) => setReasonCategory(event.target.value as MessageReasonCategory)}
               >
@@ -237,7 +237,7 @@ export function ProjectMessageThread({
               <Label htmlFor="message-report-details">Details (optional)</Label>
               <textarea
                 id="message-report-details"
-                className="min-h-20 w-full rounded-md border border-border bg-surface px-3 py-2 text-sm"
+                className="min-h-20 w-full rounded-md border border-input bg-surface px-3 py-2 text-sm"
                 value={reportDetails}
                 onChange={(event) => setReportDetails(event.target.value)}
               />

@@ -485,7 +485,7 @@ export function CreateProjectPage() {
       <span className="text-sm font-medium text-ink">Program</span>
       <select
         aria-label="Program"
-        className="w-full rounded-md border border-border bg-canvas px-3 py-2 text-ink"
+        className="w-full rounded-md border border-input bg-canvas px-3 py-2 text-ink"
         value={programId}
         onChange={(e) => setProgramId(e.target.value)}
         disabled={orgReadOnly}
@@ -606,7 +606,7 @@ export function CreateProjectPage() {
             <span className="text-sm font-medium text-ink">Describe the project you want</span>
             <textarea
               id={`${formId}-prompt`}
-              className="min-h-32 w-full rounded-md border border-border bg-canvas px-3 py-2 text-ink"
+              className="min-h-32 w-full rounded-md border border-input bg-canvas px-3 py-2 text-ink"
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               maxLength={4000}
@@ -617,7 +617,7 @@ export function CreateProjectPage() {
             <label className="block space-y-1">
               <span className="text-sm font-medium text-ink">Skill level</span>
               <select
-                className="w-full rounded-md border border-border bg-canvas px-3 py-2 text-ink"
+                className="w-full rounded-md border border-input bg-canvas px-3 py-2 text-ink"
                 value={skillLevel}
                 onChange={(e) => setSkillLevel(e.target.value as (typeof SKILL_LEVELS)[number])}
               >
@@ -631,7 +631,7 @@ export function CreateProjectPage() {
             <label className="block space-y-1">
               <span className="text-sm font-medium text-ink">Time available</span>
               <select
-                className="w-full rounded-md border border-border bg-canvas px-3 py-2 text-ink"
+                className="w-full rounded-md border border-input bg-canvas px-3 py-2 text-ink"
                 value={timeAvailable}
                 onChange={(e) => setTimeAvailable(e.target.value as (typeof TIME_AVAILABLE)[number])}
               >
@@ -679,7 +679,7 @@ export function CreateProjectPage() {
             <label className="block space-y-1">
               <span className="text-sm font-medium text-ink">Title</span>
               <input
-                className="w-full rounded-md border border-border bg-canvas px-3 py-2 text-ink"
+                className="w-full rounded-md border border-input bg-canvas px-3 py-2 text-ink"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 maxLength={120}
@@ -689,7 +689,7 @@ export function CreateProjectPage() {
             <label className="block space-y-1">
               <span className="text-sm font-medium text-ink">Summary</span>
               <textarea
-                className="min-h-24 w-full rounded-md border border-border bg-canvas px-3 py-2 text-ink"
+                className="min-h-24 w-full rounded-md border border-input bg-canvas px-3 py-2 text-ink"
                 value={summary}
                 onChange={(e) => setSummary(e.target.value)}
                 maxLength={2000}
@@ -747,7 +747,7 @@ export function CreateProjectPage() {
                   <label className="block space-y-1">
                     <span className="text-sm font-medium text-ink">Joining mode</span>
                     <select
-                      className="w-full rounded-md border border-border bg-canvas px-3 py-2 text-ink"
+                      className="w-full rounded-md border border-input bg-canvas px-3 py-2 text-ink"
                       value={joiningMode}
                       onChange={(e) => setJoiningMode(e.target.value as JoiningMode)}
                     >
@@ -764,7 +764,7 @@ export function CreateProjectPage() {
                       type="number"
                       min={1}
                       max={5}
-                      className="w-full rounded-md border border-border bg-canvas px-3 py-2 text-ink"
+                      className="w-full rounded-md border border-input bg-canvas px-3 py-2 text-ink"
                       value={capacity}
                       onChange={(e) => setCapacity(Number(e.target.value))}
                     />
@@ -772,7 +772,7 @@ export function CreateProjectPage() {
                   <label className="block space-y-1 sm:col-span-2">
                     <span className="text-sm font-medium text-ink">Roles needed (comma-separated)</span>
                     <input
-                      className="w-full rounded-md border border-border bg-canvas px-3 py-2 text-ink"
+                      className="w-full rounded-md border border-input bg-canvas px-3 py-2 text-ink"
                       value={rolesNeeded}
                       onChange={(e) => setRolesNeeded(e.target.value)}
                       placeholder="Designer, Engineer"
@@ -787,7 +787,7 @@ export function CreateProjectPage() {
                 <label className="block space-y-1">
                   <span className="text-sm font-medium text-ink">Learning objective</span>
                   <textarea
-                    className="min-h-20 w-full rounded-md border border-border bg-canvas px-3 py-2 text-ink"
+                    className="min-h-20 w-full rounded-md border border-input bg-canvas px-3 py-2 text-ink"
                     value={objective}
                     onChange={(e) => setObjective(e.target.value)}
                   />
@@ -796,7 +796,7 @@ export function CreateProjectPage() {
                   <label className="block space-y-1">
                     <span className="text-sm font-medium text-ink">Project type</span>
                     <input
-                      className="w-full rounded-md border border-border bg-canvas px-3 py-2 text-ink"
+                      className="w-full rounded-md border border-input bg-canvas px-3 py-2 text-ink"
                       value={projectType}
                       onChange={(e) => setProjectType(e.target.value)}
                     />
@@ -804,7 +804,7 @@ export function CreateProjectPage() {
                   <label className="block space-y-1">
                     <span className="text-sm font-medium text-ink">Expected duration</span>
                     <input
-                      className="w-full rounded-md border border-border bg-canvas px-3 py-2 text-ink"
+                      className="w-full rounded-md border border-input bg-canvas px-3 py-2 text-ink"
                       value={expectedDuration}
                       onChange={(e) => setExpectedDuration(e.target.value)}
                     />
@@ -813,7 +813,7 @@ export function CreateProjectPage() {
                 <label className="block space-y-1">
                   <span className="text-sm font-medium text-ink">Definition of done</span>
                   <textarea
-                    className="min-h-20 w-full rounded-md border border-border bg-canvas px-3 py-2 text-ink"
+                    className="min-h-20 w-full rounded-md border border-input bg-canvas px-3 py-2 text-ink"
                     value={definitionOfDone}
                     onChange={(e) => setDefinitionOfDone(e.target.value)}
                   />
@@ -821,7 +821,7 @@ export function CreateProjectPage() {
                 <label className="block space-y-1">
                   <span className="text-sm font-medium text-ink">Submission expectations</span>
                   <textarea
-                    className="min-h-20 w-full rounded-md border border-border bg-canvas px-3 py-2 text-ink"
+                    className="min-h-20 w-full rounded-md border border-input bg-canvas px-3 py-2 text-ink"
                     value={submissionExpectations}
                     onChange={(e) => setSubmissionExpectations(e.target.value)}
                   />
@@ -838,7 +838,7 @@ export function CreateProjectPage() {
                           <label className="block space-y-1">
                             <span className="font-medium">Title</span>
                             <input
-                              className="w-full rounded-md border border-border bg-surface px-3 py-2"
+                              className="w-full rounded-md border border-input bg-surface px-3 py-2"
                               value={task.title}
                               onChange={(event) =>
                                 setProposedTasks((current) =>
@@ -852,7 +852,7 @@ export function CreateProjectPage() {
                           <label className="block space-y-1">
                             <span className="font-medium">Summary</span>
                             <textarea
-                              className="min-h-16 w-full rounded-md border border-border bg-surface px-3 py-2"
+                              className="min-h-16 w-full rounded-md border border-input bg-surface px-3 py-2"
                               value={task.summary}
                               onChange={(event) =>
                                 setProposedTasks((current) =>
@@ -867,7 +867,7 @@ export function CreateProjectPage() {
                             <span className="font-medium">Due</span>
                             <input
                               type="date"
-                              className="w-full rounded-md border border-border bg-surface px-3 py-2"
+                              className="w-full rounded-md border border-input bg-surface px-3 py-2"
                               value={task.recommended_due_date}
                               onChange={(event) =>
                                 setProposedTasks((current) =>
@@ -903,7 +903,7 @@ export function CreateProjectPage() {
               </span>
               <input
                 type="date"
-                className="w-full rounded-md border border-border bg-canvas px-3 py-2 text-ink"
+                className="w-full rounded-md border border-input bg-canvas px-3 py-2 text-ink"
                 value={endsOn}
                 onChange={(e) => setEndsOn(e.target.value)}
                 required

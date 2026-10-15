@@ -73,7 +73,7 @@ export function AuthLayout({
             className="pointer-events-none absolute inset-0 opacity-[0.14]"
             style={{
               backgroundImage:
-                'radial-gradient(circle at 20% 20%, var(--brand) 0%, transparent 45%), radial-gradient(circle at 80% 70%, #ff6b4a 0%, transparent 40%)',
+                'radial-gradient(circle at 20% 20%, var(--brand) 0%, transparent 45%), radial-gradient(circle at 80% 70%, #c2410c 0%, transparent 40%)',
             }}
           />
           <div className="relative">

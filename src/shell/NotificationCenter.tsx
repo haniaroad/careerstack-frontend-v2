@@ -66,7 +66,7 @@ function NotificationList({
           <button
             type="button"
             className={cn(
-              'flex w-full items-start gap-2 px-3 py-2.5 text-left hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent',
+              'flex w-full items-start gap-2 px-3 py-2.5 text-left hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
               !item.read && 'font-semibold',
             )}
             onClick={() => onActivate(item)}

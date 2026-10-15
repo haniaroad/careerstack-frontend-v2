@@ -75,7 +75,7 @@ export function ProfileSurfaceSections({
             key={id}
             type="button"
             onClick={() => selectTab(id)}
-            className={`rounded-md px-3 py-1.5 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
+            className={`rounded-md px-3 py-1.5 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
               tab === id ? 'bg-ink text-surface' : 'text-ink-muted hover:text-ink'
             }`}
             aria-current={tab === id ? 'page' : undefined}

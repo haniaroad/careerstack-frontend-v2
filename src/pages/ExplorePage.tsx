@@ -307,7 +307,7 @@ function FilterSelect({
       <Label htmlFor={id}>{label}</Label>
       <select
         id={id}
-        className="h-9 w-full rounded-md border border-border bg-canvas px-3 text-sm text-ink"
+        className="h-9 w-full rounded-md border border-input bg-canvas px-3 text-sm text-ink"
         value={value}
         onChange={(event) => onChange(event.target.value)}
       >

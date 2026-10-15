@@ -476,7 +476,7 @@ export function TaskDetailPage() {
           <label className="block space-y-1">
             <span className="text-sm font-medium text-ink">Title</span>
             <input
-              className="w-full rounded-md border border-border bg-surface px-3 py-2 text-ink"
+              className="w-full rounded-md border border-input bg-surface px-3 py-2 text-ink"
               value={editTitle}
               onChange={(e) => setEditTitle(e.target.value)}
             />
@@ -484,7 +484,7 @@ export function TaskDetailPage() {
           <label className="block space-y-1">
             <span className="text-sm font-medium text-ink">Description</span>
             <textarea
-              className="min-h-24 w-full rounded-md border border-border bg-surface px-3 py-2 text-ink"
+              className="min-h-24 w-full rounded-md border border-input bg-surface px-3 py-2 text-ink"
               value={editCriteria}
               onChange={(e) => setEditCriteria(e.target.value)}
             />
@@ -492,7 +492,7 @@ export function TaskDetailPage() {
           <label className="block space-y-1">
             <span className="text-sm font-medium text-ink">Evidence expected</span>
             <textarea
-              className="min-h-20 w-full rounded-md border border-border bg-surface px-3 py-2 text-ink"
+              className="min-h-20 w-full rounded-md border border-input bg-surface px-3 py-2 text-ink"
               value={editExpectations}
               onChange={(e) => setEditExpectations(e.target.value)}
             />
@@ -501,7 +501,7 @@ export function TaskDetailPage() {
             <span className="text-sm font-medium text-ink">Due date</span>
             <input
               type="date"
-              className="w-full rounded-md border border-border bg-surface px-3 py-2 text-ink"
+              className="w-full rounded-md border border-input bg-surface px-3 py-2 text-ink"
               value={editDueOn}
               onChange={(e) => setEditDueOn(e.target.value)}
             />
@@ -509,7 +509,7 @@ export function TaskDetailPage() {
           <label className="block space-y-1">
             <span className="text-sm font-medium text-ink">YouTube URL</span>
             <input
-              className="w-full rounded-md border border-border bg-surface px-3 py-2 text-ink"
+              className="w-full rounded-md border border-input bg-surface px-3 py-2 text-ink"
               value={editVideo}
               onChange={(e) => setEditVideo(e.target.value)}
               placeholder="https://www.youtube.com/watch?v="
@@ -604,7 +604,7 @@ export function TaskDetailPage() {
           <label className="block space-y-1">
             <span className="text-sm font-medium text-ink">Submission text</span>
             <textarea
-              className="min-h-28 w-full rounded-md border border-border bg-surface px-3 py-2 text-ink"
+              className="min-h-28 w-full rounded-md border border-input bg-surface px-3 py-2 text-ink"
               value={body}
               onChange={(e) => setBody(e.target.value)}
             />
@@ -612,7 +612,7 @@ export function TaskDetailPage() {
           <label className="block space-y-1">
             <span className="text-sm font-medium text-ink">https artifact link</span>
             <input
-              className="w-full rounded-md border border-border bg-surface px-3 py-2 text-ink"
+              className="w-full rounded-md border border-input bg-surface px-3 py-2 text-ink"
               value={link}
               onChange={(e) => setLink(e.target.value)}
               placeholder="https://"

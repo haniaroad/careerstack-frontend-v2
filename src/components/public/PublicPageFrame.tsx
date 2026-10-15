@@ -43,7 +43,7 @@ export function PublicPageFrame({
             </Button>
             <Button
               type="button"
-              className="h-9 bg-[#0B0B0D] text-white hover:bg-black"
+              className="h-9 bg-brand text-brand-foreground hover:bg-brand-hover"
               onClick={onCreateAccount}
             >
               {CHROME.createAccountLabel}

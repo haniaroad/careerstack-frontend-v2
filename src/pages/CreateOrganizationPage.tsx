@@ -134,7 +134,7 @@ export function CreateOrganizationPage() {
         </div>
         <Button
           type="submit"
-          className="h-10 w-full bg-ink text-canvas hover:bg-black"
+          className="h-10 w-full bg-brand text-brand-foreground hover:bg-brand-hover"
           disabled={form.formState.isSubmitting}
         >
           Create organization
