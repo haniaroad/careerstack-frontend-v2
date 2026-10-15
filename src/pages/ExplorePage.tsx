@@ -243,7 +243,7 @@ export function ExplorePage() {
                   className="block rounded-lg border border-border bg-surface p-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
                 >
                   <div className="flex flex-wrap items-center gap-2">
-                    <p className="font-medium text-ink">{project.title}</p>
+                    <p className="font-medium text-brand underline-offset-2 hover:underline">{project.title}</p>
                     <ProjectLifecycleBadge status={project.status} phase={project.phase} showPhase={false} />
                     <StatusBadge tone="info">{project.mode === 'team' ? 'Team' : 'Solo'}</StatusBadge>
                     {joinLabel ? <StatusBadge tone="info">{joinLabel}</StatusBadge> : null}

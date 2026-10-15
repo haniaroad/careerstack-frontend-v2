@@ -295,7 +295,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 <Input
                   type="search"
                   placeholder="Search projects"
-                  className="h-9 bg-muted pl-9"
+                  className="h-9 pl-9"
                   aria-label="Search"
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}

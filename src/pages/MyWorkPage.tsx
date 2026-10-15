@@ -231,7 +231,7 @@ export function MyWorkPage() {
                   className="flex items-start justify-between gap-4 rounded-lg border border-border bg-surface p-4 transition hover:border-ink/20"
                 >
                   <div className="min-w-0">
-                    <p className="font-medium text-ink">{project.title}</p>
+                    <p className="font-medium text-brand underline-offset-2 hover:underline">{project.title}</p>
                     {project.summary ? (
                       <p className="mt-1 line-clamp-2 text-sm text-ink-muted">{project.summary}</p>
                     ) : null}
@@ -269,7 +269,7 @@ export function MyWorkPage() {
                   className="flex items-start justify-between gap-4 rounded-lg border border-border bg-surface p-4 transition hover:border-ink/20"
                 >
                   <div>
-                    <p className="font-medium text-ink">{task.title}</p>
+                    <p className="font-medium text-brand underline-offset-2 hover:underline">{task.title}</p>
                     <p className="mt-1 text-sm text-ink-muted">{task.project_title}</p>
                     {task.due_on ? (
                       <p className="mt-1 text-xs text-ink-muted">Due {task.due_on}</p>
