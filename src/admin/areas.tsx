@@ -162,7 +162,7 @@ export function CreditsArea() {
             aria-label="Owner type"
             value={ownerType}
             onChange={(event) => setOwnerType(event.target.value)}
-            className="h-9 rounded-md border border-border bg-canvas px-2"
+            className="h-9 rounded-md border border-input bg-canvas px-2"
           >
             <option value="user">user</option>
             <option value="organization">organization</option>
@@ -182,7 +182,7 @@ export function CreditsArea() {
             aria-label="Direction"
             value={direction}
             onChange={(event) => setDirection(event.target.value)}
-            className="h-9 rounded-md border border-border bg-canvas px-2"
+            className="h-9 rounded-md border border-input bg-canvas px-2"
           >
             <option value="grant">grant</option>
             <option value="remove">remove</option>
@@ -195,7 +195,7 @@ export function CreditsArea() {
             aria-label="Credit reason"
             value={reason}
             onChange={(event) => setReason(event.target.value)}
-            className="min-h-16 rounded-md border border-border px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="min-h-16 rounded-md border border-input px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           />
         </label>
         <Button type="submit">Apply credit change</Button>
@@ -238,7 +238,7 @@ export function CreditsArea() {
             aria-label="Upgrade status"
             value={upgradeStatus}
             onChange={(event) => setUpgradeStatus(event.target.value)}
-            className="h-9 rounded-md border border-border bg-canvas px-2"
+            className="h-9 rounded-md border border-input bg-canvas px-2"
           >
             <option value="contacted">contacted</option>
             <option value="closed">closed</option>

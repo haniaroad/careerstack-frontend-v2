@@ -97,7 +97,7 @@ export function OutcomesSettings({
               id="outcome-type"
               value={outcomeType}
               onChange={(event) => setOutcomeType(event.target.value)}
-              className="h-10 w-full rounded-md border border-border bg-surface px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+              className="h-10 w-full rounded-md border border-input bg-surface px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               {OUTCOME_TYPES.map((item) => (
                 <option key={item.value} value={item.value}>
@@ -114,7 +114,7 @@ export function OutcomesSettings({
               onChange={(event) =>
                 setContribution(event.target.value as 'yes' | 'partially' | 'not_sure')
               }
-              className="h-10 w-full rounded-md border border-border bg-surface px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+              className="h-10 w-full rounded-md border border-input bg-surface px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <option value="yes">Yes</option>
               <option value="partially">Partially</option>

@@ -49,10 +49,10 @@ function GoogleIcon() {
 }
 
 const inkButtonClass =
-  'h-10 w-full bg-ink text-canvas hover:bg-black focus-visible:ring-brand'
+  'h-10 w-full bg-brand text-brand-foreground hover:bg-brand-hover focus-visible:ring-ring'
 
 const secondaryButtonClass =
-  'h-10 w-full border-border bg-surface text-ink hover:bg-muted'
+  'h-10 w-full border-input bg-surface text-ink hover:bg-muted'
 
 export function SignInPage() {
   const navigate = useNavigate()

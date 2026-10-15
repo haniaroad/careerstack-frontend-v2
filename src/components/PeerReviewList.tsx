@@ -132,7 +132,7 @@ export function PeerReviewList({
               <Label htmlFor="peer-report-type">Report type</Label>
               <select
                 id="peer-report-type"
-                className="h-10 w-full rounded-md border border-border bg-surface px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                className="h-10 w-full rounded-md border border-input bg-surface px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 value={reportType}
                 onChange={(event) => setReportType(event.target.value as PeerReviewReportType)}
               >
@@ -147,7 +147,7 @@ export function PeerReviewList({
               <Label htmlFor="peer-report-reason">Reason</Label>
               <select
                 id="peer-report-reason"
-                className="h-10 w-full rounded-md border border-border bg-surface px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                className="h-10 w-full rounded-md border border-input bg-surface px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 value={reasonCategory}
                 onChange={(event) =>
                   setReasonCategory(event.target.value as PeerReviewReasonCategory)
@@ -164,7 +164,7 @@ export function PeerReviewList({
               <Label htmlFor="peer-report-details">Details (optional)</Label>
               <textarea
                 id="peer-report-details"
-                className="min-h-20 w-full rounded-md border border-border bg-surface px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                className="min-h-20 w-full rounded-md border border-input bg-surface px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 value={details}
                 onChange={(event) => setDetails(event.target.value)}
               />

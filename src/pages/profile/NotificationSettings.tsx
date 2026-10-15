@@ -2,7 +2,7 @@ import { cn } from '@/lib/utils'
 import type { NotificationPreference } from '@/lib/notifications'
 
 const focusRing =
-  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-canvas'
+  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas'
 
 const TIER_LABEL = {
   mandatory: 'Always on',
@@ -58,7 +58,7 @@ export function NotificationSettings({
               <input
                 type="checkbox"
                 className={cn(
-                  'size-4 rounded border-border text-accent',
+                  'size-4 rounded border-input text-accent',
                   focusRing,
                   !pref.can_disable && 'cursor-not-allowed opacity-60',
                 )}

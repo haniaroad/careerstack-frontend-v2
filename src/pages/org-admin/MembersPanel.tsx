@@ -107,7 +107,7 @@ export function MembersPanel({
       <div className="flex flex-wrap gap-2">
         <select
           aria-label="Filter by role"
-          className="h-9 rounded-md border border-border bg-canvas px-2.5 text-sm"
+          className="h-9 rounded-md border border-input bg-canvas px-2.5 text-sm"
           value={roleFilter}
           onChange={(event) => setRoleFilter(event.target.value as OrgRole | '')}
         >
@@ -118,7 +118,7 @@ export function MembersPanel({
         </select>
         <select
           aria-label="Filter by program"
-          className="h-9 rounded-md border border-border bg-canvas px-2.5 text-sm"
+          className="h-9 rounded-md border border-input bg-canvas px-2.5 text-sm"
           value={programFilter}
           onChange={(event) => setProgramFilter(event.target.value)}
         >
@@ -334,7 +334,7 @@ function EditMemberDialog({
               value={role}
               disabled={!canChangeRole}
               onChange={(event) => setRole(event.target.value as OrgRole)}
-              className="h-10 w-full rounded-md border border-border bg-canvas px-3 text-sm"
+              className="h-10 w-full rounded-md border border-input bg-canvas px-3 text-sm"
             >
               <option value="participant">Participant</option>
               {canChangeRole ? (
@@ -433,7 +433,7 @@ function RemoveMemberDialog({
             id="remove-reason"
             value={reason}
             onChange={(event) => setReason(event.target.value)}
-            className="h-10 w-full rounded-md border border-border bg-canvas px-3 text-sm"
+            className="h-10 w-full rounded-md border border-input bg-canvas px-3 text-sm"
           >
             {REMOVE_REASONS.map((item) => (
               <option key={item.value} value={item.value}>
@@ -530,7 +530,7 @@ function InviteDialog({
                 id="invite-role"
                 value={role}
                 onChange={(event) => setRole(event.target.value as OrgRole)}
-                className="h-10 w-full rounded-md border border-border bg-canvas px-3 text-sm"
+                className="h-10 w-full rounded-md border border-input bg-canvas px-3 text-sm"
               >
                 <option value="participant">Participant</option>
                 {canInviteAdminRoles ? (
@@ -547,7 +547,7 @@ function InviteDialog({
                 id="invite-program"
                 value={programId}
                 onChange={(event) => setProgramId(event.target.value)}
-                className="h-10 w-full rounded-md border border-border bg-canvas px-3 text-sm"
+                className="h-10 w-full rounded-md border border-input bg-canvas px-3 text-sm"
               >
                 <option value="">No program yet</option>
                 {inviteable.map((program) => (

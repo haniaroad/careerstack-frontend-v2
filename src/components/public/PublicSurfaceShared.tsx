@@ -44,7 +44,7 @@ export function CopyPublicLink({ absoluteUrl, available = true }: CopyPublicLink
       {fallback ? (
         <input
           readOnly
-          className="w-full rounded border border-border bg-surface px-3 py-2 text-xs"
+          className="w-full rounded border border-input bg-surface px-3 py-2 text-xs"
           value={absoluteUrl}
           aria-label="Public URL"
           onFocus={(event) => event.currentTarget.select()}

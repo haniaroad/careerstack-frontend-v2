@@ -315,7 +315,7 @@ function ProgramDetail({
             value={description}
             onChange={(event) => setDescription(event.target.value)}
             disabled={locked}
-            className="min-h-24 w-full rounded-md border border-border bg-canvas px-3 py-2 text-sm text-ink"
+            className="min-h-24 w-full rounded-md border border-input bg-canvas px-3 py-2 text-sm text-ink"
           />
         </div>
         {program.status !== 'archived' ? (
@@ -326,7 +326,7 @@ function ProgramDetail({
               value={status}
               onChange={(event) => setStatus(event.target.value as 'draft' | 'active')}
               disabled={locked}
-              className="h-10 w-full rounded-md border border-border bg-canvas px-3 text-sm"
+              className="h-10 w-full rounded-md border border-input bg-canvas px-3 text-sm"
             >
               <option value="draft">Draft</option>
               <option value="active">Active</option>
@@ -438,7 +438,7 @@ function CreateProgramDialog({
               id="new-program-description"
               value={description}
               onChange={(event) => setDescription(event.target.value)}
-              className="min-h-20 w-full rounded-md border border-border bg-canvas px-3 py-2 text-sm"
+              className="min-h-20 w-full rounded-md border border-input bg-canvas px-3 py-2 text-sm"
             />
           </div>
           <div className="space-y-2">
@@ -447,7 +447,7 @@ function CreateProgramDialog({
               id="new-program-status"
               value={status}
               onChange={(event) => setStatus(event.target.value as 'draft' | 'active')}
-              className="h-10 w-full rounded-md border border-border bg-canvas px-3 text-sm"
+              className="h-10 w-full rounded-md border border-input bg-canvas px-3 text-sm"
             >
               <option value="draft">Draft</option>
               <option value="active">Active</option>

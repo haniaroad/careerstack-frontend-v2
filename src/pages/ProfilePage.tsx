@@ -168,7 +168,7 @@ function CopyLinkControl({
           readOnly
           value={url}
           aria-label="Public URL — select and copy"
-          className="w-full rounded-md border border-border bg-surface px-2 py-1 font-mono text-xs"
+          className="w-full rounded-md border border-input bg-surface px-2 py-1 font-mono text-xs"
           onFocus={(event) => event.currentTarget.select()}
         />
       ) : null}
@@ -380,7 +380,7 @@ export function ProfilePage() {
             type="button"
             role="tab"
             aria-selected={tab === item.id}
-            className={`rounded-md px-3 py-1.5 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
+            className={`rounded-md px-3 py-1.5 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
               tab === item.id ? 'bg-ink text-white' : 'text-ink-muted hover:bg-surface'
             }`}
             onClick={() => setTab(item.id)}
@@ -408,7 +408,7 @@ export function ProfilePage() {
               <Label htmlFor="experience_level">Experience</Label>
               <select
                 id="experience_level"
-                className="h-10 w-full rounded-md border border-border bg-surface px-3 text-sm"
+                className="h-10 w-full rounded-md border border-input bg-surface px-3 text-sm"
                 value={form.experience_level}
                 onChange={(event) =>
                   setForm((prev) => ({ ...prev, experience_level: event.target.value }))
@@ -451,7 +451,7 @@ export function ProfilePage() {
             <Label htmlFor="bio">Bio</Label>
             <textarea
               id="bio"
-              className="min-h-24 w-full rounded-md border border-border bg-surface px-3 py-2 text-sm"
+              className="min-h-24 w-full rounded-md border border-input bg-surface px-3 py-2 text-sm"
               value={form.bio}
               onChange={(event) => setForm((prev) => ({ ...prev, bio: event.target.value }))}
             />

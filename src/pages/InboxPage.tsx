@@ -464,7 +464,7 @@ export function InboxPage() {
                   value={reviewFeedback}
                   onChange={(event) => setReviewFeedback(event.target.value)}
                   rows={4}
-                  className="w-full rounded-md border border-border bg-canvas px-3 py-2 text-ink"
+                  className="w-full rounded-md border border-input bg-canvas px-3 py-2 text-ink"
                   placeholder="Required when requesting corrections"
                 />
               </label>
@@ -528,7 +528,7 @@ export function InboxPage() {
               value={rejectReason}
               onChange={(event) => setRejectReason(event.target.value)}
               rows={3}
-              className="w-full rounded-md border border-border bg-canvas px-3 py-2 text-ink"
+              className="w-full rounded-md border border-input bg-canvas px-3 py-2 text-ink"
             />
           </label>
           <div className="flex flex-col gap-2 sm:flex-row">

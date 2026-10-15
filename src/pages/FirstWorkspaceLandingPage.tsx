@@ -31,11 +31,11 @@ export function FirstWorkspaceLandingPage() {
             ))}
           </ul>
         </div>
-        <Button asChild className="h-10 w-full bg-ink text-canvas hover:bg-black">
+        <Button asChild className="h-10 w-full bg-brand text-brand-foreground hover:bg-brand-hover">
           <Link to="/home">Enter CareerStack</Link>
         </Button>
         {canCreateOrganization ? (
-          <Button asChild variant="outline" className="h-10 w-full border-border bg-surface text-ink hover:bg-muted">
+          <Button asChild variant="outline" className="h-10 w-full border-input bg-surface text-ink hover:bg-muted">
             <Link to="/organizations/new">Create an organization</Link>
           </Button>
         ) : null}

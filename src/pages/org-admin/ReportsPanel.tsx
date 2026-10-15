@@ -249,7 +249,7 @@ export function ReportsPanel({
               required
               value={periodStart}
               onChange={(event) => setPeriodStart(event.target.value)}
-              className="h-10 w-full rounded-md border border-border bg-surface px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+              className="h-10 w-full rounded-md border border-input bg-surface px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             />
           </div>
           <div className="space-y-1.5">
@@ -260,7 +260,7 @@ export function ReportsPanel({
               required
               value={periodEnd}
               onChange={(event) => setPeriodEnd(event.target.value)}
-              className="h-10 w-full rounded-md border border-border bg-surface px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+              className="h-10 w-full rounded-md border border-input bg-surface px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             />
           </div>
           <div className="space-y-1.5">
@@ -269,7 +269,7 @@ export function ReportsPanel({
               id="report-program"
               value={programId}
               onChange={(event) => setProgramId(event.target.value)}
-              className="h-10 w-full rounded-md border border-border bg-surface px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+              className="h-10 w-full rounded-md border border-input bg-surface px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <option value="">All programs</option>
               {programs.map((program) => (
@@ -285,7 +285,7 @@ export function ReportsPanel({
               id="report-format"
               value={format}
               onChange={(event) => setFormat(event.target.value as ReportFormat)}
-              className="h-10 w-full rounded-md border border-border bg-surface px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+              className="h-10 w-full rounded-md border border-input bg-surface px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <option value="pdf">PDF</option>
               <option value="csv">CSV</option>

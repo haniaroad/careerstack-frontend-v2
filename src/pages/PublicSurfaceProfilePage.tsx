@@ -190,7 +190,7 @@ export function PublicSurfaceProfilePage() {
             </button>
             <button
               type="button"
-              className="inline-flex h-9 items-center rounded-md border border-border bg-surface px-3 text-sm font-medium"
+              className="inline-flex h-9 items-center rounded-md border border-input bg-surface px-3 text-sm font-medium"
               onClick={onSignIn}
             >
               Sign in

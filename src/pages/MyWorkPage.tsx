@@ -154,7 +154,7 @@ export function MyWorkPage() {
             key={id}
             type="button"
             onClick={() => setTab(id)}
-            className={`rounded-md px-3 py-1.5 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
+            className={`rounded-md px-3 py-1.5 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
               tab === id ? 'bg-ink text-surface' : 'text-ink-muted hover:text-ink'
             }`}
             aria-current={tab === id ? 'page' : undefined}
@@ -311,7 +311,7 @@ export function MyWorkPage() {
               <Label htmlFor="peer-review-rating">Rating</Label>
               <select
                 id="peer-review-rating"
-                className="h-10 w-full rounded-md border border-border bg-surface px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                className="h-10 w-full rounded-md border border-input bg-surface px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 value={rating}
                 onChange={(event) => setRating(Number(event.target.value))}
               >
@@ -327,7 +327,7 @@ export function MyWorkPage() {
               <textarea
                 id="peer-review-comment"
                 required
-                className="min-h-24 w-full rounded-md border border-border bg-surface px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                className="min-h-24 w-full rounded-md border border-input bg-surface px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 value={comment}
                 onChange={(event) => setComment(event.target.value)}
               />

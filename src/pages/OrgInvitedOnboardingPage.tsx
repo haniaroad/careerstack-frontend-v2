@@ -154,7 +154,7 @@ export function OrgInvitedOnboardingPage() {
           </div>
           <Button
             type="button"
-            className="h-10 w-full bg-ink text-canvas hover:bg-black"
+            className="h-10 w-full bg-brand text-brand-foreground hover:bg-brand-hover"
             onClick={() =>
               navigate('/sign-in', {
                 state: {
@@ -205,7 +205,7 @@ export function OrgInvitedOnboardingPage() {
           </div>
           <Button
             type="button"
-            className="h-10 w-full bg-ink text-canvas hover:bg-black"
+            className="h-10 w-full bg-brand text-brand-foreground hover:bg-brand-hover"
             disabled={!token || Boolean(inviteError)}
             onClick={() => void joinExistingAccount()}
           >
@@ -331,7 +331,7 @@ export function OrgInvitedOnboardingPage() {
         ) : null}
         <Button
           type="submit"
-          className="h-10 w-full bg-ink text-canvas hover:bg-black"
+          className="h-10 w-full bg-brand text-brand-foreground hover:bg-brand-hover"
           disabled={form.formState.isSubmitting}
         >
           Join organization

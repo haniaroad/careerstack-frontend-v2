@@ -100,7 +100,7 @@ export function InviteControl({ userId, displayName }: Props) {
               <Label htmlFor={`invite-project-${userId}`}>Project</Label>
               <select
                 id={`invite-project-${userId}`}
-                className="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+                className="w-full rounded-md border border-input bg-surface px-3 py-2 text-sm text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
                 value={projectId}
                 onChange={(event) => {
                   const next = projects.find((project) => project.id === event.target.value)
@@ -122,7 +122,7 @@ export function InviteControl({ userId, displayName }: Props) {
             <Label htmlFor={`invite-role-${userId}`}>Role</Label>
             <select
               id={`invite-role-${userId}`}
-              className="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+              className="w-full rounded-md border border-input bg-surface px-3 py-2 text-sm text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
               value={role}
               onChange={(event) => setRole(event.target.value)}
             >
