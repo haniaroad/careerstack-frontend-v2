@@ -1,9 +1,15 @@
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { AppShell } from './AppShell'
+import { StaffShell } from '@/admin/StaffShell'
+import { MorePage } from '@/pages/MorePage'
+import { AppShell, HELP_AND_FEEDBACK_HREF } from './AppShell'
 import { ShellProvider } from './ShellContext'
+
+const analyticsEvents = vi.hoisted(() => [] as string[])
 
 const apiFetch = vi.fn()
 
@@ -12,7 +18,12 @@ vi.mock('@/lib/api', () => ({
 }))
 
 vi.mock('@/lib/mixpanel', () => ({
-  trackNotificationOpened: vi.fn(),
+  trackNotificationOpened: vi.fn((props: { notification_id?: string }) => {
+    analyticsEvents.push(`notification_opened:${props?.notification_id ?? ''}`)
+  }),
+  trackHelpAndFeedbackOpened: vi.fn(() => {
+    analyticsEvents.push('help_feedback_opened')
+  }),
 }))
 
 function renderShell(
@@ -45,8 +56,13 @@ function renderShell(
   )
 }
 
+function source(relativePath: string) {
+  return readFileSync(resolve(process.cwd(), 'src', relativePath), 'utf8')
+}
+
 describe('AppShell', () => {
   beforeEach(() => {
+    analyticsEvents.length = 0
     apiFetch.mockReset()
     apiFetch.mockImplementation(async (path: unknown) => {
       const url = String(path)
@@ -238,6 +254,91 @@ describe('AppShell', () => {
     await user.click(screen.getByLabelText('Profile menu'))
     await user.click(screen.getByRole('menuitem', { name: 'Create organization' }))
     expect(screen.getByRole('heading', { name: 'Create organization' })).toBeInTheDocument()
+  })
+
+  it('offers Help and Feedback from the profile menu without leaving the shell', async () => {
+    const user = userEvent.setup()
+    renderShell()
+
+    expect(screen.getByRole('heading', { name: 'Home' })).toBeInTheDocument()
+    const sidebar = screen.getByTestId('desktop-sidebar')
+    expect(within(sidebar).getByRole('link', { name: 'Home' })).toBeInTheDocument()
+    expect(within(sidebar).queryByRole('link', { name: /Help and Feedback/i })).not.toBeInTheDocument()
+    expect(
+      within(screen.getByTestId('mobile-bottom-nav')).queryByRole('link', {
+        name: /Help and Feedback/i,
+      }),
+    ).not.toBeInTheDocument()
+
+    await user.click(screen.getByLabelText('Profile menu'))
+    const link = screen.getByRole('menuitem', { name: 'Help and Feedback, opens in a new tab' })
+    expect(link.tagName).toBe('A')
+    expect(link).toHaveAttribute('href', HELP_AND_FEEDBACK_HREF)
+    expect(new URL(link.getAttribute('href') ?? '')).toMatchObject({
+      search: '',
+      hash: '',
+    })
+    expect(link).toHaveAttribute('target', '_blank')
+    expect(link).toHaveAttribute('rel', 'noopener noreferrer')
+    expect(link).toHaveClass('min-h-11', 'focus-visible:ring-2', 'focus-visible:ring-ring')
+    expect(screen.queryByLabelText(/^subject$/i)).not.toBeInTheDocument()
+    expect(screen.queryByLabelText(/^feedback$/i)).not.toBeInTheDocument()
+
+    await user.click(link)
+    expect(source('shell/AppShell.tsx')).not.toMatch(/mixpanel|help_feedback/)
+    expect(analyticsEvents).not.toContain('help_feedback_opened')
+    expect(analyticsEvents.join(' ')).not.toMatch(/help/i)
+    expect(screen.getByRole('heading', { name: 'Home', hidden: true })).toBeInTheDocument()
+  })
+
+  it('keeps the same Help and Feedback address in each workspace and while impersonating', async () => {
+    const user = userEvent.setup()
+    renderShell('/home', { isImpersonating: true, activeWorkspaceId: 'personal' })
+
+    await user.click(screen.getByLabelText('Profile menu'))
+    expect(
+      screen.getByRole('menuitem', { name: 'Help and Feedback, opens in a new tab' }),
+    ).toHaveAttribute('href', HELP_AND_FEEDBACK_HREF)
+
+    await user.keyboard('{Escape}')
+    await user.click(screen.getByLabelText(/Workspace:/i))
+    await user.click(screen.getByRole('menuitem', { name: 'Demo Org (preview)' }))
+    await user.click(screen.getByLabelText('Profile menu'))
+    expect(
+      screen.getByRole('menuitem', { name: 'Help and Feedback, opens in a new tab' }),
+    ).toHaveAttribute('href', HELP_AND_FEEDBACK_HREF)
+  })
+
+  it('keeps Help and Feedback out of More, sign-in, and the platform-admin shell', () => {
+    render(
+      <MemoryRouter>
+        <ShellProvider>
+          <MorePage />
+        </ShellProvider>
+      </MemoryRouter>,
+    )
+    expect(screen.queryByRole('menuitem', { name: /Help and Feedback/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /Help and Feedback/i })).not.toBeInTheDocument()
+
+    render(
+      <MemoryRouter>
+        <StaffShell>
+          <p>Staff</p>
+        </StaffShell>
+      </MemoryRouter>,
+    )
+    expect(screen.queryByRole('menuitem', { name: /Help and Feedback/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /Help and Feedback/i })).not.toBeInTheDocument()
+
+    for (const file of [
+      'shell/destinations.ts',
+      'pages/MorePage.tsx',
+      'pages/SignInPage.tsx',
+      'admin/StaffShell.tsx',
+    ]) {
+      expect(source(file)).not.toContain('Help and Feedback')
+      expect(source(file)).not.toContain('submit-feedback-1')
+    }
   })
 
   it('omits Create organization after the user has already created one', async () => {
