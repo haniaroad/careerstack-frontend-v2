@@ -19,6 +19,7 @@ export type ExplorePerson = {
   slug: string
   display_name: string
   image_url: string | null
+  profile_photo_thumb_url?: string | null
   location: string
   timezone: string
   role: string | null

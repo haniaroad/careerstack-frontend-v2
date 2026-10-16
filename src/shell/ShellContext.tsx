@@ -58,6 +58,7 @@ export function ShellProvider({ children, initial }: ShellProviderProps) {
   const value = useMemo<ShellContextValue>(
     () => ({
       userDisplayName: initial?.userDisplayName ?? 'Preview User',
+      profilePhotoUrl: initial?.profilePhotoUrl ?? null,
       workspaces,
       activeWorkspaceId,
       notificationCount: initial?.notificationCount ?? 2,
@@ -84,6 +85,7 @@ export function ShellProvider({ children, initial }: ShellProviderProps) {
       initial?.notificationCount,
       initial?.onSignOut,
       initial?.programFilter,
+      initial?.profilePhotoUrl,
       initial?.userDisplayName,
       initial?.workspaceStatus,
       isImpersonating,

@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react'
 import { ChevronDown, ExternalLink, LifeBuoy, Menu, Search } from 'lucide-react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
-import { Avatar, AvatarFallback } from '@/components/Avatar'
+import { ProfilePhoto } from '@/components/ProfilePhoto'
 import { Button } from '@/components/Button'
 import {
   DropdownMenu,
@@ -93,14 +93,8 @@ function WorkspaceSwitcher() {
 }
 
 function ProfileMenu() {
-  const { userDisplayName, canCreateOrganization, signOut } = useShell()
+  const { userDisplayName, profilePhotoUrl, canCreateOrganization, signOut } = useShell()
   const navigate = useNavigate()
-  const initials = userDisplayName
-    .split(/\s+/)
-    .map((part) => part[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase()
 
   return (
     <DropdownMenu>
@@ -112,11 +106,7 @@ function ProfileMenu() {
           aria-label="Profile menu"
           className="rounded-full"
         >
-          <Avatar className="size-8">
-            <AvatarFallback className="bg-muted text-xs font-medium">
-              {initials || 'PU'}
-            </AvatarFallback>
-          </Avatar>
+          <ProfilePhoto name={userDisplayName} imageUrl={profilePhotoUrl} size="sm" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="min-w-[12rem]">
