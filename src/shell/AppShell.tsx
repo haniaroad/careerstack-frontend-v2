@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react'
-import { ChevronDown, Menu, Search } from 'lucide-react'
+import { ChevronDown, ExternalLink, LifeBuoy, Menu, Search } from 'lucide-react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { Avatar, AvatarFallback } from '@/components/Avatar'
 import { Button } from '@/components/Button'
@@ -22,6 +22,9 @@ import {
   PRIMARY_DESTINATIONS,
   destinationFromPath,
 } from './destinations'
+
+export const HELP_AND_FEEDBACK_HREF =
+  'https://careerstack.odoo.com/helpdesk/submit-feedback-1'
 
 function Wordmark({ compact = false }: { compact?: boolean }) {
   return (
@@ -133,6 +136,19 @@ function ProfileMenu() {
         ) : null}
         <DropdownMenuItem onSelect={() => navigate('/profile?tab=settings')}>
           Settings
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild className="p-0">
+          <a
+            href={HELP_AND_FEEDBACK_HREF}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Help and Feedback, opens in a new tab"
+            className="flex min-h-11 w-full items-center gap-2 rounded-sm px-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <LifeBuoy className="size-4" aria-hidden />
+            <span>Help and Feedback</span>
+            <ExternalLink className="ml-auto size-3.5" aria-hidden />
+          </a>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem
