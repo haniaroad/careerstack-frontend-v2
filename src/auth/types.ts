@@ -44,6 +44,8 @@ export type SessionPayload = {
   }
   profile: {
     display_name: string
+    image_url?: string | null
+    profile_photo_thumb_url?: string | null
     country: string
     state_region: string
     career_goal: string

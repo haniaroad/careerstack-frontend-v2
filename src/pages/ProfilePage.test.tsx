@@ -167,6 +167,77 @@ describe('ProfilePage', () => {
     expect(screen.getByRole('button', { name: 'Replay tips' })).toBeInTheDocument()
   })
 
+  it('uploads and removes a profile photo from Settings with the keyboard', async () => {
+    const user = userEvent.setup()
+    render(
+      <MemoryRouter>
+        <ProfilePage />
+      </MemoryRouter>,
+    )
+
+    expect(await screen.findByText('AM')).toBeInTheDocument()
+    await user.click(screen.getByRole('tab', { name: 'Settings' }))
+    const upload = screen.getByRole('button', { name: 'Upload photo' })
+    upload.focus()
+    expect(upload).toHaveFocus()
+    expect(upload).toHaveClass('min-h-11')
+
+    apiFetch.mockImplementation(async (path: unknown, init?: { method?: string }) => {
+      const url = String(path)
+      if (url.includes('/api/v1/notification_preferences')) return { preferences: samplePreferences }
+      if (url.endsWith('/photo') && init?.method === 'POST') {
+        return {
+          profile: {
+            ...ownProfile,
+            details: { ...ownProfile.details, image_url: 'https://cdn.example/photo.webp' },
+          },
+        }
+      }
+      if (url.endsWith('/photo') && init?.method === 'DELETE') {
+        return { profile: ownProfile }
+      }
+      return { profile: ownProfile }
+    })
+
+    const input = screen.getByLabelText('Profile photo', { selector: 'input' })
+    await user.upload(input, new File(['png'], 'face.png', { type: 'image/png' }))
+    expect(await screen.findByText('Profile photo saved.')).toBeInTheDocument()
+    expect(screen.getByRole('img', { name: 'Current profile photo' })).toHaveAttribute(
+      'src',
+      'https://cdn.example/photo.webp',
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Remove photo' }))
+    expect(await screen.findByText('Profile photo removed.')).toBeInTheDocument()
+    expect(screen.queryByRole('img', { name: 'Current profile photo' })).not.toBeInTheDocument()
+  })
+
+  it('announces a rejected photo and keeps the initials icon', async () => {
+    const user = userEvent.setup()
+    apiFetch.mockImplementation(async (path: unknown, init?: { method?: string }) => {
+      const url = String(path)
+      if (url.includes('/api/v1/notification_preferences')) return { preferences: samplePreferences }
+      if (url.endsWith('/photo') && init?.method === 'POST') {
+        throw new ApiError(422, 'validation_error', 'That photo could not be saved.')
+      }
+      return { profile: ownProfile }
+    })
+
+    render(
+      <MemoryRouter>
+        <ProfilePage />
+      </MemoryRouter>,
+    )
+    await screen.findByText('/profile/alex-morgan')
+    await user.click(screen.getByRole('tab', { name: 'Settings' }))
+    await user.upload(
+      screen.getByLabelText('Profile photo', { selector: 'input' }),
+      new File(['png'], 'face.png', { type: 'image/png' }),
+    )
+    expect(await screen.findByText('That photo could not be saved.')).toBeInTheDocument()
+    expect(screen.queryByRole('img')).not.toBeInTheDocument()
+  })
+
   it('replays tips from Settings and shows the profile tip again', async () => {
     const user = userEvent.setup()
     let dismissed = true
@@ -365,6 +436,8 @@ describe('PublicProfilePage', () => {
     )
 
     expect(await screen.findByRole('heading', { name: 'Alex Morgan' })).toBeInTheDocument()
+    expect(screen.getByText('AM')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Upload photo|Replace photo|Remove photo/ })).not.toBeInTheDocument()
     expect(screen.getByText((_, node) => node?.textContent === 'Peer reviews: 1')).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Peer reviews' }))
     expect(await screen.findByText('Clear facilitation notes')).toBeInTheDocument()

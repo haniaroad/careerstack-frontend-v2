@@ -7,6 +7,8 @@ import { FirstRunTip, notifyFirstRunTipsReplayed, replayFirstRunTips } from '@/c
 import { Input } from '@/components/Input'
 import { Label } from '@/components/Label'
 import { ProfileLinks } from '@/components/ProfileLinks'
+import { ProfilePhoto } from '@/components/ProfilePhoto'
+import { ProfilePhotoSettings } from '@/components/ProfilePhotoSettings'
 import { ProfileProjects } from '@/components/ProfileProjects'
 import { ApiError } from '@/lib/api'
 import {
@@ -309,7 +311,13 @@ export function ProfilePage() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
-      <header className="space-y-2">
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-center">
+        <ProfilePhoto
+          name={profile?.details.display_name ?? session?.profile?.display_name ?? 'Your profile'}
+          imageUrl={profile?.details.image_url}
+          size="lg"
+        />
+        <div className="space-y-2">
         <p className="text-sm font-medium text-ink-muted">Profile</p>
         <h1 className="font-display text-3xl text-ink">
           {profile?.details.display_name ?? session?.profile?.display_name ?? 'Your profile'}
@@ -326,6 +334,7 @@ export function ProfilePage() {
             ) : null}
           </div>
         ) : null}
+        </div>
       </header>
 
       <FirstRunTip destination="profile" />
@@ -545,6 +554,14 @@ export function ProfilePage() {
 
       {tab === 'settings' ? (
         <div className="space-y-4">
+          <ProfilePhotoSettings
+            name={profile?.details.display_name ?? session?.profile?.display_name ?? 'Your profile'}
+            imageUrl={profile?.details.image_url ?? null}
+            onChanged={(next) => {
+              setProfile(next)
+              void refreshSession?.()
+            }}
+          />
           <section className="space-y-3 rounded-lg border border-border bg-surface p-5">
             <h2 className="text-lg font-semibold text-ink">Billing & Credits</h2>
             <p className="text-sm text-ink-muted">

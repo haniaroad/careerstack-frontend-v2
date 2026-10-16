@@ -4,6 +4,7 @@ import { Button } from '@/components/Button'
 import { PageLoadError } from '@/components/PageLoadError'
 import { InviteControl } from '@/components/InviteControl'
 import { ProfileLinks } from '@/components/ProfileLinks'
+import { ProfilePhoto } from '@/components/ProfilePhoto'
 import { ProfileProjects } from '@/components/ProfileProjects'
 import { ProfileSurfaceSections } from '@/components/ProfileSurfaceSections'
 import { ApiError } from '@/lib/api'
@@ -101,6 +102,9 @@ export function PublicProfilePage() {
             Back to Explore
           </Link>
         ) : null}
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+          <ProfilePhoto name={profile.details.display_name} imageUrl={profile.details.image_url} size="lg" />
+          <div className="space-y-2">
         <p className="text-sm font-medium text-ink-muted">Profile</p>
         <h1 className="font-display text-3xl text-ink">{profile.details.display_name}</h1>
         <p className="text-ink-muted">
@@ -109,6 +113,8 @@ export function PublicProfilePage() {
         </p>
         {profile.details.bio ? <p className="text-ink">{profile.details.bio}</p> : null}
         <InviteControl userId={profile.user_id} displayName={profile.details.display_name} />
+          </div>
+        </div>
       </header>
 
       <Stats stats={profile.stats} />

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { Alert } from '@/components/Alert'
+import { ProfilePhoto } from '@/components/ProfilePhoto'
 import { ProfileProjects } from '@/components/ProfileProjects'
 import { ProfileSurfaceSections } from '@/components/ProfileSurfaceSections'
 import { PublicPageFrame } from '@/components/public/PublicPageFrame'
@@ -87,6 +88,9 @@ export function PublicSurfaceProfilePage() {
     <PublicPageFrame onSignIn={onSignIn} onCreateAccount={onCreateAccount}>
       <article className="space-y-8">
         <header className="space-y-3">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+            <ProfilePhoto name={details.display_name} imageUrl={details.image_url} size="lg" />
+            <div className="space-y-3">
           <p className="text-xs font-semibold tracking-wide text-ink-muted uppercase">
             Public profile
           </p>
@@ -97,6 +101,8 @@ export function PublicSurfaceProfilePage() {
           </p>
           {details.bio ? <p className="text-base text-ink-muted">{details.bio}</p> : null}
           <CopyPublicLink absoluteUrl={profileAbsoluteUrl(details.slug)} />
+            </div>
+          </div>
         </header>
 
         <ProfileSurfaceSections

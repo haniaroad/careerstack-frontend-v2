@@ -6,6 +6,7 @@ import { Button } from '@/components/Button'
 import { EmptyState } from '@/components/EmptyState'
 import { Input } from '@/components/Input'
 import { InviteControl } from '@/components/InviteControl'
+import { ProfilePhoto } from '@/components/ProfilePhoto'
 import { Label } from '@/components/Label'
 import { ProjectLifecycleBadge } from '@/components/ProjectLifecycleBadge'
 import { StatusBadge } from '@/components/StatusBadge'
@@ -266,7 +267,14 @@ export function ExplorePage() {
                 to={`/profile/${person.slug}?from=${encodeURIComponent(explorePath)}`}
                 className="block focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
               >
-                <p className="font-medium text-ink hover:underline">{person.display_name}</p>
+                <span className="flex items-center gap-3">
+                  <ProfilePhoto
+                    name={person.display_name}
+                    imageUrl={person.profile_photo_thumb_url ?? person.image_url}
+                    size="md"
+                  />
+                  <p className="font-medium text-ink hover:underline">{person.display_name}</p>
+                </span>
                 <p className="text-sm text-ink-muted">
                   {[person.role, person.location, person.experience_level].filter(Boolean).join(' · ')}
                 </p>
