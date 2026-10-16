@@ -17,6 +17,7 @@ export type ShellProgramFilter = {
 
 export type ShellContextValue = {
   userDisplayName: string
+  profilePhotoUrl: string | null
   workspaces: ShellWorkspace[]
   activeWorkspaceId: string
   notificationCount: number
@@ -39,6 +40,7 @@ export type ShellProviderProps = {
   /** Override defaults for tests / preview. */
   initial?: Partial<{
     userDisplayName: string
+    profilePhotoUrl: string | null
     workspaces: ShellWorkspace[]
     activeWorkspaceId: string
     notificationCount: number

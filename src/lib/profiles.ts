@@ -11,6 +11,7 @@ export type ProfileDetails = {
   experience_level: string
   bio: string | null
   image_url: string | null
+  profile_photo_thumb_url?: string | null
   github_url: string | null
   linkedin_url: string | null
   portfolio_url: string | null
@@ -67,6 +68,23 @@ export type ProfilePayload = {
 
 export async function fetchOwnProfile() {
   const data = await apiFetch<{ profile: ProfilePayload }>('/api/v1/profiles/me')
+  return data.profile
+}
+
+export async function uploadProfilePhoto(file: File) {
+  const body = new FormData()
+  body.append('photo', file)
+  const data = await apiFetch<{ profile: ProfilePayload }>('/api/v1/profiles/me/photo', {
+    method: 'POST',
+    body,
+  })
+  return data.profile
+}
+
+export async function removeProfilePhoto() {
+  const data = await apiFetch<{ profile: ProfilePayload }>('/api/v1/profiles/me/photo', {
+    method: 'DELETE',
+  })
   return data.profile
 }
 

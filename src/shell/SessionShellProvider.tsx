@@ -43,6 +43,7 @@ export function SessionShellProvider({ children }: { children: ReactNode }) {
     if (!session) return undefined
     return {
       userDisplayName: session.profile?.display_name ?? session.user.email,
+      profilePhotoUrl: session.profile?.profile_photo_thumb_url ?? session.profile?.image_url ?? null,
       workspaces: toShellWorkspaces(session),
       activeWorkspaceId:
         session.active_workspace_id ?? session.workspaces[0]?.id ?? 'personal',

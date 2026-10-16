@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { render, screen, within } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -307,6 +307,23 @@ describe('AppShell', () => {
     expect(
       screen.getByRole('menuitem', { name: 'Help and Feedback, opens in a new tab' }),
     ).toHaveAttribute('href', HELP_AND_FEEDBACK_HREF)
+  })
+
+  it('shows the profile photo in the menu and falls back to initials', async () => {
+    const user = userEvent.setup()
+    const { unmount } = renderShell('/home', {
+      profilePhotoUrl: 'https://cdn.example/thumb.webp',
+    })
+    const photo = screen.getByTestId('profile-photo').querySelector('img')
+    expect(photo).toHaveAttribute('src', 'https://cdn.example/thumb.webp')
+    fireEvent.error(photo!)
+    expect(await screen.findByText('PU')).toBeInTheDocument()
+    unmount()
+
+    renderShell()
+    expect(screen.getByText('PU')).toBeInTheDocument()
+    await user.click(screen.getByLabelText('Profile menu'))
+    expect(screen.getByRole('menuitem', { name: 'Help and Feedback, opens in a new tab' })).toBeInTheDocument()
   })
 
   it('keeps Help and Feedback out of More, sign-in, and the platform-admin shell', () => {
