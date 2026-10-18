@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from 'react'
 import { ChevronDown, ExternalLink, LifeBuoy, Menu, Search } from 'lucide-react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
+import { Wordmark } from '@/components/BrandMark'
 import { ProfilePhoto } from '@/components/ProfilePhoto'
 import { Button } from '@/components/Button'
 import {
@@ -25,26 +26,6 @@ import {
 
 export const HELP_AND_FEEDBACK_HREF =
   'https://careerstack.odoo.com/helpdesk/submit-feedback-1'
-
-function Wordmark({ compact = false }: { compact?: boolean }) {
-  return (
-    <div className="flex items-center gap-2">
-      <div
-        className="flex size-7 items-center justify-center rounded-md bg-primary text-[10px] font-bold text-primary-foreground"
-        aria-hidden
-      >
-        CS
-      </div>
-      {!compact ? (
-        <span className="text-[15px] font-semibold tracking-tight text-foreground">
-          CareerStack
-        </span>
-      ) : (
-        <span className="sr-only">CareerStack</span>
-      )}
-    </div>
-  )
-}
 
 function WorkspaceSwitcher() {
   const { workspaces, activeWorkspaceId, setActiveWorkspaceId } = useShell()
@@ -170,15 +151,7 @@ function DesktopSidebar() {
       className="hidden w-60 shrink-0 flex-col bg-sidebar text-sidebar-foreground md:flex"
     >
       <div className="flex h-14 items-center border-b border-sidebar-border px-4">
-        <div className="flex items-center gap-2 text-sidebar-foreground">
-          <div
-            className="flex size-7 items-center justify-center rounded-md bg-sidebar-primary text-[10px] font-bold text-sidebar-primary-foreground"
-            aria-hidden
-          >
-            CS
-          </div>
-          <span className="text-[15px] font-semibold tracking-tight">CareerStack</span>
-        </div>
+        <Wordmark tone="on-ink" labelClassName="text-sidebar-foreground" />
       </div>
       <nav aria-label="Primary" className="flex flex-1 flex-col gap-1 p-3">
         {PRIMARY_DESTINATIONS.map((destination) => (
@@ -278,10 +251,10 @@ export function AppShell({ children }: { children: ReactNode }) {
         >
           <div className="flex min-w-0 flex-1 items-center gap-2 md:gap-3">
             <div className="md:hidden">
-              <Wordmark compact />
+              <Wordmark tone="on-light" compact />
             </div>
             <div className="hidden md:block">
-              <Wordmark />
+              <Wordmark tone="on-light" labelClassName="text-foreground" />
             </div>
             <WorkspaceSwitcher />
             <form
