@@ -38,7 +38,11 @@ export type ProfileStats = {
   creator_reviewed_approved_tasks: number | null
   average_creator_review_hours: number | null
   peer_review_total: number | null
-  activity: { week_start: string; count: number }[]
+  activity: {
+    week_start: string
+    count: number
+    by_kind?: Partial<Record<string, number>>
+  }[]
 }
 
 export type ProfilePayload = {

@@ -96,6 +96,17 @@ describe('AppShell', () => {
     expect(screen.getByLabelText('Profile menu')).toBeInTheDocument()
   })
 
+  it('uses the white mark on the sidebar and the color mark in the header', () => {
+    renderShell()
+    const sidebar = screen.getByTestId('desktop-sidebar')
+    const header = screen.getByTestId('app-header')
+    expect(sidebar.querySelector('img')?.getAttribute('src')).toBe('/brand/mark-white.png')
+    expect(sidebar.querySelector('img')?.getAttribute('alt')).toBe('')
+    const headerSources = Array.from(header.querySelectorAll('img')).map((img) => img.getAttribute('src'))
+    expect(headerSources).toEqual(['/brand/mark-color.png', '/brand/mark-color.png'])
+    expect(header.querySelector('img[alt="CareerStack"]')).toBeTruthy()
+  })
+
   it('hides organization administration for participants', () => {
     renderShell('/home', {
       canAccessOrgAdmin: false,

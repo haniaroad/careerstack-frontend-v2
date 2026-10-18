@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { Wordmark } from '@/components/BrandMark'
 import { cn } from '@/lib/utils'
 
 type AuthLayoutProps = {
@@ -36,22 +37,6 @@ function EvidenceStackMark({ className }: { className?: string }) {
   )
 }
 
-function BrandMark({ inverted = false }: { inverted?: boolean }) {
-  return (
-    <div className="flex items-center gap-2.5">
-      <span
-        className={cn(
-          'flex size-8 items-center justify-center rounded text-[11px] font-bold tracking-tight',
-          inverted ? 'bg-canvas text-ink' : 'bg-brand text-brand-foreground',
-        )}
-      >
-        CS
-      </span>
-      <span className="text-lg font-semibold tracking-tight">CareerStack</span>
-    </div>
-  )
-}
-
 /**
  * Evidence Standard standalone auth chrome: Ink brand panel + form column.
  * Shared by sign-in, onboarding, invite, and first-workspace landing.
@@ -77,7 +62,11 @@ export function AuthLayout({
             }}
           />
           <div className="relative">
-            <BrandMark />
+            <Wordmark
+              tone="on-ink"
+              className="gap-2.5"
+              labelClassName="text-lg text-sidebar-foreground"
+            />
             <h1 className="mt-16 max-w-md text-4xl font-extrabold tracking-tight text-balance xl:text-5xl xl:leading-[1.1]">
               Turn real project work into proof of skill.
             </h1>
@@ -93,7 +82,7 @@ export function AuthLayout({
 
         <main className="relative flex flex-col justify-center overflow-y-auto bg-canvas px-5 py-10 sm:px-8 md:px-12 lg:px-16 xl:px-20">
           <div className="mb-8 lg:hidden">
-            <BrandMark inverted />
+            <Wordmark tone="on-light" className="gap-2.5" labelClassName="text-lg text-foreground" />
           </div>
 
           <div className="mx-auto w-full max-w-md">
