@@ -16,6 +16,7 @@ import { InsufficientCreditsInterception } from '@/components/InsufficientCredit
 import { ProjectLifecycleBadge } from '@/components/ProjectLifecycleBadge'
 import { ProjectMessageThread } from '@/components/ProjectMessageThread'
 import { StatusBadge } from '@/components/StatusBadge'
+import { LabelMultiSelect, RoleMultiSelect } from '@/components/LabelMultiSelect'
 import { apiFetch, ApiError } from '@/lib/api'
 import { joinStatusLabel } from '@/lib/explore'
 import {
@@ -39,6 +40,7 @@ import {
   type ReasonCategory,
 } from '@/lib/projects'
 import type { SessionPayload } from '@/auth/types'
+import { labelsFromTerms, useTaxonomyLists } from '@/lib/taxonomies'
 
 function applicationTone(status: string): 'info' | 'success' | 'warning' | 'danger' {
   if (status === 'approved') return 'success'
@@ -85,7 +87,8 @@ export function ProjectDetailPage() {
 
   const [convertJoiningMode, setConvertJoiningMode] = useState<JoiningMode>('application')
   const [convertCapacity, setConvertCapacity] = useState(3)
-  const [convertRoles, setConvertRoles] = useState('')
+  const [convertRoles, setConvertRoles] = useState<string[]>([])
+  const taxonomy = useTaxonomyLists()
 
   const [joinRole, setJoinRole] = useState('')
   const [applyRole, setApplyRole] = useState('')
@@ -112,7 +115,8 @@ export function ProjectDetailPage() {
   const [visibilityDraft, setVisibilityDraft] = useState<'public' | 'private'>('private')
   const [joiningModeDraft, setJoiningModeDraft] = useState<JoiningMode>('application')
   const [capacityDraft, setCapacityDraft] = useState('1')
-  const [rolesEditDraft, setRolesEditDraft] = useState('')
+  const [rolesEditDraft, setRolesEditDraft] = useState<string[]>([])
+  const [skillsEdit, setSkillsEdit] = useState<string[]>([])
 
   const workspace = session?.active_workspace
   const isPersonal = workspace?.kind === 'personal'
@@ -133,7 +137,8 @@ export function ProjectDetailPage() {
       setVisibilityDraft(data.project.visibility)
       setJoiningModeDraft(data.project.joining_mode ?? 'application')
       setCapacityDraft(String(data.project.capacity ?? 1))
-      setRolesEditDraft((data.project.roles_needed ?? []).join(', '))
+      setRolesEditDraft(data.project.roles_needed ?? [])
+      setSkillsEdit(data.project.skills ?? [])
       trackProjectLifecycleObserved({
         project_id: data.project.id,
         status: data.project.status,
@@ -143,7 +148,7 @@ export function ProjectDetailPage() {
         setJoinRole((prev) => prev || data.project.roles_needed[0])
         setApplyRole((prev) => prev || data.project.roles_needed[0])
         setInviteRole((prev) => prev || data.project.roles_needed[0])
-        setConvertRoles((prev) => prev || data.project.roles_needed.join(', '))
+        setConvertRoles((prev) => (prev.length ? prev : data.project.roles_needed))
       }
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Unable to load project')
@@ -200,10 +205,7 @@ export function ProjectDetailPage() {
 
   async function handleConvertToTeam() {
     if (!project) return
-    const roles = convertRoles
-      .split(',')
-      .map((s) => s.trim())
-      .filter(Boolean)
+    const roles = convertRoles.map((role) => role.trim()).filter(Boolean)
     if (!roles.length) {
       setError('Add at least one role to convert to team')
       return
@@ -446,14 +448,12 @@ export function ProjectDetailPage() {
       definition_of_done: definitionDraft.trim() || null,
       ends_on: endsOnDraft.trim(),
       visibility: visibilityDraft,
+      skills: skillsEdit,
     }
     if (project.mode === 'team') {
       body.joining_mode = joiningModeDraft
       body.capacity = Number(capacityDraft)
-      body.roles_needed = rolesEditDraft
-        .split(',')
-        .map((role) => role.trim())
-        .filter(Boolean)
+      body.roles_needed = rolesEditDraft.map((role) => role.trim()).filter(Boolean)
     }
     try {
       const data = await apiFetch<{ project: Project }>(`/api/v1/projects/${project.id}`, {
@@ -469,7 +469,8 @@ export function ProjectDetailPage() {
       setVisibilityDraft(data.project.visibility)
       setJoiningModeDraft(data.project.joining_mode ?? 'application')
       setCapacityDraft(String(data.project.capacity ?? 1))
-      setRolesEditDraft((data.project.roles_needed ?? []).join(', '))
+      setRolesEditDraft(data.project.roles_needed ?? [])
+      setSkillsEdit(data.project.skills ?? [])
       if (data.project.ends_on && data.project.ends_on !== previousEndsOn) {
         trackProjectEndDateUpdated({ project_id: data.project.id })
       }
@@ -753,18 +754,22 @@ export function ProjectDetailPage() {
                   disabled={busy}
                 />
               </label>
-              <label className="block space-y-1 sm:col-span-2">
-                <span className="text-sm font-medium text-ink">Roles needed</span>
-                <input
-                  className="w-full rounded-md border border-input bg-canvas px-3 py-2 text-ink"
-                  value={rolesEditDraft}
-                  onChange={(event) => setRolesEditDraft(event.target.value)}
-                  disabled={busy}
-                  placeholder="Designer, Engineer"
-                />
-              </label>
+              <RoleMultiSelect
+                roleLabels={labelsFromTerms(taxonomy.roles)}
+                value={rolesEditDraft}
+                onChange={setRolesEditDraft}
+                disabled={busy}
+              />
             </div>
           ) : null}
+          <LabelMultiSelect
+            id="project-skills"
+            label="Skills"
+            options={labelsFromTerms(taxonomy.skills)}
+            value={skillsEdit}
+            onChange={setSkillsEdit}
+            disabled={busy}
+          />
           <Button type="submit" size="sm" disabled={busy || !titleDraft.trim() || !endsOnDraft.trim()}>
             Save project
           </Button>
@@ -874,14 +879,13 @@ export function ProjectDetailPage() {
                 onChange={(e) => setConvertCapacity(Number(e.target.value))}
               />
             </label>
-            <label className="block space-y-1 sm:col-span-2">
-              <span className="text-sm font-medium text-ink">Roles needed (comma-separated)</span>
-              <input
-                className="w-full rounded-md border border-input bg-canvas px-3 py-2 text-ink"
-                value={convertRoles}
-                onChange={(e) => setConvertRoles(e.target.value)}
-              />
-            </label>
+            <RoleMultiSelect
+              id="convert_roles_needed"
+              roleLabels={labelsFromTerms(taxonomy.roles)}
+              value={convertRoles}
+              onChange={setConvertRoles}
+              disabled={busy}
+            />
           </div>
           <Button onClick={() => void handleConvertToTeam()} disabled={busy}>
             Convert to team

@@ -6,9 +6,9 @@ import { Button } from '@/components/Button'
 import { InsufficientCreditsInterception } from '@/components/InsufficientCreditsInterception'
 import { apiFetch, ApiError } from '@/lib/api'
 import { trackAiDraftGenerated, trackProjectActivated } from '@/lib/mixpanel'
+import { LabelMultiSelect, RoleMultiSelect } from '@/components/LabelMultiSelect'
 import {
   JOINING_MODES,
-  PROJECT_SKILLS,
   SKILL_LEVELS,
   TIME_AVAILABLE,
   type AiGeneration,
@@ -17,6 +17,7 @@ import {
   type ProjectMode,
   type ProposedTask,
 } from '@/lib/projects'
+import { labelsFromTerms, useTaxonomyLists } from '@/lib/taxonomies'
 import type { ProgramFilterProgram, SessionPayload } from '@/auth/types'
 import { fetchPrograms } from '@/lib/organizationAdmin'
 
@@ -57,7 +58,8 @@ export function CreateProjectPage() {
   const [expectedDuration, setExpectedDuration] = useState('')
   const [endsOn, setEndsOn] = useState('')
   const [definitionOfDone, setDefinitionOfDone] = useState('')
-  const [rolesNeeded, setRolesNeeded] = useState('')
+  const [rolesNeeded, setRolesNeeded] = useState<string[]>([])
+  const taxonomy = useTaxonomyLists()
   const [submissionExpectations, setSubmissionExpectations] = useState('')
   const [proposedTasks, setProposedTasks] = useState<ProposedTask[]>([])
   const [projectMode, setProjectMode] = useState<ProjectMode>('solo')
@@ -136,15 +138,6 @@ export function CreateProjectPage() {
     if (activePrograms.length === 1) setProgramId(activePrograms[0].id)
   }, [activePrograms, isPersonal, programId, session?.program_filter])
 
-  const rolesNeededList = useMemo(
-    () =>
-      rolesNeeded
-        .split(',')
-        .map((s) => s.trim())
-        .filter(Boolean),
-    [rolesNeeded],
-  )
-
   const draftPayload = useMemo(
     () => ({
       title,
@@ -159,7 +152,7 @@ export function CreateProjectPage() {
       expected_duration: expectedDuration || null,
       ends_on: endsOn || null,
       definition_of_done: definitionOfDone || null,
-      roles_needed: projectMode === 'team' ? rolesNeededList : [],
+      roles_needed: projectMode === 'team' ? rolesNeeded : [],
       proposed_tasks: proposedTasks,
       submission_expectations: submissionExpectations || null,
       program_id: isPersonal ? null : programId || null,
@@ -177,7 +170,7 @@ export function CreateProjectPage() {
       expectedDuration,
       endsOn,
       definitionOfDone,
-      rolesNeededList,
+      rolesNeeded,
       proposedTasks,
       submissionExpectations,
       isPersonal,
@@ -186,7 +179,7 @@ export function CreateProjectPage() {
   )
 
   const teamFieldsValid =
-    projectMode === 'solo' || (rolesNeededList.length > 0 && capacity >= 1 && capacity <= 5)
+    projectMode === 'solo' || (rolesNeeded.length > 0 && capacity >= 1 && capacity <= 5)
 
   const endsOnMissing = !endsOn.trim()
   const tasksPastEndsOn = proposedTasks.some(
@@ -240,7 +233,7 @@ export function CreateProjectPage() {
     setExpectedDuration(project.expected_duration ?? '')
     setEndsOn(project.ends_on ?? '')
     setDefinitionOfDone(project.definition_of_done ?? '')
-    setRolesNeeded((project.roles_needed ?? []).join(', '))
+    setRolesNeeded(project.roles_needed ?? [])
     setProposedTasks(project.proposed_tasks ?? [])
     setSubmissionExpectations(project.submission_expectations ?? '')
     setAiLabeled(project.source === 'ai')
@@ -256,18 +249,10 @@ export function CreateProjectPage() {
     setEndsOn(String(result.project_end_date ?? ''))
     setDefinitionOfDone(String(result.definition_of_done ?? ''))
     setSkills(Array.isArray(result.skills_demonstrated) ? (result.skills_demonstrated as string[]) : [])
-    setRolesNeeded(
-      Array.isArray(result.roles_needed) ? (result.roles_needed as string[]).join(', ') : '',
-    )
+    setRolesNeeded(Array.isArray(result.roles_needed) ? (result.roles_needed as string[]) : [])
     setSubmissionExpectations(String(result.submission_expectations ?? ''))
     setProposedTasks(Array.isArray(result.proposed_tasks) ? (result.proposed_tasks as ProposedTask[]) : [])
     setAiLabeled(true)
-  }
-
-  function toggleSkill(skill: string) {
-    setSkills((prev) =>
-      prev.includes(skill) ? prev.filter((s) => s !== skill) : [...prev, skill],
-    )
   }
 
   function goManual() {
@@ -769,15 +754,11 @@ export function CreateProjectPage() {
                       onChange={(e) => setCapacity(Number(e.target.value))}
                     />
                   </label>
-                  <label className="block space-y-1 sm:col-span-2">
-                    <span className="text-sm font-medium text-ink">Roles needed (comma-separated)</span>
-                    <input
-                      className="w-full rounded-md border border-input bg-canvas px-3 py-2 text-ink"
-                      value={rolesNeeded}
-                      onChange={(e) => setRolesNeeded(e.target.value)}
-                      placeholder="Designer, Engineer"
-                    />
-                  </label>
+                  <RoleMultiSelect
+                    roleLabels={labelsFromTerms(taxonomy.roles)}
+                    value={rolesNeeded}
+                    onChange={setRolesNeeded}
+                  />
                 </div>
               ) : null}
             </fieldset>
@@ -914,28 +895,13 @@ export function CreateProjectPage() {
                 One or more proposed task due dates are after the project end date.
               </p>
             ) : null}
-            <fieldset>
-              <legend className="text-sm font-medium text-ink">Skills (optional)</legend>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {PROJECT_SKILLS.map((skill) => {
-                  const selected = skills.includes(skill)
-                  return (
-                    <button
-                      key={skill}
-                      type="button"
-                      onClick={() => toggleSkill(skill)}
-                      className={`rounded-md border px-3 py-1 text-sm ${
-                        selected
-                          ? 'border-ink bg-ink text-canvas'
-                          : 'border-border bg-canvas text-ink'
-                      }`}
-                    >
-                      {skill}
-                    </button>
-                  )
-                })}
-              </div>
-            </fieldset>
+            <LabelMultiSelect
+              id={`${formId}-skills`}
+              label="Skills (optional)"
+              options={labelsFromTerms(taxonomy.skills)}
+              value={skills}
+              onChange={setSkills}
+            />
           </div>
 
           <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">

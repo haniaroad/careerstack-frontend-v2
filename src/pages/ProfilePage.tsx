@@ -7,6 +7,8 @@ import { Button } from '@/components/Button'
 import { FirstRunTip, notifyFirstRunTipsReplayed, replayFirstRunTips } from '@/components/FirstRunTip'
 import { Input } from '@/components/Input'
 import { Label } from '@/components/Label'
+import { LocationFields } from '@/components/LocationFields'
+import { useTaxonomyLists } from '@/lib/taxonomies'
 import { ProfileLinks } from '@/components/ProfileLinks'
 import { ProfilePhoto } from '@/components/ProfilePhoto'
 import { ProfilePhotoSettings } from '@/components/ProfilePhotoSettings'
@@ -160,6 +162,7 @@ export function ProfilePage() {
   const [error, setError] = useState<string | null>(null)
   const [visibilityNotice, setVisibilityNotice] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+  const { countries, usStateAbbreviations } = useTaxonomyLists()
   const [form, setForm] = useState({
     display_name: '',
     bio: '',
@@ -397,24 +400,15 @@ export function ProfilePage() {
                 <option value="advanced">Advanced</option>
               </select>
             </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="country">Country</Label>
-              <Input
-                id="country"
-                value={form.country}
-                onChange={(event) => setForm((prev) => ({ ...prev, country: event.target.value }))}
-                required
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="state_region">State / region</Label>
-              <Input
-                id="state_region"
-                value={form.state_region}
-                onChange={(event) => setForm((prev) => ({ ...prev, state_region: event.target.value }))}
-                required
-              />
-            </div>
+            <LocationFields
+              country={form.country}
+              stateRegion={form.state_region}
+              countries={countries}
+              usStateAbbreviations={usStateAbbreviations}
+              onCountryChange={(value) => setForm((prev) => ({ ...prev, country: value }))}
+              onStateChange={(value) => setForm((prev) => ({ ...prev, state_region: value }))}
+              selectClassName="h-10 w-full rounded-md border border-input bg-surface px-3 text-sm"
+            />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="career_goal">Career goal</Label>
