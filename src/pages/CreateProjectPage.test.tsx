@@ -40,7 +40,8 @@ describe('CreateProjectPage', () => {
     vi.mocked(apiFetch).mockReset()
   })
 
-  it('shows AI-first create with manual advanced setup', () => {
+  it('shows AI-first create with manual advanced setup', async () => {
+    vi.mocked(apiFetch).mockResolvedValue({})
     render(
       <MemoryRouter initialEntries={['/projects/new']}>
         <Routes>
@@ -49,7 +50,7 @@ describe('CreateProjectPage', () => {
       </MemoryRouter>,
     )
 
-    expect(screen.getByText(/Generating or editing a draft does not use a credit/i)).toBeInTheDocument()
+    expect(await screen.findByText(/Generating or editing a draft does not use a credit/i)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Generate with AI/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Advanced setup \(manual\)/i })).toBeInTheDocument()
   })

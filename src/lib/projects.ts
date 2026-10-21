@@ -122,17 +122,6 @@ export type AiGeneration = {
   retryable: boolean
 }
 
-export const PROJECT_SKILLS = [
-  'React',
-  'Accessibility',
-  'Technical writing',
-  'Product thinking',
-  'Frontend',
-  'QA testing',
-  'Data analysis',
-  'Other',
-] as const
-
 export const SKILL_LEVELS = ['beginner', 'intermediate', 'advanced'] as const
 export const TIME_AVAILABLE = ['1 week', '2 weeks', '1 month', '6 weeks'] as const
 

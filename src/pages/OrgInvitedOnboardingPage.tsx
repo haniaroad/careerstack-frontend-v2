@@ -7,6 +7,7 @@ import { Alert } from '@/components/Alert'
 import { Button } from '@/components/Button'
 import { Input } from '@/components/Input'
 import { Label } from '@/components/Label'
+import { LocationFields } from '@/components/LocationFields'
 import { AuthLayout } from '@/auth/AuthLayout'
 import { useAuth } from '@/auth/AuthContext'
 import type { SessionPayload } from '@/auth/types'
@@ -34,6 +35,8 @@ export function OrgInvitedOnboardingPage() {
   const navigate = useNavigate()
   const { status, session, setSession } = useAuth()
   const [roles, setRoles] = useState<TaxonomyTerm[]>([])
+  const [countries, setCountries] = useState<string[]>([])
+  const [usStateAbbreviations, setUsStateAbbreviations] = useState<string[]>([])
   const [inviteError, setInviteError] = useState<string | null>(null)
   const [invitePreview, setInvitePreview] = useState<{
     organization_name: string
@@ -68,9 +71,15 @@ export function OrgInvitedOnboardingPage() {
 
   useEffect(() => {
     if (!authenticated) return
-    void apiFetch<{ taxonomies: { key: string; terms: TaxonomyTerm[] }[] }>('/api/v1/taxonomies')
+    void apiFetch<{
+      countries?: string[]
+      us_state_abbreviations?: string[]
+      taxonomies?: { key: string; terms: TaxonomyTerm[] }[]
+    }>('/api/v1/taxonomies')
       .then((data) => {
-        setRoles(data.taxonomies.find((item) => item.key === 'roles')?.terms ?? [])
+        setRoles(data.taxonomies?.find((item) => item.key === 'roles')?.terms ?? [])
+        setCountries(data.countries ?? [])
+        setUsStateAbbreviations(data.us_state_abbreviations ?? [])
       })
       .catch(() => undefined)
   }, [authenticated])
@@ -256,14 +265,14 @@ export function OrgInvitedOnboardingPage() {
           <Input id="display_name" {...form.register('display_name')} />
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-2">
-            <Label htmlFor="country">Country</Label>
-            <Input id="country" {...form.register('country')} />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="state_region">State / region</Label>
-            <Input id="state_region" {...form.register('state_region')} />
-          </div>
+          <LocationFields
+            country={form.watch('country')}
+            stateRegion={form.watch('state_region')}
+            countries={countries}
+            usStateAbbreviations={usStateAbbreviations}
+            onCountryChange={(value) => form.setValue('country', value, { shouldValidate: true })}
+            onStateChange={(value) => form.setValue('state_region', value, { shouldValidate: true })}
+          />
         </div>
         <div className="space-y-2">
           <Label htmlFor="career_goal">Career goal</Label>

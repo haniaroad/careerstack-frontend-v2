@@ -325,7 +325,7 @@ describe('ProjectDetailPage', () => {
       'href',
       '/profile/taylor-brooks',
     )
-    expect(screen.getByText('Designer')).toBeInTheDocument()
+    expect(screen.getAllByText('Designer').length).toBeGreaterThan(0)
     expect(screen.getByText('I love design systems')).toBeInTheDocument()
     expect(screen.getByText('Pending')).toBeInTheDocument()
     expect(screen.getAllByText(/Submitted/i).length).toBeGreaterThan(0)
@@ -473,6 +473,24 @@ describe('ProjectDetailPage', () => {
     })
 
     apiFetch.mockImplementation(async (path: string, init?: RequestInit) => {
+      if (path === '/api/v1/taxonomies') {
+        return {
+          countries: ['United States'],
+          us_state_abbreviations: ['MA'],
+          taxonomies: [
+            {
+              key: 'roles',
+              terms: [
+                { id: 'role-1', key: 'software_engineer', label: 'Software engineer', is_other: false },
+              ],
+            },
+            {
+              key: 'skills',
+              terms: [{ id: 'skill-1', key: 'web_development', label: 'Web development', is_other: false }],
+            },
+          ],
+        }
+      }
       if (path === '/api/v1/projects/p1' && !init?.method) {
         return { project }
       }
@@ -498,7 +516,8 @@ describe('ProjectDetailPage', () => {
     expect(await screen.findByRole('heading', { name: /Convert to team/i })).toBeInTheDocument()
     expect(screen.getByText(/In-flight AI reviews will be cancelled/i)).toBeInTheDocument()
 
-    await user.type(screen.getByLabelText(/Roles needed/i), 'Designer')
+    expect(await screen.findByRole('option', { name: 'Software engineer' })).toBeInTheDocument()
+    await user.selectOptions(screen.getByLabelText(/Roles needed/i), 'Software engineer')
     await user.click(screen.getByRole('button', { name: /Convert to team/i }))
 
     expect(
