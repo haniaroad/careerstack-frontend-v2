@@ -4,7 +4,7 @@ import { Alert } from '@/components/Alert'
 import { AuthLayout } from '@/auth/AuthLayout'
 import { useAuth } from '@/auth/AuthContext'
 import { completeMagicLink } from '@/lib/firebase'
-import { consumeReturnTo, isInviteReturnTo, isSafeReturnTo } from '@/lib/publicSurfaces'
+import { consumeReturnTo, isAdminReturnTo, isInviteReturnTo, isSafeReturnTo } from '@/lib/publicSurfaces'
 
 function resumeAfterMagicLink() {
   let fromQuery: string | null = null
@@ -29,7 +29,7 @@ export function AuthCompletePage() {
         await completeMagicLink()
         const session = await refreshSession()
         const returnTo = resumeAfterMagicLink()
-        if (isInviteReturnTo(returnTo)) {
+        if (isInviteReturnTo(returnTo) || isAdminReturnTo(returnTo)) {
           navigate(returnTo, { replace: true })
           return
         }

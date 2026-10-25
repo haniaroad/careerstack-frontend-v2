@@ -24,6 +24,7 @@ function renderComplete() {
       <Routes>
         <Route path="/auth/complete" element={<AuthCompletePage />} />
         <Route path="/invite/:token" element={<h1>Invite</h1>} />
+        <Route path="/admin/users" element={<h1>Users and orgs</h1>} />
         <Route path="/onboarding" element={<h1>Onboarding</h1>} />
         <Route path="/home" element={<h1>Home</h1>} />
       </Routes>
@@ -49,6 +50,18 @@ describe('AuthCompletePage', () => {
     renderComplete()
 
     expect(await screen.findByRole('heading', { name: 'Invite' })).toBeInTheDocument()
+  })
+
+  it('returns staff to the admin page after a magic link', async () => {
+    refreshSession.mockResolvedValue({
+      user: { status: 'active' },
+      workspaces: [],
+    })
+    window.localStorage.setItem('careerstack.returnTo', '/admin/users')
+
+    renderComplete()
+
+    expect(await screen.findByRole('heading', { name: 'Users and orgs' })).toBeInTheDocument()
   })
 
   it('sends pending users without an invite to independent onboarding', async () => {

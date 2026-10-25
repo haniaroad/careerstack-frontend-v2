@@ -1,7 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { Button } from '@/components/Button'
-import { ApiError } from '@/lib/api'
-import { getIdToken } from '@/lib/firebase'
+import { runWithStaffReauth } from './staffReauth'
 
 export function ReasonedAction({
   label,
@@ -15,24 +14,17 @@ export function ReasonedAction({
   const [open, setOpen] = useState(false)
   const [reason, setReason] = useState('')
   const [message, setMessage] = useState<string | null>(null)
-  const [needsReauth, setNeedsReauth] = useState(false)
 
   async function submit(event: FormEvent) {
     event.preventDefault()
     setMessage(null)
     try {
-      await onConfirm(reason.trim())
+      await runWithStaffReauth(() => onConfirm(reason.trim()))
       setOpen(false)
       setReason('')
-      setNeedsReauth(false)
       setMessage('Recorded.')
     } catch (err) {
-      if (err instanceof ApiError && err.code === 'reauthentication_required') {
-        setNeedsReauth(true)
-        setMessage('Sign in again before this action.')
-        return
-      }
-      setMessage(err instanceof ApiError ? err.message : 'Could not complete that action')
+      setMessage(err instanceof Error ? err.message : 'Could not complete that action')
     }
   }
 
@@ -57,20 +49,6 @@ export function ReasonedAction({
             {confirmLabel}
           </Button>
         </form>
-      ) : null}
-      {needsReauth ? (
-        <Button
-          type="button"
-          size="sm"
-          onClick={() => {
-            void getIdToken(true).then(() => {
-              setNeedsReauth(false)
-              setMessage('Signed in again. Confirm the action once more.')
-            })
-          }}
-        >
-          Sign in again
-        </Button>
       ) : null}
       {message ? (
         <p role="status" className="text-sm">

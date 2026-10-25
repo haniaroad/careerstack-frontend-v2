@@ -110,6 +110,17 @@ export function peekReturnTo() {
   return null
 }
 
+/** Staff console paths used to resume after a magic-link reauthentication. */
+export function isAdminReturnTo(path: string) {
+  if (!path.startsWith('/') || path.startsWith('//') || path.includes('://')) return false
+  const pathname = path.split(/[?#]/)[0] ?? ''
+  if (pathname.includes('..')) return false
+  if (pathname === '/admin') return true
+  if (!pathname.startsWith('/admin/')) return false
+  const rest = pathname.slice('/admin/'.length)
+  return rest.length > 0 && !rest.includes('//')
+}
+
 /** Organization invite links used to resume after Google or magic-link sign-in. */
 export function isInviteReturnTo(path: string) {
   if (path === '/invite') return true
@@ -124,6 +135,7 @@ export function isSafeReturnTo(path: string) {
   if (path.includes('://')) return false
   return (
     isInviteReturnTo(path) ||
+    isAdminReturnTo(path) ||
     path.startsWith('/projects/') ||
     path.startsWith('/profile/') ||
     path === '/home' ||

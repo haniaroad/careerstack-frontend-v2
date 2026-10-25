@@ -2,7 +2,8 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { Button } from '@/components/Button'
 import { Input } from '@/components/Input'
 import { LocationFields } from '@/components/LocationFields'
-import { ApiError, apiFetch } from '@/lib/api'
+import { apiFetch } from '@/lib/api'
+import { runWithStaffReauth } from './staffReauth'
 import { ProductionConfirm, productionConfirmed } from './EnvironmentBar'
 
 type OrgOption = { id: string; name: string }
@@ -70,15 +71,17 @@ function CreateAccount({ organizations }: { organizations: OrgOption[] }) {
       return
     }
     try {
-      const result = await apiFetch<{ message: string }>('/api/v1/platform_admin/users', {
-        method: 'POST',
-        body: JSON.stringify({
-          email,
-          organization_id: organizationId || null,
-          role: organizationId ? role : 'participant',
-          reason,
+      const result = await runWithStaffReauth(() =>
+        apiFetch<{ message: string }>('/api/v1/platform_admin/users', {
+          method: 'POST',
+          body: JSON.stringify({
+            email,
+            organization_id: organizationId || null,
+            role: organizationId ? role : 'participant',
+            reason,
+          }),
         }),
-      })
+      )
       setNotice(result.message)
       setEmail('')
     } catch (err) {
@@ -151,16 +154,18 @@ function ImportAccounts({ organizations }: { organizations: OrgOption[] }) {
       return
     }
     try {
-      const result = await apiFetch<{ rows: { line: number; email?: string; status: string; message: string }[] }>(
-        '/api/v1/platform_admin/users/import',
-        {
-          method: 'POST',
-          body: JSON.stringify({ csv, organization_id: organizationId || null, reason }),
-        },
+      const result = await runWithStaffReauth(() =>
+        apiFetch<{ rows: { line: number; email?: string; status: string; message: string }[] }>(
+          '/api/v1/platform_admin/users/import',
+          {
+            method: 'POST',
+            body: JSON.stringify({ csv, organization_id: organizationId || null, reason }),
+          },
+        ),
       )
       setNotice(result.rows.map((row) => `Line ${row.line}: ${row.status}. ${row.message}`).join(' '))
     } catch (err) {
-      setNotice(err instanceof ApiError ? err.message : messageFrom(err))
+      setNotice(messageFrom(err))
     }
   }
 
@@ -249,18 +254,20 @@ function CreateOrganization({
         setNotice('No account with that email. They need to finish onboarding before they can be the first admin.')
         return
       }
-      const result = await apiFetch<{ id: string; name: string }>('/api/v1/platform_admin/organizations', {
-        method: 'POST',
-        body: JSON.stringify({
-          admin_user_id: admin.id,
-          name,
-          country,
-          state_region: stateRegion,
-          structure_term_id: structureId,
-          primary_goal_term_id: goalId,
-          reason,
+      const result = await runWithStaffReauth(() =>
+        apiFetch<{ id: string; name: string }>('/api/v1/platform_admin/organizations', {
+          method: 'POST',
+          body: JSON.stringify({
+            admin_user_id: admin.id,
+            name,
+            country,
+            state_region: stateRegion,
+            structure_term_id: structureId,
+            primary_goal_term_id: goalId,
+            reason,
+          }),
         }),
-      })
+      )
       onCreated({ id: result.id, name: result.name })
       setNotice(`${result.name} is ready. The first admin received the organization email.`)
       setName('')

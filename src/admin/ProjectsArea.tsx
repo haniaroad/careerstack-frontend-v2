@@ -3,6 +3,7 @@ import { Button } from '@/components/Button'
 import { Input } from '@/components/Input'
 import { LabelMultiSelect, RoleMultiSelect } from '@/components/LabelMultiSelect'
 import { apiFetch } from '@/lib/api'
+import { runWithStaffReauth } from './staffReauth'
 import { labelsFromTerms, useTaxonomyLists } from '@/lib/taxonomies'
 import { ProductionConfirm, productionConfirmed } from './EnvironmentBar'
 
@@ -265,9 +266,8 @@ function CreateProject({
       return
     }
     try {
-      const result = await apiFetch<{ project: ProjectDetail }>(
-        `/api/v1/platform_admin/organizations/${organization.id}/projects`,
-        {
+      const result = await runWithStaffReauth(() =>
+        apiFetch<{ project: ProjectDetail }>(`/api/v1/platform_admin/organizations/${organization.id}/projects`, {
           method: 'POST',
           body: JSON.stringify({
             creator_id: creatorId,
@@ -296,7 +296,7 @@ function CreateProject({
               })),
             reason,
           }),
-        },
+        }),
       )
       setNotice(`${result.project.title} is active.`)
       await onCreated(result.project)
@@ -650,27 +650,29 @@ function EditProject({
     setNotice(null)
     if (!guard()) return
     try {
-      const result = await apiFetch<{ project: ProjectDetail }>(`/api/v1/platform_admin/projects/${project.id}`, {
-        method: 'PATCH',
-        body: JSON.stringify({
-          title,
-          summary,
-          ends_on: endsOn,
-          visibility,
-          joining_mode: project.mode === 'team' ? joiningMode : undefined,
-          capacity: project.mode === 'team' ? Number(capacity) : undefined,
-          roles_needed: project.mode === 'team' ? roles : undefined,
-          skills,
-          tasks: tasks.map((task) => ({
-            id: task.id,
-            title: task.title,
-            acceptance_criteria: task.acceptance_criteria,
-            due_on: task.due_on || null,
-            assignee_id: task.assignee_id || null,
-          })),
-          reason,
+      const result = await runWithStaffReauth(() =>
+        apiFetch<{ project: ProjectDetail }>(`/api/v1/platform_admin/projects/${project.id}`, {
+          method: 'PATCH',
+          body: JSON.stringify({
+            title,
+            summary,
+            ends_on: endsOn,
+            visibility,
+            joining_mode: project.mode === 'team' ? joiningMode : undefined,
+            capacity: project.mode === 'team' ? Number(capacity) : undefined,
+            roles_needed: project.mode === 'team' ? roles : undefined,
+            skills,
+            tasks: tasks.map((task) => ({
+              id: task.id,
+              title: task.title,
+              acceptance_criteria: task.acceptance_criteria,
+              due_on: task.due_on || null,
+              assignee_id: task.assignee_id || null,
+            })),
+            reason,
+          }),
         }),
-      })
+      )
       setNotice('Saved.')
       await onChange(result.project)
     } catch (err) {
@@ -682,12 +684,14 @@ function EditProject({
     setNotice(null)
     if (!guard()) return
     try {
-      const result = await apiFetch<{ project: ProjectDetail }>(
-        `/api/v1/platform_admin/projects/${project.id}/members`,
-        {
-          method: 'POST',
-          body: JSON.stringify({ user_id: memberId, participant_role: memberRole, reason }),
-        },
+      const result = await runWithStaffReauth(() =>
+        apiFetch<{ project: ProjectDetail }>(
+          `/api/v1/platform_admin/projects/${project.id}/members`,
+          {
+            method: 'POST',
+            body: JSON.stringify({ user_id: memberId, participant_role: memberRole, reason }),
+          },
+        ),
       )
       setMemberId('')
       setNotice('Member added.')
@@ -701,9 +705,11 @@ function EditProject({
     setNotice(null)
     if (!guard()) return
     try {
-      const result = await apiFetch<{ project: ProjectDetail }>(
-        `/api/v1/platform_admin/projects/${project.id}/members/${userId}`,
-        { method: 'DELETE', body: JSON.stringify({ reason }) },
+      const result = await runWithStaffReauth(() =>
+        apiFetch<{ project: ProjectDetail }>(
+          `/api/v1/platform_admin/projects/${project.id}/members/${userId}`,
+          { method: 'DELETE', body: JSON.stringify({ reason }) },
+        ),
       )
       setNotice('Member removed. No credit was returned.')
       await onChange(result.project)
@@ -716,16 +722,18 @@ function EditProject({
     setNotice(null)
     if (!guard()) return
     try {
-      const result = await apiFetch<{ project: ProjectDetail }>(
-        `/api/v1/platform_admin/projects/${project.id}/duplicate`,
-        {
-          method: 'POST',
-          body: JSON.stringify({
-            creator_id: duplicateCreatorId,
-            title: duplicateTitle || undefined,
-            reason,
-          }),
-        },
+      const result = await runWithStaffReauth(() =>
+        apiFetch<{ project: ProjectDetail }>(
+          `/api/v1/platform_admin/projects/${project.id}/duplicate`,
+          {
+            method: 'POST',
+            body: JSON.stringify({
+              creator_id: duplicateCreatorId,
+              title: duplicateTitle || undefined,
+              reason,
+            }),
+          },
+        ),
       )
       setNotice(`${result.project.title} is a new copy. Members were not copied.`)
       await onChange(result.project)
