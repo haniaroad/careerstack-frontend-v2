@@ -7,6 +7,7 @@ import {
   GoogleAuthProvider,
   initializeAuth,
   isSignInWithEmailLink,
+  reauthenticateWithPopup,
   sendSignInLinkToEmail,
   signInWithEmailLink,
   signInWithPopup,
@@ -144,4 +145,37 @@ export async function getIdToken(forceRefresh = false): Promise<string | null> {
   const user = firebaseAuth?.currentUser
   if (!user) return null
   return user.getIdToken(forceRefresh)
+}
+
+export type StaffReauthResult = 'popup' | 'redirect' | 'magic_link'
+
+/**
+ * Interactive sign-in that updates Firebase auth_time.
+ * A token refresh leaves auth_time unchanged, so high-risk staff actions stay rejected.
+ */
+export async function reauthenticateCurrentUser(): Promise<StaffReauthResult> {
+  const firebaseAuth = getFirebaseAuth()
+  const user = firebaseAuth?.currentUser
+  if (!firebaseAuth || !user) throw new Error('Sign in before this action')
+
+  const usesGoogle = user.providerData.some((provider) => provider.providerId === 'google.com')
+  if (usesGoogle) {
+    const provider = new GoogleAuthProvider()
+    try {
+      await reauthenticateWithPopup(user, provider)
+      const token = await getIdToken(true)
+      if (!token) throw new Error('Sign in before this action')
+      return 'popup'
+    } catch (err) {
+      if (!isIndexedDbPersistenceError(err)) throw err
+      await signInWithRedirect(firebaseAuth, provider)
+      return 'redirect'
+    }
+  }
+
+  const email = user.email
+  if (!email) throw new Error('Sign in again from the sign-in page')
+  const returnTo = `${window.location.pathname}${window.location.search}`
+  await requestMagicLink(email, returnTo)
+  return 'magic_link'
 }

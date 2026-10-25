@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import {
   consumeReturnTo,
+  isAdminReturnTo,
   isInviteReturnTo,
   isSafeReturnTo,
   storeReturnTo,
@@ -18,6 +19,16 @@ describe('returnTo helpers', () => {
     expect(isInviteReturnTo('/invite/abc-TOKEN_123')).toBe(true)
     expect(isSafeReturnTo('/invite/../home')).toBe(false)
     expect(isSafeReturnTo('https://evil.example/invite/x')).toBe(false)
+  })
+
+  it('allows staff console paths and rejects traversal', () => {
+    expect(isAdminReturnTo('/admin')).toBe(true)
+    expect(isAdminReturnTo('/admin/users')).toBe(true)
+    expect(isSafeReturnTo('/admin/users?tab=csv')).toBe(true)
+    expect(isAdminReturnTo('/admin/../home')).toBe(false)
+    expect(isAdminReturnTo('/administrator')).toBe(false)
+    storeReturnTo('/admin/projects')
+    expect(consumeReturnTo()).toBe('/admin/projects')
   })
 
   it('stores invite returnTo in localStorage so a magic-link tab can resume', () => {
