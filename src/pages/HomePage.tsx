@@ -203,8 +203,8 @@ export function HomePage() {
         <p className="text-sm font-medium text-ink-muted">Home</p>
         <h1 className="font-display text-3xl text-ink">Your next actions</h1>
         <p className="max-w-xl text-ink-muted">
-          Projects that are ending, in a grace period, or expired show up here. Open one to finish
-          the work, or start something new.
+          If a project you’re working on is almost due, past its end date, or closed because time
+          ran out, it shows up here. Open it to finish the work, or start a new project.
         </p>
       </header>
 
@@ -219,7 +219,7 @@ export function HomePage() {
       {loading ? <p className="text-ink-muted">Loading Home…</p> : null}
 
       {!loading && primary ? (
-        <section className="space-y-3" aria-label="Lifecycle warnings">
+        <section className="space-y-3" aria-label="Projects that need attention">
           <Alert
             tone={primary.phase === 'expired' ? 'danger' : 'warning'}
             title={
@@ -281,8 +281,9 @@ export function HomePage() {
       ) : null}
 
       {!loading && !primary && completions.length === 0 && !error ? (
-        <Alert tone="info" title="No lifecycle warnings">
-          You have no ending-soon, grace, or expired project warnings right now.
+        <Alert tone="info" title="No projects need attention">
+          You don’t have a project that’s almost due, past its end date, or closed because time ran
+          out. When you do, it will show up here.
         </Alert>
       ) : null}
 

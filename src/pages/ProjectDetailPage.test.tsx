@@ -516,8 +516,8 @@ describe('ProjectDetailPage', () => {
     expect(await screen.findByRole('heading', { name: /Convert to team/i })).toBeInTheDocument()
     expect(screen.getByText(/In-flight AI reviews will be cancelled/i)).toBeInTheDocument()
 
-    expect(await screen.findByRole('option', { name: 'Software engineer' })).toBeInTheDocument()
-    await user.selectOptions(screen.getByLabelText(/Roles needed/i), 'Software engineer')
+    expect(await screen.findByRole('checkbox', { name: 'Software engineer' })).toBeInTheDocument()
+    await user.click(screen.getByRole('checkbox', { name: 'Software engineer' }))
     await user.click(screen.getByRole('button', { name: /Convert to team/i }))
 
     expect(

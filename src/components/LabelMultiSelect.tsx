@@ -76,16 +76,43 @@ export function RoleMultiSelect({
     onChange(next)
   }
 
+  function toggle(choice: string) {
+    const next = selected.includes(choice)
+      ? selected.filter((role) => role !== choice)
+      : [...selected, choice]
+    emit(next, custom)
+  }
+
+  const selectedCount = selected.length
+
   return (
-    <div className="space-y-2 sm:col-span-2">
-      <LabelMultiSelect
-        id={id}
-        label="Roles needed"
-        options={choices}
-        value={selected}
-        disabled={disabled}
-        onChange={(next) => emit(next, custom)}
-      />
+    <fieldset className="space-y-2 sm:col-span-2" disabled={disabled}>
+      <legend className="text-sm font-medium text-ink">Roles needed</legend>
+      <p id={`${id}-hint`} className="text-sm text-ink-muted">
+        Select every role this project needs. You can choose more than one.
+      </p>
+      <div className="grid gap-2 sm:grid-cols-2" aria-describedby={`${id}-hint`}>
+        {choices.map((choice) => {
+          const checked = selected.includes(choice)
+          return (
+            <label
+              key={choice}
+              className="flex items-start gap-2 rounded-md border border-input bg-canvas px-3 py-2 text-sm text-ink"
+            >
+              <input
+                type="checkbox"
+                className="mt-0.5 size-4 shrink-0 accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                checked={checked}
+                onChange={() => toggle(choice)}
+              />
+              <span>{choice}</span>
+            </label>
+          )
+        })}
+      </div>
+      <p className="text-sm text-ink-muted">
+        {selectedCount === 0 ? 'None selected' : `${selectedCount} selected`}
+      </p>
       {otherSelected ? (
         <label className="block space-y-1" htmlFor={`${id}_custom`}>
           <span className="text-sm font-medium text-ink">Custom role</span>
@@ -102,6 +129,6 @@ export function RoleMultiSelect({
           />
         </label>
       ) : null}
-    </div>
+    </fieldset>
   )
 }

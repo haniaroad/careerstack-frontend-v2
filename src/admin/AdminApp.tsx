@@ -25,6 +25,7 @@ import {
   QueuesArea,
   UsersArea,
 } from './areas'
+import { ProjectsArea } from './ProjectsArea'
 import { StaffShell } from './StaffShell'
 
 function ShellLayout() {
@@ -107,6 +108,7 @@ export function AdminRoutes() {
           <Route element={<StaffGateLayout />}>
             <Route index element={<Navigate to="/admin/users" replace />} />
             <Route path="admin/users" element={<UsersArea />} />
+            <Route path="admin/projects" element={<ProjectsArea />} />
             <Route path="admin/credits" element={<CreditsArea />} />
             <Route path="admin/moderation" element={<ModerationArea />} />
             <Route path="admin/queues" element={<QueuesArea />} />

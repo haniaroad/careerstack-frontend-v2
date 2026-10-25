@@ -4,6 +4,7 @@ import { Input } from '@/components/Input'
 import { useAuth } from '@/auth/AuthContext'
 import { apiFetch } from '@/lib/api'
 import { ReasonedAction } from './ReasonedAction'
+import { ProvisionForms } from './ProvisionForms'
 
 type UserHit = {
   id: string
@@ -122,6 +123,7 @@ export function UsersArea() {
           </li>
         ))}
       </ul>
+      <ProvisionForms />
     </section>
   )
 }

@@ -21,6 +21,8 @@ type AuthContextValue = {
   status: AuthStatus
   firebaseUser: FirebaseUser | null
   session: SessionPayload | null
+  /** False until the current session request has succeeded or failed. */
+  sessionSettled: boolean
   refreshSession: () => Promise<SessionPayload | null>
   setSession: (session: SessionPayload | null) => void
   signOut: () => Promise<void>
@@ -36,6 +38,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<AuthStatus>('loading')
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null)
   const [session, setSession] = useState<SessionPayload | null>(null)
+  const [sessionSettled, setSessionSettled] = useState(false)
 
   const refreshSession = useCallback(async () => {
     try {
@@ -50,6 +53,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch {
       setSession(null)
       return null
+    } finally {
+      setSessionSettled(true)
     }
   }, [])
 
@@ -78,9 +83,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (authStubEnabled()) {
       const stub = window.localStorage.getItem(STUB_TOKEN_KEY)
       if (!stub) {
+        setSessionSettled(true)
         setStatus('anonymous')
         return
       }
+      setSessionSettled(false)
       setStatus('authenticated')
       void refreshSession()
       return
@@ -88,6 +95,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const auth = getFirebaseAuth()
     if (!auth) {
+      setSessionSettled(true)
       setStatus('anonymous')
       return
     }
@@ -96,9 +104,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setFirebaseUser(user)
       if (!user) {
         setSession(null)
+        setSessionSettled(true)
         setStatus('anonymous')
         return
       }
+      setSessionSettled(false)
       setStatus('authenticated')
       void refreshSession()
     })
@@ -108,6 +118,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     async (email: string) => {
       const uid = `stub-${email.replace(/[^a-z0-9]/gi, '-')}`
       window.localStorage.setItem(STUB_TOKEN_KEY, `test:${uid}:${email}`)
+      setSessionSettled(false)
       setStatus('authenticated')
       await refreshSession()
     },
@@ -119,6 +130,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await firebaseSignOut()
     setFirebaseUser(null)
     setSession(null)
+    setSessionSettled(true)
     setStatus('anonymous')
   }, [])
 
@@ -127,12 +139,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       status,
       firebaseUser,
       session,
+      sessionSettled,
       refreshSession,
       setSession,
       signOut,
       stubSignIn,
     }),
-    [firebaseUser, refreshSession, session, signOut, status, stubSignIn],
+    [firebaseUser, refreshSession, session, sessionSettled, signOut, status, stubSignIn],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

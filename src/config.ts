@@ -10,11 +10,107 @@ export function isAdminSurface(
   return hostname === 'admin.careerstack.co' || hostname === 'admin.localhost'
 }
 
-export function apiBaseUrl(): string {
-  return (
-    (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '') ??
-    'http://127.0.0.1:3000'
+export type FirebasePublicConfig = {
+  apiKey?: string
+  authDomain?: string
+  projectId?: string
+  appId?: string
+}
+
+export type StaffEnvironmentId = 'production' | 'staging'
+
+export type StaffEnvironmentOption = {
+  id: StaffEnvironmentId
+  label: string
+  apiBaseUrl: string
+  firebase: FirebasePublicConfig
+}
+
+const STAFF_ENVIRONMENT_KEY = 'careerstack.staffEnvironment'
+
+export function rememberStaffEnvironment(id: StaffEnvironmentId) {
+  window.localStorage.setItem(STAFF_ENVIRONMENT_KEY, id)
+}
+
+type EnvSource = {
+  VITE_API_BASE_URL?: string
+  VITE_FIREBASE_API_KEY?: string
+  VITE_FIREBASE_AUTH_DOMAIN?: string
+  VITE_FIREBASE_PROJECT_ID?: string
+  VITE_FIREBASE_APP_ID?: string
+  VITE_STAGING_API_BASE_URL?: string
+  VITE_STAGING_FIREBASE_API_KEY?: string
+  VITE_STAGING_FIREBASE_AUTH_DOMAIN?: string
+  VITE_STAGING_FIREBASE_PROJECT_ID?: string
+  VITE_STAGING_FIREBASE_APP_ID?: string
+}
+
+function trimUrl(value: string | undefined, fallback: string): string {
+  return (value ?? fallback).replace(/\/$/, '')
+}
+
+function firebaseFrom(
+  apiKey?: string,
+  authDomain?: string,
+  projectId?: string,
+  appId?: string,
+): FirebasePublicConfig {
+  return { apiKey, authDomain, projectId, appId }
+}
+
+function firebaseReady(config: FirebasePublicConfig): boolean {
+  return Boolean(config.apiKey && config.authDomain && config.projectId && config.appId)
+}
+
+export function staffEnvironmentOptions(
+  env: EnvSource = import.meta.env as EnvSource,
+  stored: string | null = typeof window === 'undefined' ? null : window.localStorage.getItem(STAFF_ENVIRONMENT_KEY),
+): { options: StaffEnvironmentOption[]; selected: StaffEnvironmentId } {
+  const productionFirebase = firebaseFrom(
+    env.VITE_FIREBASE_API_KEY,
+    env.VITE_FIREBASE_AUTH_DOMAIN,
+    env.VITE_FIREBASE_PROJECT_ID,
+    env.VITE_FIREBASE_APP_ID,
   )
+  const production: StaffEnvironmentOption = {
+    id: 'production',
+    label: 'Production',
+    apiBaseUrl: trimUrl(env.VITE_API_BASE_URL, 'http://127.0.0.1:3000'),
+    firebase: productionFirebase,
+  }
+  const stagingFirebase = firebaseFrom(
+    env.VITE_STAGING_FIREBASE_API_KEY,
+    env.VITE_STAGING_FIREBASE_AUTH_DOMAIN,
+    env.VITE_STAGING_FIREBASE_PROJECT_ID,
+    env.VITE_STAGING_FIREBASE_APP_ID,
+  )
+  const stagingUrl = env.VITE_STAGING_API_BASE_URL?.replace(/\/$/, '')
+  const options = [production]
+  if (stagingUrl && firebaseReady(stagingFirebase)) {
+    options.push({
+      id: 'staging',
+      label: 'Staging',
+      apiBaseUrl: stagingUrl,
+      firebase: stagingFirebase,
+    })
+  }
+  const selected: StaffEnvironmentId =
+    stored === 'staging' && options.some((option) => option.id === 'staging') ? 'staging' : 'production'
+  return { options, selected }
+}
+
+export function staffEnvironmentSwitchAvailable(): boolean {
+  return isAdminSurface() && staffEnvironmentOptions().options.length > 1
+}
+
+function selectedOption(): StaffEnvironmentOption {
+  const { options, selected } = staffEnvironmentOptions()
+  return options.find((option) => option.id === selected) ?? options[0]
+}
+
+export function apiBaseUrl(): string {
+  if (isAdminSurface()) return selectedOption().apiBaseUrl
+  return trimUrl(import.meta.env.VITE_API_BASE_URL, 'http://127.0.0.1:3000')
 }
 
 /**
@@ -34,12 +130,13 @@ export function isDesignSystemPreviewEnabled(): boolean {
 }
 
 export function firebaseConfig() {
-  return {
-    apiKey: import.meta.env.VITE_FIREBASE_API_KEY as string | undefined,
-    authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN as string | undefined,
-    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID as string | undefined,
-    appId: import.meta.env.VITE_FIREBASE_APP_ID as string | undefined,
-  }
+  if (isAdminSurface()) return selectedOption().firebase
+  return firebaseFrom(
+    import.meta.env.VITE_FIREBASE_API_KEY,
+    import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+    import.meta.env.VITE_FIREBASE_PROJECT_ID,
+    import.meta.env.VITE_FIREBASE_APP_ID,
+  )
 }
 
 export function isFirebaseConfigured(): boolean {
