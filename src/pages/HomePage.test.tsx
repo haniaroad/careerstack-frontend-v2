@@ -164,6 +164,7 @@ describe('HomePage', () => {
 
     renderHome()
     expect(await screen.findByRole('region', { name: 'Start here' })).toBeInTheDocument()
+    expect(screen.getByText(/No projects need attention/i)).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /Create project/i })).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Dismiss tip' }))
     expect(screen.queryByRole('region', { name: 'Start here' })).not.toBeInTheDocument()
@@ -197,7 +198,7 @@ describe('HomePage', () => {
 
     renderHome()
     expect(
-      await screen.findByText(/Projects that are ending, in a grace period, or expired show up here/i),
+      await screen.findByText(/If a project you’re working on is almost due, past its end date, or closed because time ran out/i),
     ).toBeInTheDocument()
     expect(screen.getByText(/Shipping checklist — Ending soon/i)).toBeInTheDocument()
     expect(screen.getByText(/Grace work — Grace period/i)).toBeInTheDocument()

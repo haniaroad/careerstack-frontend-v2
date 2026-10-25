@@ -1,10 +1,29 @@
 import { Link, useLocation } from 'react-router-dom'
 import { ProjectLifecycleBadge } from '@/components/ProjectLifecycleBadge'
+import { StatusBadge, type StatusTone } from '@/components/StatusBadge'
 
 type ProfileTask = {
   id?: string
   title?: string
   status?: string
+}
+
+const TASK_STATUS_LABELS: Record<string, string> = {
+  pending: 'Not started',
+  submitted: 'Submitted for review',
+  corrections_requested: 'Changes requested',
+  approved: 'Approved',
+  incomplete: 'Not finished',
+}
+
+export function profileTaskStatusLabel(status: string): string {
+  return TASK_STATUS_LABELS[status] ?? status.replaceAll('_', ' ')
+}
+
+function profileTaskStatusTone(status: string): StatusTone {
+  if (status === 'approved') return 'success'
+  if (status === 'corrections_requested' || status === 'incomplete') return 'warning'
+  return 'info'
 }
 
 type ProfileProject = Record<string, unknown> & {
@@ -49,14 +68,21 @@ export function ProfileProjects({ projects }: { projects: ProfileProject[] }) {
               {summaryOnly ? <span>summary</span> : null}
             </p>
             {tasks.length > 0 ? (
-              <ul className="mt-2 space-y-1 border-l border-border pl-3">
-                {tasks.map((task) => (
-                  <li key={String(task.id)} className="text-ink">
-                    {task.title}
-                    {task.status ? <span className="text-ink-muted"> · {task.status.replaceAll('_', ' ')}</span> : null}
-                  </li>
-                ))}
-              </ul>
+              <div className="mt-2 border-l border-border pl-3">
+                <p className="text-xs font-medium text-ink-muted">Tasks</p>
+                <ul className="mt-1 space-y-1">
+                  {tasks.map((task) => (
+                    <li key={String(task.id)} className="flex flex-wrap items-center gap-2 text-ink">
+                      <span>{task.title}</span>
+                      {task.status ? (
+                        <StatusBadge tone={profileTaskStatusTone(task.status)}>
+                          {profileTaskStatusLabel(task.status)}
+                        </StatusBadge>
+                      ) : null}
+                    </li>
+                  ))}
+                </ul>
+              </div>
             ) : null}
           </li>
         )
